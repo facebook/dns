@@ -1,0 +1,24 @@
+name: lint
+on: [push, pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: "Install Rocks"
+        run: sudo bash .github/scripts/install_rocks_7.sh
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: dnsrocks
+      - run: if [ "$(cd dnsrocks; go fmt ./...| wc -l)" -gt 0 ]; then exit 1; fi
+      - run: |
+          cd dnsrocks
+          go get -v -u github.com/client9/misspell
+          go run github.com/client9/misspell/cmd/misspell -error ./
+      - run: |
+          cd dnsrocks
+          go get -v -u github.com/hedhyw/go-import-lint/cmd/go-import-lint
+          go run github.com/hedhyw/go-import-lint/cmd/go-import-lint -exclude ./cgo-rocksdb
