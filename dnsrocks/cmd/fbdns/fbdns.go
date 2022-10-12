@@ -74,6 +74,8 @@ func main() {
 	var loggerConfig logger.Config
 	var doTTLSATtl uint64
 	var metricsAddr, thriftAddr string
+	var toStderr bool
+	var verbosity int
 	const DefaultMetricsAddr string = ":18888"
 	cliflags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
@@ -151,19 +153,21 @@ Currently two types of trigger files are supported:
 	version := cliflags.Bool("version", false, "Print versioning information.")
 
 	// Enable glog format (already defined by glog lib)
-	err := flag.Set("logtostderr", "true")
+	// This hack is required for glog compatiblity, as it does not expose verbosity level
+	cliflags.BoolVar(&toStderr, "logtostderr", true, "log to standard error instead of files")
+	cliflags.IntVar(&verbosity, "v", 2, "log level for V logs")
+	cliflags.Parse(os.Args[1:])
+	err := flag.Set("logtostderr", strconv.FormatBool(toStderr))
 	if err != nil {
 		glog.Errorf("Failed to set glog logging to stdout. Err: %v", err)
 	}
-	err = flag.Set("v", "2")
+	err = flag.Set("v", strconv.FormatInt(int64(verbosity), 10))
 	if err != nil {
 		glog.Errorf("Failed to set glog verbosity level to 2. Err: %v", err)
 	}
-
-	err = cliflags.Parse(os.Args[1:])
-	if err != nil {
-		glog.Fatalf("Failed to parse cli flags %v", err)
-	}
+	flag.CommandLine = cliflags
+	flag.Parse()
+	// glog cli flag hack over.
 
 	if thriftAddr != DefaultMetricsAddr {
 		metricsAddr = thriftAddr
