@@ -153,7 +153,7 @@ Currently two types of trigger files are supported:
 	version := cliflags.Bool("version", false, "Print versioning information.")
 
 	// Enable glog format (already defined by glog lib)
-	// This hack is required for glog compatiblity, as it does not expose verbosity level
+	// This hack is required for glog compatibility, as it does not expose verbosity level
 	cliflags.BoolVar(&toStderr, "logtostderr", true, "log to standard error instead of files")
 	cliflags.IntVar(&verbosity, "v", 2, "log level for V logs")
 	err := cliflags.Parse(os.Args[1:])
