@@ -156,8 +156,11 @@ Currently two types of trigger files are supported:
 	// This hack is required for glog compatiblity, as it does not expose verbosity level
 	cliflags.BoolVar(&toStderr, "logtostderr", true, "log to standard error instead of files")
 	cliflags.IntVar(&verbosity, "v", 2, "log level for V logs")
-	cliflags.Parse(os.Args[1:])
-	err := flag.Set("logtostderr", strconv.FormatBool(toStderr))
+	err := cliflags.Parse(os.Args[1:])
+	if err != nil {
+		glog.Errorf("Failed to parse cli flags: %v", err)
+	}
+	err = flag.Set("logtostderr", strconv.FormatBool(toStderr))
 	if err != nil {
 		glog.Errorf("Failed to set glog logging to stdout. Err: %v", err)
 	}
@@ -197,7 +200,7 @@ Currently two types of trigger files are supported:
 
 	if *pprofconf != "" {
 		go func() {
-			err := http.ListenAndServe(*pprofconf, nil)
+			err = http.ListenAndServe(*pprofconf, nil)
 			if err != nil {
 				glog.Errorf("Failed to start pprof. Err: %v", err)
 			}
@@ -229,7 +232,7 @@ Currently two types of trigger files are supported:
 	srv := fbserver.NewServer(serverConfig, l, stats, metricsServer)
 
 	if len(*dnsRecordKeyToValidate) > 0 {
-		err := srv.ValidateDbKey(unquotedKey)
+		err = srv.ValidateDbKey(unquotedKey)
 		if err != nil {
 			failOnErr(err, "Invalid DB file, expected record not present.")
 		}
