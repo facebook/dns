@@ -19,6 +19,7 @@ type Stats interface {
 	ResetCounter(key string)
 	IncrementCounterBy(key string, value int64)
 	IncrementCounter(key string)
+	AddSample(key string, value int64)
 }
 
 // DummyStats is a stub stats implementation
@@ -36,3 +37,6 @@ func (s *DummyStats) IncrementCounterBy(key string, value int64) {}
 
 // IncrementCounter stub implementation
 func (s *DummyStats) IncrementCounter(key string) {}
+
+// AddSample stub implementation
+func (s *DummyStats) AddSample(key string, value int64) {}

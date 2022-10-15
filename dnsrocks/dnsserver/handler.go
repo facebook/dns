@@ -371,7 +371,10 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 
 // ServeDNS implements the plugin.Handler interface.
 func (h *FBDNSDB) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	return h.ServeDNSWithRCODE(ctx, w, r)
+	requestStartTime := time.Now()
+	rcode, err := h.ServeDNSWithRCODE(ctx, w, r)
+	h.stats.AddSample("DNS.responsetime_us", time.Since(requestStartTime).Microseconds())
+	return rcode, err
 }
 
 // Name returns tinydnscdb.
