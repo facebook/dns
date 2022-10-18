@@ -40,3 +40,7 @@ func (s Counters) IncrementCounterBy(key string, value int64) {
 func (s Counters) IncrementCounter(key string) {
 	s[key]++
 }
+
+// AddSample is not implemented here
+func (s Counters) AddSample(key string, value int64) {
+}
