@@ -43,7 +43,8 @@ func TestParseKey(t *testing.T) {
 		"DS mismatch")
 }
 
-/**
+/*
+*
 TestInitializeZonesKeys tests that we properly load zones and keys
 */
 func TestInitializeZonesKeys(t *testing.T) {

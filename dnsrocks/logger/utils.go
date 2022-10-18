@@ -96,7 +96,6 @@ func RequestProtocol(state request.Request) string {
 
 // computeDNSFlag return a uint to represent flags set in dns message header
 func computeDNSFlag(r *dns.Msg) uint16 {
-
 	// https://www.freesoft.org/CIE/RFC/2065/40.htm for format
 
 	var dnsFlags = uint16(r.Opcode)<<11 | uint16(r.Rcode&0xF)

@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -34,7 +33,6 @@ func sessionTicketFromSeed(seed string) (key [32]byte) {
 }
 
 func loadSessionTicketFromFile(config *tls.Config, seedfile string) error {
-
 	seedReader, err := os.Open(seedfile)
 	if err != nil {
 		return fmt.Errorf("could not load seed file %q", seedfile)
@@ -51,7 +49,6 @@ func loadSessionTicketFromFile(config *tls.Config, seedfile string) error {
 }
 
 func loadSessionTicketKeys(reader io.Reader) (keys [][32]byte, err error) {
-
 	var (
 		t struct {
 			Old     []string
@@ -60,7 +57,7 @@ func loadSessionTicketKeys(reader io.Reader) (keys [][32]byte, err error) {
 		}
 		data []byte
 	)
-	if data, err = ioutil.ReadAll(reader); err != nil {
+	if data, err = io.ReadAll(reader); err != nil {
 		return
 	}
 	if err = json.Unmarshal(data, &t); err != nil {
@@ -119,7 +116,6 @@ func initSessionTicketKeys(config *tls.Config, keyConfig *SessionTicketKeysConfi
 				}
 			}
 		}()
-
 	} else {
 		glog.Infof("Skipping loading session ticket keys, no seed file provided.")
 	}

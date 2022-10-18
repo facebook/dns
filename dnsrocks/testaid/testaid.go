@@ -21,7 +21,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/big"
 	"os"
@@ -66,21 +66,21 @@ var TestDBs []TestDB
 // Run creates the test databases and runs the tests. It returns an exit code to pass to os.Exit.
 func Run(m *testing.M, relativePath string) int {
 	// create tempdir for RDB
-	rdbDir, err := ioutil.TempDir("", "rocksdb-test")
+	rdbDir, err := os.MkdirTemp("", "rocksdb-test")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer os.RemoveAll(rdbDir)
 
 	// create tempdir for RDB v2
-	rdbDirV2, err := ioutil.TempDir("", "rocksdb-v2-test")
+	rdbDirV2, err := os.MkdirTemp("", "rocksdb-v2-test")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer os.RemoveAll(rdbDirV2)
 
 	// create tempdir for CDB
-	cdbDir, err := ioutil.TempDir("", "cdb-test")
+	cdbDir, err := os.MkdirTemp("", "cdb-test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func Run(m *testing.M, relativePath string) int {
 	// temporarily suppress output to make test suite happy
 	// (otherwise any output from CompileRDB() will fail the test
 	err, errDB, errPath := func() (error, string, string) {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 		defer log.SetOutput(os.Stderr)
 		// compile RDB into tempdir
 		o := rdb.CompilationOptions{}
@@ -162,7 +162,7 @@ func MkTestCert(t *testing.T) string {
 	pemBytes, err := x509.CreateCertificate(rand.Reader, template, template, &privateKey.PublicKey, privateKey)
 	assert.Nil(t, err)
 
-	tmpfile, err := ioutil.TempFile("", "example")
+	tmpfile, err := os.CreateTemp("", "example")
 	assert.Nil(t, err)
 
 	err = pem.Encode(tmpfile, &pem.Block{Type: "CERTIFICATE", Bytes: pemBytes})

@@ -102,5 +102,4 @@ func (sw *slidingWindow) Samples() []int64 {
 		samples[idx] = sws.Value
 	}
 	return samples
-
 }

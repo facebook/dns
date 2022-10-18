@@ -70,7 +70,6 @@ func dnsLabelWildsafe(q []byte) bool {
 // nil is returned when the row is not matching the specific filters (e.g
 // Location or wildcard).
 func ExtractRRFromRow(row []byte, wildcard bool) (rr ResourceRecord, err error) {
-
 	dpos := 0
 	rr.Qtype = binary.BigEndian.Uint16(row[dpos : dpos+2])
 	dpos += 2
@@ -116,9 +115,9 @@ func (r *DataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, auth boo
 	zoneCut = q
 
 	parseResult := func(result []byte) error {
-
 		rec, err := ExtractRRFromRow(result, false)
 		if err != nil {
+			// nolint: nilerr
 			return nil
 		}
 
@@ -159,7 +158,6 @@ func (r *DataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, auth boo
 			break
 		}
 		zoneCut = zoneCut[1+zoneCut[0]:]
-
 	}
 	return
 }
@@ -179,12 +177,13 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 	)
 
 	parseResult := func(result []byte) error {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 
 		if rec, err = ExtractRRFromRow(result, wildcard); err != nil {
 			// Not a location match
+			// nolint:nilerr
 			return nil
 		}
 		recordFound = true

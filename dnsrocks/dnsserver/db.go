@@ -14,8 +14,9 @@ limitations under the License.
 package dnsserver
 
 import (
+	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -171,7 +172,7 @@ func getNewDBPath(path string) (string, error) {
 		return newPath, err
 	}
 	defer f.Close()
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	if err != nil {
 		return newPath, err
 	}
@@ -327,10 +328,10 @@ func (h *FBDNSDB) Reload(s ReloadSignal) (err error) {
 	var newDB *db.DB
 	newDB, err = h.dnsdb.Reload(newPath, h.dbConfig.ValidationKey, h.dbConfig.ReloadTimeout)
 	if err != nil {
-		if err == db.ErrValidationKeyNotFound {
+		if errors.Is(err, db.ErrValidationKeyNotFound) {
 			h.stats.IncrementCounter("DNS_db.ErrValidationKeyNotFound")
 		}
-		if err == db.ErrReloadTimeout {
+		if errors.Is(err, db.ErrReloadTimeout) {
 			h.stats.IncrementCounter("DNS_db.ErrReloadTimeout")
 		}
 		return

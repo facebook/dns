@@ -14,13 +14,12 @@ limitations under the License.
 package dnsdata
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 )
 
 func TestDeriveSerial(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "testserial")
+	tmpfile, err := os.CreateTemp("", "testserial")
 	if err != nil {
 		t.Fatal(err)
 	}

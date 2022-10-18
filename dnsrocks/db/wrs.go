@@ -52,7 +52,7 @@ func (w *Wrs) Add(rec ResourceRecord, data []byte) error {
 		return fmt.Errorf("Unsupported type %d", rec.Qtype)
 	}
 
-	key := math.Pow(float64(localRand.Uint32())*float64(1.0/math.MaxUint32), float64(1.0/float64(rec.Weight)))
+	key := math.Pow(float64(localRand.Uint32())*float64(1.0/math.MaxUint32), 1.0/float64(rec.Weight))
 	wrsItem := WrsItem{Key: key,
 		TTL:  rec.TTL,
 		Addr: data[rec.Offset:]}
@@ -122,7 +122,7 @@ func (w *Wrs) record(name string, class uint16, qtype uint16) (rrs []dns.RR, err
 			var rr dns.RR
 			rr, _, err = dns.UnpackRRWithHeader(hdr, item.Addr, 0)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to convert from tinydns format %v %d, %d", err, hdr.Rdlength, len(item.Addr))
+				return nil, fmt.Errorf("failed to convert from tinydns format %d, %d: %w", hdr.Rdlength, len(item.Addr), err)
 			}
 			rrs = append(rrs, rr)
 		}

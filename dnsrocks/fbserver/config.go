@@ -60,7 +60,6 @@ func (ipans ipAns) String() string {
 
 // Support setting ipAns with only "IP" or "IP,maxAns"
 func (ipans ipAns) Set(v string) error {
-
 	ipAnsSpt := strings.Split(v, ",")
 
 	ip := net.ParseIP(ipAnsSpt[0])

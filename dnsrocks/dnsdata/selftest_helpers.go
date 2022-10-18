@@ -43,7 +43,7 @@ func GetSubnets(dataPath string) ([]*net.IPNet, error) {
 		}
 		r, err := codec.DecodeLn(line)
 		if err != nil {
-			return nets, fmt.Errorf("error decoding %s: %v", string(line), err)
+			return nets, fmt.Errorf("error decoding %s: %w", string(line), err)
 		}
 		rr := r.(*Rnet)
 		nets = append(nets, rr.ipnet)

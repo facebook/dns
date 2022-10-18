@@ -24,9 +24,7 @@ func GetNs(r Reader, q []byte, zonename string, class uint16, loc *Location) (ns
 	var rr dns.RR
 
 	parseResult := func(result []byte) error {
-
 		if rec, err := ExtractRRFromRow(result, false); err == nil {
-
 			// rec is nil if not matching location
 
 			if rec.Qtype == dns.TypeNS {

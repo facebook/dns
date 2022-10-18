@@ -14,6 +14,7 @@ limitations under the License.
 package db
 
 import (
+	"errors"
 	"io"
 	"net"
 	"sync"
@@ -96,7 +97,7 @@ func (c *cdbdriver) FindMap(domain, mtype []byte, context Context) ([]byte, erro
 		// We found a match. Copy this to the MapID
 		if err == nil {
 			return mapID, nil
-		} else if err != io.EOF {
+		} else if !errors.Is(err, io.EOF) {
 			return nil, err
 		}
 		// If there is no more label, break out of the loop
@@ -151,7 +152,7 @@ func (c *cdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 	c.FindStart(context)
 	maskLens, err := c.FindNext(bitmapKey, context)
 
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		// No maskLens found, return what we have. e.g default l.LocID == {0, 0}
 		return nil, 0, nil
 	}
@@ -183,7 +184,7 @@ func (c *cdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 		k[dlen+net.IPv6len] = mask
 		c.FindStart(context)
 		locID, err := c.FindNext(k, context)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			continue
 		}
 		if err == nil {
@@ -231,7 +232,7 @@ func (c *cdbdriver) ForEach(key []byte, f func(value []byte) error, context Cont
 		v, err := c.FindNext(key, context)
 
 		// No more row
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

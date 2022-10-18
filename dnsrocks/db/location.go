@@ -66,7 +66,6 @@ type Location struct {
 // It returns a pointer to dns.EDNS0_SUBNET or nil when there is not such
 // EDNS0 option.
 func FindECS(m *dns.Msg) *dns.EDNS0_SUBNET {
-
 	if o := m.IsEdns0(); o != nil {
 		for _, opt := range o.Option {
 			switch opt := opt.(type) {
@@ -98,7 +97,6 @@ func (r *DataReader) FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns
 	// Check if there is ECS option and look for a matching location
 
 	if ecs = FindECS(m); ecs != nil {
-
 		// ECS location lookup and set Scope accordingly
 		loc, err = r.EcsLocation(qname, ecs)
 		if err != nil {
@@ -166,7 +164,6 @@ func (r *DataReader) ResolverLocation(q []byte, ip string) (*Location, error) {
 // If we find a match, Location will contain the matching LocationID and ECS
 // option will have SourceScope set.
 func (r *DataReader) EcsLocation(q []byte, ecs *dns.EDNS0_SUBNET) (*Location, error) {
-
 	bits := 8 * net.IPv4len
 	if ecs.Family == 2 {
 		bits = 8 * net.IPv6len

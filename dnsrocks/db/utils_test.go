@@ -43,7 +43,6 @@ func RRSliceMatchSubsetf(t *testing.T, list, subset []dns.RR, msg string, args .
 }
 
 func answerSkeleton() *dns.Msg {
-
 	q := new(dns.Msg)
 	q.SetQuestion(dns.Fqdn("foo.example.org."), dns.TypeA)
 	a := new(dns.Msg)
@@ -99,7 +98,6 @@ func answerSkeleton() *dns.Msg {
 }
 
 func answerSkeletonForAdditionalSectionTest(qname string, qtype uint16) *dns.Msg {
-
 	q := new(dns.Msg)
 	q.SetQuestion(dns.Fqdn(qname), qtype)
 	a := new(dns.Msg)
@@ -111,7 +109,6 @@ func answerSkeletonForAdditionalSectionTest(qname string, qtype uint16) *dns.Msg
 // TestHasRecord test that we can properly detect if a qname/qtype tuple is in
 // a dns message.
 func TestHasRecord(t *testing.T) {
-
 	a := answerSkeleton()
 
 	testCases := []struct {

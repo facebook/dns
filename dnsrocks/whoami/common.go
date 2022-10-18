@@ -35,7 +35,6 @@ type Handler struct {
 
 // ServeDNS serves whoami queries
 func (wh *Handler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-
 	if len(r.Question[0].Name) != len(wh.whoamiDomain) || strings.ToLower(r.Question[0].Name) != wh.whoamiDomain {
 		return plugin.NextOrFailure(wh.Name(), wh.Next, ctx, w, r)
 	}

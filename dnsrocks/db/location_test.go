@@ -564,6 +564,7 @@ func testFindLocationForResolversCustomBitmap(t *testing.T, separateBitmap bool)
 	var db *DB
 	var packedQName = make([]byte, 255)
 	var err error
+	SeparateBitMap = separateBitmap
 
 	testCases := []struct {
 		domain           string
@@ -654,7 +655,6 @@ func TestFindLocationForResolvers(t *testing.T) {
 	t.Run("TestFindLocationForResolversCustomBitmap SeparateBitMap", func(t *testing.T) {
 		testFindLocationForResolversCustomBitmap(t, true)
 	})
-
 }
 
 func testDBEcsLocationCustomBitmap(t *testing.T, separateBitMap bool) {
@@ -738,7 +738,6 @@ func TestDBEcsLocation(t *testing.T) {
 	t.Run("TestDBEcsLocationCustomBitmap SeparateBitMap", func(t *testing.T) {
 		testDBEcsLocationCustomBitmap(t, true)
 	})
-
 }
 
 func testDBCorrectEcsAnswerCustomBitmap(t *testing.T, separateBitMap bool) {
@@ -836,7 +835,7 @@ func TestDBECSResolverFindMap(t *testing.T) {
 		ecsMapType
 	)
 
-	mapType := [][]byte{[]byte{0, 'M'}, []byte{0, '8'}}
+	mapType := [][]byte{{0, 'M'}, {0, '8'}}
 
 	testCases := []struct {
 		domain  string

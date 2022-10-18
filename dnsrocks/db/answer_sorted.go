@@ -15,6 +15,7 @@ package db
 
 import (
 	"bytes"
+	"errors"
 	"io"
 
 	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
@@ -37,12 +38,13 @@ func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname 
 	)
 
 	parseResult := func(result []byte) error {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 
 		if rec, err = ExtractRRFromRow(result, wildcard); err != nil {
 			// Not a location match
+			// nolint: nilerr
 			return nil
 		}
 		recordFound = true
@@ -126,9 +128,9 @@ func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname 
 
 func (r *sortedDataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, auth bool, zoneCut []byte, err error) {
 	parseResult := func(result []byte) error {
-
 		rec, err := ExtractRRFromRow(result, false)
 		if err != nil {
+			// nolint: nilerr
 			return nil
 		}
 
@@ -165,8 +167,8 @@ func (r *sortedDataReader) find(
 	loc *Location,
 	parseResult func(value []byte) error,
 	preIterationCheck func(qName []byte, currentLength int) bool,
-	postIterationCheck func() bool) {
-
+	postIterationCheck func() bool,
+) {
 	var err error
 
 	reversedQName := reverseZoneName(q)
@@ -205,11 +207,11 @@ func (r *sortedDataReader) find(
 
 		// zone cut for different location exists -> check default location
 		if loc.LocID != EmptyLocation.LocID &&
-
 			// empty location override might exists as only location part is different in found key
 			len(key) == len(k) &&
-			bytes.Equal(key[:len(key)-locationLength], k[:len(key)-locationLength]) {
-
+			bytes.Equal(
+				key[:len(key)-locationLength], k[:len(key)-locationLength],
+			) {
 			copy(key[locationStart:], EmptyLocation.LocID[:])
 
 			k, err = r.TryForEach(key, parseResult)
@@ -247,7 +249,7 @@ func (r *sortedDataReader) find(
 
 // cut out exactly one label from the end
 func getLengthWithoutLastLabel(qName []byte, qLength int) int {
-	var i byte = 0
+	var i byte
 
 	lastLabelLengthIndex := 0
 	for i < byte(qLength)-1 {
@@ -316,7 +318,6 @@ func reverseZoneNameToBuffer(qName []byte, destination []byte) {
 	destination[i] = 0
 
 	for qName[0] > 0 {
-
 		i -= qName[0]
 
 		copy(destination[i:], qName[1:qName[0]+1])

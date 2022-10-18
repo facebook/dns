@@ -81,7 +81,6 @@ func getFBServer(t *testing.T) (*fbserver.Server, func()) {
 	return srv, func() {
 		srv.Shutdown()
 	}
-
 }
 
 // Wait() call should hang forever because Done() is not called anywhere

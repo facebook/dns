@@ -129,7 +129,7 @@ func NewRearranger(locationCount int) *Rearranger {
 }
 
 // ErrInvalidLocation is used when location doesn't match expectations (nil or exactly 2 bytes)
-var ErrInvalidLocation error = errors.New("location should be either nil or exactly 2 bytes long as FBDNS depends on it")
+var ErrInvalidLocation = errors.New("location should be either nil or exactly 2 bytes long as FBDNS depends on it")
 
 func copyLocID(locID []byte) ([2]byte, error) {
 	var x [2]byte
@@ -143,10 +143,8 @@ func copyLocID(locID []byte) ([2]byte, error) {
 }
 
 // AddLocation converts the location into a pair of RangePoints, where:
-//  * the starting RangePoint is the first IP of the Location, and we immediately
-//  know the LocID for this RangePoint
-//  * the next RangePoint is the first IP _after_ the end of this Location, so
-//  it is marked as rangePointEnd, and the LocID is to be determined
+// * the starting RangePoint is the first IP of the Location, and we immediately know the LocID for this RangePoint
+// * the next RangePoint is the first IP _after_ the end of this Location, so it is marked as rangePointEnd, and the LocID is to be determined
 func (r *Rearranger) AddLocation(ipnet *net.IPNet, locID []byte) error {
 	maskLen, _ := ipnet.Mask.Size()
 	copiedLocID, err := copyLocID(locID)

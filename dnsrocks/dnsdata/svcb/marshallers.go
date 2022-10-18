@@ -85,6 +85,7 @@ func mandatoryMarshaller(input []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// nolint:unparam
 func alpnMarshaller(input []byte) ([]byte, error) {
 	alpns := bytes.Split(input, valueDelimInternal)
 
@@ -99,6 +100,7 @@ func alpnMarshaller(input []byte) ([]byte, error) {
 }
 
 // no-default-alpn should have empty value
+// nolint:unparam
 func nodefaultalpnMarshaller(input []byte) ([]byte, error) {
 	if len(input) > 0 {
 		return nil, errors.New("the value for no-default-alpn should be empty")

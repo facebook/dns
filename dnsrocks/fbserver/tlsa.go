@@ -57,16 +57,16 @@ func newDotTLSA(tlsconfig *tlsc.TLSConfig) (*dotTLSAHandler, error) {
 		dh.ttl = tlsconfig.DoTTLSATtl
 	}
 	if cert, err = tlsc.LoadTLSCertFromFile(tlsconfig); err != nil {
-		return nil, fmt.Errorf("Loading certs from %v: %v", tlsconfig, err)
+		return nil, fmt.Errorf("loading certs from %v: %w", tlsconfig, err)
 	}
 	// cert.Certificate is an chain of one or more certificate, leaf first.
 	// https://golang.org/pkg/crypto/tls/#Certificate
 	// We only care about the Leaf.
 	if x509cert, err = x509.ParseCertificate(cert.Certificate[0]); err != nil {
-		return nil, fmt.Errorf("Converting tls.Certificate to x509.Certificate %v: %v", cert, err)
+		return nil, fmt.Errorf("converting tls.Certificate to x509.Certificate %v: %w", cert, err)
 	}
 	dh.dotTLSAPrefix = "_" + strconv.Itoa(tlsconfig.Port) + "._tcp."
-	glog.Infof("dotTLSAHandler will match prefix: %s\n", dh.dotTLSAPrefix)
+	glog.Infof("dotTLSAHandler will match prefix: %s", dh.dotTLSAPrefix)
 	err = dh.rr.Sign(3, 1, 1, x509cert)
 	return dh, err
 }
@@ -78,7 +78,6 @@ func (dh *dotTLSAHandler) SetTTL(ttl uint32) *dotTLSAHandler {
 }
 
 func (dh *dotTLSAHandler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-
 	if len(r.Question[0].Name) <= len(dh.dotTLSAPrefix) || !strings.HasPrefix(strings.ToLower(r.Question[0].Name), dh.dotTLSAPrefix) {
 		return plugin.NextOrFailure(dh.Name(), dh.Next, ctx, w, r)
 	}
@@ -103,6 +102,7 @@ func (dh *dotTLSAHandler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r 
 	m = state.Scrub(m)
 	err := state.W.WriteMsg(m)
 	if err != nil {
+		// nolint: nilerr
 		return dns.RcodeServerFailure, nil
 	}
 	return dns.RcodeSuccess, nil

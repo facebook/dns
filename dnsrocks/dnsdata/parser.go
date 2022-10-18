@@ -44,7 +44,7 @@ func ParseStream(r io.Reader, codec *Codec, results chan<- []MapRecord, workers 
 		func(line []byte) error {
 			v, err := codec.ConvertLn(line)
 			if err != nil {
-				return fmt.Errorf("Conversion failed for line '%s': %s", line, err)
+				return fmt.Errorf("Conversion failed for line '%s': %w", line, err)
 			}
 			results <- v
 			return nil
@@ -58,14 +58,14 @@ func ParseStream(r io.Reader, codec *Codec, results chan<- []MapRecord, workers 
 	// Pack the accumulated state
 	v, err := codec.Acc.MarshalMap()
 	if err != nil {
-		return fmt.Errorf("acc marshalling failed: %v", err)
+		return fmt.Errorf("acc marshalling failed: %w", err)
 	}
 	results <- v
 
 	// Pack the supported features
 	v, err = codec.Features.MarshalMap()
 	if err != nil {
-		return fmt.Errorf("Features marshalling failed: %v", err)
+		return fmt.Errorf("features marshalling failed: %w", err)
 	}
 	results <- v
 
@@ -82,7 +82,7 @@ func ParseRecords(r io.Reader, codec *Codec, results chan<- Record, workers int)
 		func(line []byte) error {
 			v, err := codec.DecodeLn(line)
 			if err != nil {
-				return fmt.Errorf("parsing failed for line '%s': %s", line, err)
+				return fmt.Errorf("parsing failed for line '%s': %w", line, err)
 			}
 			results <- v
 			return nil

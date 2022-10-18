@@ -14,6 +14,7 @@ limitations under the License.
 package fbserver
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -90,7 +91,6 @@ type anyMetricsExporter interface {
 
 // NewServer start the server given a server config, a logger and a stat collector
 func NewServer(conf ServerConfig, logger dnsserver.Logger, stats stats.Stats, metricsExporter anyMetricsExporter) *Server {
-
 	// if no ip provided, use the default wildcard.
 	if len(conf.IPAns) == 0 {
 		conf.IPAns[""] = 1
@@ -136,10 +136,10 @@ func newMonitoredReader(m *Monitor) dns.DecorateReader {
 
 // initUDPServer opens a monitored UDP socket and returns a DNS server ready
 // for ActivateAndServe.
-func (srv *Server) initUDPServer(addr string, h dns.Handler, s *metrics.Stats) (*dns.Server, error) {
-	pc, err := listenUDP(addr, srv.listenConf(), s)
+func (srv *Server) initUDPServer(addr string, h dns.Handler) (*dns.Server, error) {
+	pc, err := listenUDP(addr, srv.listenConf())
 	if err != nil {
-		return nil, fmt.Errorf("failed to init UDP server: %v", err)
+		return nil, fmt.Errorf("failed to init UDP server: %w", err)
 	}
 	return &dns.Server{
 		Addr:       addr,
@@ -154,7 +154,7 @@ func (srv *Server) initUDPServer(addr string, h dns.Handler, s *metrics.Stats) (
 func (srv *Server) initTCPServer(addr string, h dns.Handler, s *metrics.Stats) (*dns.Server, error) {
 	l, err := listenTCP(addr, srv.listenConf(), s)
 	if err != nil {
-		return nil, fmt.Errorf("failed to init TCP server: %v", err)
+		return nil, fmt.Errorf("failed to init TCP server: %w", err)
 	}
 	return &dns.Server{
 		Addr:           addr,
@@ -170,11 +170,11 @@ func (srv *Server) initTCPServer(addr string, h dns.Handler, s *metrics.Stats) (
 func (srv *Server) initTLSServer(addr string, h dns.Handler, conf *tlsconfig.TLSConfig, s *metrics.Stats) (*dns.Server, error) {
 	tlsConf, err := tlsconfig.InitTLSConfig(conf)
 	if err != nil {
-		return nil, fmt.Errorf("failed to init TLS config: %v", err)
+		return nil, fmt.Errorf("failed to init TLS config: %w", err)
 	}
 	l, err := listenTLS(addr, srv.listenConf(), tlsConf, s)
 	if err != nil {
-		return nil, fmt.Errorf("failed to init TCP/TLS server: %v", err)
+		return nil, fmt.Errorf("failed to init TCP/TLS server: %w", err)
 	}
 	return &dns.Server{
 		Addr:           addr,
@@ -201,7 +201,6 @@ func (srv *Server) listenConf() net.ListenConfig {
 // configuration. Start does not block, and the servers may fail with fatal
 // errors.
 func (srv *Server) Start() (err error) {
-
 	var (
 		defaultHandler   plugin.Handler = srv.db
 		maxAnswerHandler *maxAnswerHandler
@@ -233,7 +232,7 @@ func (srv *Server) Start() (err error) {
 			log.Fatalf("TLS is disabled yet are enabling DoTTLSAHandler. This is likely unexpected")
 		}
 		if dotTLSAHandler, err = newDotTLSA(&srv.conf.TLSConfig); err != nil {
-			return fmt.Errorf("Failed to initialize dotTLSAHandler: %v", err)
+			return fmt.Errorf("failed to initialize dotTLSAHandler: %w", err)
 		}
 
 		dotTLSAHandler.Next = defaultHandler
@@ -244,7 +243,7 @@ func (srv *Server) Start() (err error) {
 		domain := strings.ToLower(dns.Fqdn(srv.conf.WhoamiDomain))
 		glog.Infof("Enabling WhoAmI handler for domain %s", domain)
 		if whoamiHandler, err = whoami.NewWhoami(domain); err != nil {
-			return fmt.Errorf("Failed to initialize whoamiHandler: %v", err)
+			return fmt.Errorf("failed to initialize whoamiHandler: %w", err)
 		}
 		whoamiHandler.Next = defaultHandler
 		defaultHandler = whoamiHandler
@@ -255,7 +254,7 @@ func (srv *Server) Start() (err error) {
 	if srv.conf.RefuseANY {
 		glog.Infof("Enabling ANY handler")
 		if anyHandler, err = newAnyHandler(); err != nil {
-			return fmt.Errorf("Failed to initialize anyHandler: %v", err)
+			return fmt.Errorf("failed to initialize anyHandler: %w", err)
 		}
 		anyHandler.Next = defaultHandler
 		defaultHandler = anyHandler
@@ -267,7 +266,7 @@ func (srv *Server) Start() (err error) {
 	// transport protocol.
 	for ip, maxAns := range srv.conf.IPAns {
 		if maxAnswerHandler, err = newMaxAnswerHandler(maxAns); err != nil {
-			return fmt.Errorf("Failed to initialize maxAnswerHandler: %v", err)
+			return fmt.Errorf("failed to initialize maxAnswerHandler: %w", err)
 		}
 		maxAnswerHandler.Next = defaultHandler
 		glog.Infof("Creating handler with VIP %s and max answer %d", ip, maxAns)
@@ -282,7 +281,7 @@ func (srv *Server) Start() (err error) {
 				srv.conf.DNSSECConfig.Keys)
 			dnssecHandler, err := newDNSSECHandler(srv, maxAnswerHandler)
 			if err != nil {
-				return fmt.Errorf("Failed to initialize dnssecHandler: %v", err)
+				return fmt.Errorf("failed to initialize dnssecHandler: %w", err)
 			}
 			handler.defaultHandler = dnssecHandler
 		} else {
@@ -296,7 +295,7 @@ func (srv *Server) Start() (err error) {
 
 		for i := 0; i < numListeners; i++ {
 			// UDP is the default, and is always run.
-			s, err := srv.initUDPServer(addr, handler, stats)
+			s, err := srv.initUDPServer(addr, handler)
 			if err != nil {
 				return err
 			}
@@ -398,21 +397,21 @@ func (srv *Server) getDBTimestamp() error {
 
 	srv.stats.IncrementCounter(DBTimestampNumRun)
 	parseResult := func(result []byte) error {
-
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 
 		if rec, err = db.ExtractRRFromRow(result, false); err != nil {
 			// Not a location match
+			// nolint: nilerr
 			return nil
 		}
 		// We only care about the TXT field.
 		if rec.Qtype == dns.TypeTXT {
 			timestamp, err = strconv.ParseInt(string(result[rec.Offset+1:]), 10, 64)
 			if err != nil {
-
 				srv.stats.IncrementCounter(DBTimestampInvalidTXT)
+				// nolint: nilerr
 				return nil
 			}
 			timestampFound = true
@@ -472,7 +471,6 @@ func (srv *Server) LogMapAge() {
 			glog.Errorf("LogMapAge: %s", err)
 		}
 	}
-
 }
 
 // WatchDBAndReload refreshes the data view on DB file change

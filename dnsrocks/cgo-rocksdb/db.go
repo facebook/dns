@@ -35,9 +35,9 @@ type RocksDB struct {
 // OpenDatabase opens the database directory with provided options,
 // returns RocksDB instance or error.
 // Parameters:
-//  - name: path to db (directory)
-//  - readOnly: open in read-only mode
-//  - readOnlyErrorIfLogExists: for read-only mode will throw error if logfile exists
+//   - name: path to db (directory)
+//   - readOnly: open in read-only mode
+//   - readOnlyErrorIfLogExists: for read-only mode will throw error if logfile exists
 func OpenDatabase(name string, readOnly, readOnlyErrorIfLogExist bool, options *Options) (*RocksDB, error) {
 	var (
 		cError *C.char

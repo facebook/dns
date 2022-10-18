@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
@@ -100,7 +99,7 @@ type Batch struct {
 // to the directory, the database will be opened or initialized
 func NewRDB(path string) (*RDB, error) {
 	if info, err := os.Stat(path); err != nil || !info.IsDir() {
-		return nil, fmt.Errorf("%s directory does not exist: %v", path, err)
+		return nil, fmt.Errorf("%s directory does not exist: %w", path, err)
 	}
 
 	options := rocksdb.NewOptions()
@@ -197,10 +196,10 @@ func defaultOptions() *rocksdb.Options {
 // to the directory, the database will be opened as secondary
 func NewReader(path string) (*RDB, error) {
 	if info, err := os.Stat(path); err != nil || !info.IsDir() {
-		return nil, fmt.Errorf("%s directory does not exist: %v", path, err)
+		return nil, fmt.Errorf("%s directory does not exist: %w", path, err)
 	}
 
-	logDir, err := ioutil.TempDir("", fmt.Sprintf("rdb-log-%d", os.Getpid()))
+	logDir, err := os.MkdirTemp("", fmt.Sprintf("rdb-log-%d", os.Getpid()))
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +240,7 @@ func NewUpdater(dbpath string) (*RDB, error) {
 
 	db, err := rocksdb.OpenDatabase(dbpath, false, false, opt)
 	if err != nil {
-		return nil, fmt.Errorf("rocksdb.OpenDatabase: %v", err)
+		return nil, fmt.Errorf("rocksdb.OpenDatabase: %w", err)
 	}
 
 	// TODO "false, false, true, false, false" looks to cryptic - consider converting to option setters
@@ -656,7 +655,7 @@ func (rdb *RDB) ForEach(key []byte, f func(value []byte) error, ctx *Context) (e
 		v, data, err = ReadNextChunk(data)
 
 		// No more row
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = nil
 			break
 		}
