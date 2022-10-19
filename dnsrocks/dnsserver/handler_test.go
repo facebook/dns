@@ -1803,20 +1803,23 @@ func TestReloadFullBroken(t *testing.T) {
 
 func TestWatchDBAndReload(t *testing.T) {
 	th := OpenDbForTesting(t, &testaid.TestCDB)
+	watcher, err := prepareDBWatcher(path.Dir(th.dbConfig.Path))
+	if watcher != nil {
+		defer watcher.Close()
+	}
+	require.NoError(t, err)
 	go func() {
-		err := th.WatchDBAndReload()
+		err := th.watchDBAndReload(watcher)
 		assert.NoError(t, err)
 	}()
 
 	// Simulate touch of the file
-	go func() {
-		// mtime has nanoseconds precision, therefore we need to have this sleep
-		// See http://man7.org/linux/man-pages/man2/stat.2.html
-		time.Sleep(1 * time.Millisecond)
-		currenttime := time.Now()
-		err := os.Chtimes(testaid.TestCDB.Path, currenttime, currenttime)
-		assert.Nil(t, err)
-	}()
+	// mtime has nanoseconds precision, therefore we need to have this sleep
+	// See http://man7.org/linux/man-pages/man2/stat.2.html
+	time.Sleep(1 * time.Millisecond)
+	currenttime := time.Now()
+	err = os.Chtimes(testaid.TestCDB.Path, currenttime, currenttime)
+	require.NoError(t, err)
 
 	select {
 	case reload := <-th.ReloadChan:
@@ -1835,19 +1838,22 @@ func TestWatchControlDirAndReloadPartial(t *testing.T) {
 	}
 	defer os.RemoveAll(ctlDir)
 	th.dbConfig.ControlPath = ctlDir
+	watcher, err := prepareDBWatcher(th.dbConfig.ControlPath)
+	if watcher != nil {
+		defer watcher.Close()
+	}
+	require.NoError(t, err)
 	go func() {
-		err := th.WatchControlDirAndReload()
+		err := th.watchControlDirAndReload(watcher)
 		assert.NoError(t, err)
 	}()
 
 	// Simulate touch of the file
-	go func() {
-		time.Sleep(1 * time.Millisecond)
-		filePath := path.Join(ctlDir, ControlFilePartialReload)
-		emptyFile, err := os.Create(filePath)
-		assert.Nil(t, err)
-		emptyFile.Close()
-	}()
+	time.Sleep(1 * time.Millisecond)
+	filePath := path.Join(ctlDir, ControlFilePartialReload)
+	emptyFile, err := os.Create(filePath)
+	assert.Nil(t, err)
+	emptyFile.Close()
 
 	select {
 	case reload := <-th.ReloadChan:
@@ -1866,8 +1872,13 @@ func TestWatchControlDirAndReloadFull(t *testing.T) {
 	}
 	defer os.RemoveAll(ctlDir)
 	th.dbConfig.ControlPath = ctlDir
+	watcher, err := prepareDBWatcher(th.dbConfig.ControlPath)
+	if watcher != nil {
+		defer watcher.Close()
+	}
+	require.NoError(t, err)
 	go func() {
-		err := th.WatchControlDirAndReload()
+		err := th.watchControlDirAndReload(watcher)
 		assert.NoError(t, err)
 	}()
 	newPath, err := os.MkdirTemp("", "ctl-test-newdir")
@@ -1877,12 +1888,14 @@ func TestWatchControlDirAndReloadFull(t *testing.T) {
 	defer os.RemoveAll(newPath)
 
 	// Simulate touch of the file
-	go func() {
-		time.Sleep(1 * time.Millisecond)
-		filePath := path.Join(ctlDir, ControlFileFullReload)
-		err := os.WriteFile(filePath, []byte(newPath), 0644)
-		assert.Nil(t, err)
-	}()
+	time.Sleep(1 * time.Millisecond)
+	filePathTmp := path.Join(ctlDir, "."+ControlFileFullReload)
+	filePath := path.Join(ctlDir, ControlFileFullReload)
+	// write temp file, move it to proper path already with the content
+	err = os.WriteFile(filePathTmp, []byte(newPath), 0644)
+	require.Nil(t, err)
+	err = os.Rename(filePathTmp, filePath)
+	require.Nil(t, err)
 
 	select {
 	case reload := <-th.ReloadChan:

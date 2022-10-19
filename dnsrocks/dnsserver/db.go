@@ -184,6 +184,20 @@ func getNewDBPath(path string) (string, error) {
 	return newPath, nil
 }
 
+func prepareDBWatcher(watchPath string) (*fsnotify.Watcher, error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		glog.Errorf("Can't setup watcher: %v", err)
+		return nil, fmt.Errorf("setting up fsnotify watcher: %w", err)
+	}
+
+	if err = watcher.Add(watchPath); err != nil {
+		glog.Errorf("Can't add file to watcher :%v", err)
+		return watcher, fmt.Errorf("adding %q to fsnotify watcher: %w", watchPath, err)
+	}
+	return watcher, nil
+}
+
 // PeriodicDBReload is to enforce db reload in case db watch fails or stuck
 func (h *FBDNSDB) PeriodicDBReload(reloadInt int) {
 	d := time.Duration(reloadInt) * time.Second
@@ -198,27 +212,15 @@ func (h *FBDNSDB) PeriodicDBReload(reloadInt int) {
 	}
 }
 
-// WatchDBAndReload refreshes the data view on DB file change
-func (h *FBDNSDB) WatchDBAndReload() error {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		glog.Errorf("Can't setup watcher: %v", err)
-		return err
-	}
-	defer watcher.Close()
-
-	// Watch the whole dir as file FD might change
-	watchdir := path.Dir(h.dbConfig.Path)
-	if err = watcher.Add(watchdir); err != nil {
-		glog.Errorf("Can't add file to watcher :%v", err)
-		return err
-	}
-
+func (h *FBDNSDB) watchDBAndReload(watcher *fsnotify.Watcher) (err error) {
 	for {
 		select {
 		case err = <-watcher.Errors:
+			if err == nil {
+				return nil
+			}
 			glog.Errorf("Watcher encountered error: %v", err)
-			return err
+			return fmt.Errorf("fsnotify watcher error: %w", err)
 		case <-h.done:
 			return nil
 		case ev := <-watcher.Events:
@@ -227,6 +229,21 @@ func (h *FBDNSDB) WatchDBAndReload() error {
 			}
 		}
 	}
+}
+
+// WatchDBAndReload refreshes the data view on DB file change
+func (h *FBDNSDB) WatchDBAndReload() error {
+	// Watch the whole dir as file FD might change
+	watchdir := path.Dir(h.dbConfig.Path)
+	watcher, err := prepareDBWatcher(watchdir)
+	if watcher != nil {
+		defer watcher.Close()
+	}
+	if err != nil {
+		return err
+	}
+
+	return h.watchDBAndReload(watcher)
 }
 
 // cleanupSignalFile removes processed signal files
@@ -246,28 +263,15 @@ func (h *FBDNSDB) cleanupSignalFile(s ReloadSignal) error {
 	return os.RemoveAll(p)
 }
 
-// WatchControlDirAndReload refreshes the data view on control file change.
-// We monitor for two type of reload signals: full reload, when we switch to new file/directory,
-// and partial reload when we try to catch up on WAL if possible.
-// CDB does full reload in both cases as it's immutable.
-func (h *FBDNSDB) WatchControlDirAndReload() error {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		glog.Errorf("Can't setup watcher: %v", err)
-		return err
-	}
-	defer watcher.Close()
-
-	if err = watcher.Add(h.dbConfig.ControlPath); err != nil {
-		glog.Errorf("Can't add directory to watcher :%v", err)
-		return err
-	}
-
+func (h *FBDNSDB) watchControlDirAndReload(watcher *fsnotify.Watcher) (err error) {
 	for {
 		select {
 		case err = <-watcher.Errors:
+			if err == nil {
+				return nil
+			}
 			glog.Errorf("Watcher encountered error: %v", err)
-			return err
+			return fmt.Errorf("fsnotify watcher error: %w", err)
 		case <-h.done:
 			return nil
 		case ev := <-watcher.Events:
@@ -285,7 +289,7 @@ func (h *FBDNSDB) WatchControlDirAndReload() error {
 				glog.Infof("Found full reload trigger file")
 				newPath, err := getNewDBPath(cp)
 				if err != nil {
-					return err
+					return fmt.Errorf("getting new DB path: %w", err)
 				}
 				h.ReloadChan <- *NewFullReloadSignal(newPath)
 			default:
@@ -293,6 +297,21 @@ func (h *FBDNSDB) WatchControlDirAndReload() error {
 			}
 		}
 	}
+}
+
+// WatchControlDirAndReload refreshes the data view on control file change.
+// We monitor for two type of reload signals: full reload, when we switch to new file/directory,
+// and partial reload when we try to catch up on WAL if possible.
+// CDB does full reload in both cases as it's immutable.
+func (h *FBDNSDB) WatchControlDirAndReload() error {
+	watcher, err := prepareDBWatcher(h.dbConfig.ControlPath)
+	if watcher != nil {
+		defer watcher.Close()
+	}
+	if err != nil {
+		return err
+	}
+	return h.watchControlDirAndReload(watcher)
 }
 
 // Load loads a DB file
