@@ -105,9 +105,12 @@ func (stats *Stats) AddSample(key string, value int64) {
 // Get implements export.Int interface
 func (stats *Stats) Get() map[string]int64 {
 	var ret = make(map[string]int64)
+	stats.vlock.Lock()
 	for key, val := range stats.values {
 		ret[key] = val
 	}
+	stats.vlock.Unlock()
+	stats.wlock.Lock()
 	for key, val := range stats.windows {
 		samples := val.Samples()
 		sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
@@ -125,6 +128,6 @@ func (stats *Stats) Get() map[string]int64 {
 			ret[fmt.Sprintf("%s.avg", key)] = 0
 		}
 	}
-
+	stats.wlock.Unlock()
 	return ret
 }
