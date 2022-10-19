@@ -118,7 +118,6 @@ func TestLoggerErrorBadStdoutFormat(t *testing.T) {
 	slc := Config{Target: "stdout", LogFormat: "invalid"}
 	_, err := NewLogger(slc)
 	assert.NotNil(t, err)
-
 }
 
 // TestLoggerNotErrorGoodTarget makes sure that we do not Error if the
@@ -218,9 +217,8 @@ func TestIsSonarInvalidNames(t *testing.T) {
 
 // TestComputeDNSFlag test computeDNSFlag set the right value w.r.t. each flag
 func TestComputeDNSFlag(t *testing.T) {
-
 	m := new(dns.Msg)
-	var flags int = 0
+	var flags int
 	assert.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.Response = true
@@ -259,5 +257,4 @@ func TestComputeDNSFlag(t *testing.T) {
 	m.Rcode = 3
 	flags |= (5 << 11) | 3
 	assert.Equal(t, int(computeDNSFlag(m)), flags)
-
 }

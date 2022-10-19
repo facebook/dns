@@ -59,7 +59,7 @@ type Builder struct {
 // NewBuilder creates a new instance of Builder
 func NewBuilder(path string, useHardlinks bool) (*Builder, error) {
 	if info, err := os.Stat(path); err != nil || !info.IsDir() {
-		return nil, fmt.Errorf("%s directory does not exist: %v", path, err)
+		return nil, fmt.Errorf("%s directory does not exist: %w", path, err)
 	}
 
 	log.Println("Creating database", path)
@@ -242,13 +242,13 @@ func (b *Builder) saveBuckets() ([]string, error) {
 
 func (b *Builder) ingestFiles(sstFilePaths []string) error {
 	if err := b.db.IngestSSTFiles(sstFilePaths, b.useHardlinks); err != nil {
-		return fmt.Errorf("Error ingesting files: %v", err)
+		return fmt.Errorf("error ingesting files: %w", err)
 	}
 	log.Println("Ingesting done, cleanup")
 	if !b.useHardlinks {
 		for _, path := range sstFilePaths {
 			if err := os.Remove(path); err != nil {
-				return fmt.Errorf("Error removing file %s: %s", path, err)
+				return fmt.Errorf("error removing file %s: %w", path, err)
 			}
 		}
 	}

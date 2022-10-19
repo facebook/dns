@@ -29,17 +29,17 @@ import (
 func CleanRDBDir(rdbDir string) error {
 	dir, err := os.Open(rdbDir)
 	if err != nil {
-		return fmt.Errorf("Error opening directory %s: %s", rdbDir, err)
+		return fmt.Errorf("error opening directory %s: %w", rdbDir, err)
 	}
 	var files []string
 	files, err = dir.Readdirnames(0)
 	if err != nil {
-		return fmt.Errorf("Error reading directory %s: %s", rdbDir, err)
+		return fmt.Errorf("error reading directory %s: %w", rdbDir, err)
 	}
 	for _, fileName := range files {
 		fullName := path.Join(rdbDir, fileName)
 		if err = os.Remove(fullName); err != nil {
-			return fmt.Errorf("Error removing file %s: %s", fullName, err)
+			return fmt.Errorf("error removing file %s: %w", fullName, err)
 		}
 	}
 	return nil
@@ -63,7 +63,7 @@ func compileBuilder(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 	var g errgroup.Group
 	// Open or create database
 	if builder, err = NewBuilder(destPath, opts.BuilderUseHardlinks); err != nil {
-		return 0, fmt.Errorf("error opening database at %s: %s", destPath, err)
+		return 0, fmt.Errorf("error opening database at %s: %w", destPath, err)
 	}
 	defer builder.FreeBuilder()
 
@@ -72,7 +72,7 @@ func compileBuilder(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 	counter := 0
 	nw := 0
 
-	store := func(data []dnsdata.MapRecord) error {
+	store := func(data []dnsdata.MapRecord) {
 		for _, m := range data {
 			builder.ScheduleAdd(m.Key, m.Value)
 			nw++
@@ -82,7 +82,6 @@ func compileBuilder(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 				log.Println(nw)
 			}
 		}
-		return nil
 	}
 
 	// will be closed by ParseParallelStream
@@ -92,14 +91,12 @@ func compileBuilder(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 		return dnsdata.ParseStream(in, codec, resultsChan, opts.NumCPU)
 	})
 	for v := range resultsChan {
-		if err := store(v); err != nil {
-			return nw, err
-		}
+		store(v)
 	}
 
 	// final flush
 	if err = builder.Execute(); err != nil {
-		return nw, fmt.Errorf("Building database failed: %s", err)
+		return nw, fmt.Errorf("building database failed: %w", err)
 	}
 
 	return nw, g.Wait()
@@ -119,7 +116,7 @@ func compileBatches(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 
 	db, err = NewRDB(destPath)
 	if err != nil {
-		return 0, fmt.Errorf("Error opening database at %s: %s", destPath, err)
+		return 0, fmt.Errorf("error opening database at %s: %w", destPath, err)
 	}
 	defer func() {
 		if err != nil {
@@ -127,7 +124,7 @@ func compileBatches(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 			db.db.CompactRangeAll()
 		}
 		if ierr := db.Close(); ierr != nil {
-			log.Printf("Error closing database %v", err)
+			log.Printf("error closing database: %v", err)
 			if err == nil {
 				// report closing error if no other errors happened
 				err = ierr
@@ -141,7 +138,7 @@ func compileBatches(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 	counter := 0
 	nw := 0
 
-	store := func(data []dnsdata.MapRecord) error {
+	store := func(data []dnsdata.MapRecord) {
 		for _, m := range data {
 			rdbBatch.Add(m.Key, m.Value)
 
@@ -155,7 +152,7 @@ func compileBatches(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 				g.Go(func() error {
 					if err := db.ExecuteBatch(b); err != nil {
 						<-limiter
-						return fmt.Errorf("Error executing batch: %s", err)
+						return fmt.Errorf("error executing batch: %w", err)
 					}
 					<-limiter
 					return nil
@@ -163,7 +160,6 @@ func compileBatches(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 				rdbBatch = db.CreateBatch()
 			}
 		}
-		return nil
 	}
 
 	// will be closed by ParseParallelStream
@@ -173,16 +169,14 @@ func compileBatches(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 		return dnsdata.ParseStream(in, codec, resultsChan, opts.NumCPU)
 	})
 	for v := range resultsChan {
-		if err := store(v); err != nil {
-			return nw, err
-		}
+		store(v)
 	}
 
 	// final flush
 	if !rdbBatch.IsEmpty() {
 		log.Println("Flushing batch")
 		if err := db.ExecuteBatch(rdbBatch); err != nil {
-			return nw, fmt.Errorf("Error executing batch: %s", err)
+			return nw, fmt.Errorf("error executing batch: %w", err)
 		}
 	}
 
@@ -214,12 +208,12 @@ func CompileToSpecificRDBVersion(inputFileName, destPath string, o CompilationOp
 	// Open infile for read
 	ifile, err := os.Open(inputFileName)
 	if err != nil {
-		return 0, fmt.Errorf("Error opening input file %s: %s", inputFileName, err)
+		return 0, fmt.Errorf("error opening input file %s: %w", inputFileName, err)
 	}
 	defer ifile.Close()
 	serial, err := dnsdata.DeriveSerial(ifile)
 	if err != nil {
-		return 0, fmt.Errorf("Error accessing input file %s: %s", inputFileName, err)
+		return 0, fmt.Errorf("error accessing input file %s: %w", inputFileName, err)
 	}
 	return Compile(ifile, serial, destPath, o)
 }

@@ -23,7 +23,6 @@ import (
 )
 
 func main() {
-
 	dbPath := flag.String("dbpath", "", "Path to cdb")
 	dumbSlotStats := flag.Bool("slotstats", false, "Dump information about slots")
 	dumbHashStats := flag.Bool("hashstats", false, "Dumps stats about hash. This can be used to see how many entries there is for a specific key.")
@@ -59,5 +58,4 @@ func main() {
 			fmt.Printf("SLOT %d %d\n", k, v)
 		}
 	}
-
 }

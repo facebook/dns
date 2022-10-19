@@ -23,10 +23,10 @@ import (
 	"github.com/facebookincubator/dns/dnsrocks/testaid"
 )
 
-//q []byte, zonename string, class uint16, loc *Location
+// q []byte, zonename string, class uint16, loc *Location
 func BenchmarkGetNs(b *testing.B) {
 	var packedQName = make([]byte, 255)
-	var loc *Location = new(Location)
+	var loc = new(Location)
 	var db *DB
 	var err error
 

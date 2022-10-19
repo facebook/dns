@@ -13,11 +13,6 @@ jobs:
       - uses: golangci/golangci-lint-action@v3
         with:
           working-directory: dnsrocks
-      - run: if [ "$(cd dnsrocks; go fmt ./...| wc -l)" -gt 0 ]; then exit 1; fi
-      - run: |
-          cd dnsrocks
-          go get -v -u github.com/client9/misspell
-          go run github.com/client9/misspell/cmd/misspell -error ./
       - run: |
           cd dnsrocks
           go get -v -u github.com/hedhyw/go-import-lint/cmd/go-import-lint

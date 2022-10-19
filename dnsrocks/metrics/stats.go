@@ -57,7 +57,6 @@ func (stats *Stats) IncrementCounter(key string) {
 		stats.values.Store(key, intval+1)
 	} else {
 		stats.values.Store(key, int64(1))
-
 	}
 }
 
@@ -70,7 +69,6 @@ func (stats *Stats) IncrementCounterBy(key string, value int64) {
 		stats.values.Store(key, intval+value)
 	} else {
 		stats.values.Store(key, value)
-
 	}
 }
 
@@ -113,16 +111,15 @@ func (stats *Stats) Get() map[string]int64 {
 		if len(samples) > 0 {
 			ret[fmt.Sprintf("%s.min", kstr)] = samples[0]
 			ret[fmt.Sprintf("%s.max", kstr)] = samples[len(samples)-1]
-			var sum int64 = 0
+			var sum int64
 			for _, numb := range samples {
 				sum += numb
 			}
-			ret[fmt.Sprintf("%s.avg", kstr)] = int64(sum / int64(len(samples)))
+			ret[fmt.Sprintf("%s.avg", kstr)] = sum / int64(len(samples))
 		} else {
 			ret[fmt.Sprintf("%s.min", kstr)] = 0
 			ret[fmt.Sprintf("%s.max", kstr)] = 0
 			ret[fmt.Sprintf("%s.avg", kstr)] = 0
-
 		}
 		return true
 	})

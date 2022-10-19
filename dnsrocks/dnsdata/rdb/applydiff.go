@@ -47,10 +47,10 @@ func (rdb *RDB) ApplyDiff(r io.Reader, serial uint32) error {
 		}
 		e := new(dbdiff.Entry)
 		if err := e.ParseBytes(line); err != nil {
-			return fmt.Errorf("parse error for input line '%s': %v", line, err)
+			return fmt.Errorf("parse error for input line '%s': %w", line, err)
 		}
 		if err := e.Convert(codec); err != nil {
-			return fmt.Errorf("conversion error for line '%s' (op '%v'): %v", e.Bytes, e.Op, err)
+			return fmt.Errorf("conversion error for line '%s' (op '%v'): %w", e.Bytes, e.Op, err)
 		}
 		batch.ApplyDiff(e)
 	}
@@ -58,7 +58,7 @@ func (rdb *RDB) ApplyDiff(r io.Reader, serial uint32) error {
 		return err
 	}
 	if err := rdb.ExecuteBatch(batch); err != nil {
-		return fmt.Errorf("database update failed: %s", err)
+		return fmt.Errorf("database update failed: %w", err)
 	}
 	return nil
 }
@@ -72,12 +72,12 @@ func ApplyDiff(diffpath, dbpath string) error {
 	defer rdb.Close()
 	file, err := os.Open(diffpath)
 	if err != nil {
-		return fmt.Errorf("%s: can't open input: %s", diffpath, err)
+		return fmt.Errorf("%s: can't open input: %w", diffpath, err)
 	}
 	defer file.Close()
 	serial, err := dnsdata.DeriveSerial(file)
 	if err != nil {
-		return fmt.Errorf("%s: can't derive SOA serial: %s", diffpath, err)
+		return fmt.Errorf("%s: can't derive SOA serial: %w", diffpath, err)
 	}
 	return rdb.ApplyDiff(file, serial)
 }

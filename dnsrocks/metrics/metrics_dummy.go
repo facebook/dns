@@ -36,6 +36,6 @@ func (s *DummyServer) ConsumeStats(category string, stats *Stats) error {
 	return nil
 }
 
-//UpdateExporter for dummy metrics server does nothing
+// UpdateExporter for dummy metrics server does nothing
 func (s *DummyServer) UpdateExporter() {
 }

@@ -75,9 +75,9 @@ type Options struct {
 
 // NewOptions creates and returns default Options structure.
 // (old) Parameters:
-//  - createIfMissing: create the DB if it does not exist
-//    (otherwise - throw error if exists)
-//  - errorIfExits: throw error if the DB already exists
+//   - createIfMissing: create the DB if it does not exist
+//     (otherwise - throw error if exists)
+//   - errorIfExits: throw error if the DB already exists
 func NewOptions() *Options {
 	cOptions := C.rocksdb_options_create()
 	return &Options{
@@ -397,9 +397,10 @@ func NewDefaultReadOptions() *ReadOptions {
 
 // NewReadOptions creates ReadOptions object
 // Parameters:
-//  - verifyChecksum: all data read from underlying storage will be
-//  verified against corresponding checksums
-//  - fillCache: Should the "data block"/"index block"" read for this
+//   - verifyChecksum: all data read from underlying storage will be
+//     verified against corresponding checksums
+//   - fillCache: Should the "data block"/"index block"" read for this
+//
 // iteration be placed in block cache?
 func NewReadOptions(verifyChecksum, fillCache bool) *ReadOptions {
 	readOptions := NewDefaultReadOptions()

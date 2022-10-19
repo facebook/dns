@@ -563,13 +563,13 @@ func (r *Rrangepoint) UnmarshalText(text []byte) error {
 	r.pt.rangeStart = FromNetIP(ip)
 	getuint8(f[2], &r.pt.location.maskLen)
 	var err error
-	locId, err := getloc(f[3])
+	locID, err := getloc(f[3])
 	if err != nil {
 		return err
 	}
-	copy(r.pt.location.locID[:], locId)
+	copy(r.pt.location.locID[:], locID)
 
-	r.pt.location.locIDIsNull = (locId == nil)
+	r.pt.location.locIDIsNull = (locID == nil)
 	if !r.pt.location.locIDIsNull && ip.To4() != nil {
 		r.pt.location.maskLen += (net.IPv6len - net.IPv4len) * 8
 	}
@@ -603,10 +603,7 @@ func (r *Rrangepoint) MarshalMap() ([]MapRecord, error) {
 func (r *Accum) MarshalMap() ([]MapRecord, error) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
-	vm, err := r.marshalPrefixSets(nil)
-	if err != nil {
-		return nil, err
-	}
+	vm := r.marshalPrefixSets()
 	mr, err := r.Ranger.MarshalMap()
 	if err != nil {
 		return nil, err
@@ -720,9 +717,9 @@ func (r *Accum) updatePrefixSet(s *Rnet) {
 }
 
 // called with r.mux held locked
-func (r *Accum) marshalPrefixSets(mr []MapRecord) ([]MapRecord, error) {
+func (r *Accum) marshalPrefixSets() []MapRecord {
 	if r.NoPrefixSets {
-		return nil, nil
+		return nil
 	}
 	makeMapRecord := func(key []byte, prefixset big.Int) MapRecord {
 		k := new(bytes.Buffer)
@@ -735,12 +732,11 @@ func (r *Accum) marshalPrefixSets(mr []MapRecord) ([]MapRecord, error) {
 		}
 		return MapRecord{Key: k.Bytes(), Value: v}
 	}
-	mr = append(mr,
+	return []MapRecord{
 		makeMapRecord([]byte("\000/"), r.prefixset),
 		makeMapRecord([]byte("\0004"), r.v4prefixset),
 		makeMapRecord([]byte("\0006"), r.v6prefixset),
-	)
-	return mr, nil
+	}
 }
 
 func getuint32(b []byte, out *uint32) {
@@ -797,23 +793,23 @@ func (r *Rsoa) MarshalMap() ([]MapRecord, error) {
 	putrrhead(v, TypeSOA, r.ttl, r.lo, false) // BUG wildcard?
 	putdom(v, r.ns)
 	putdom(v, r.adm)
-	err := binary.Write(v, binary.BigEndian, uint32(r.ser))
+	err := binary.Write(v, binary.BigEndian, r.ser)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, uint32(r.ref))
+	err = binary.Write(v, binary.BigEndian, r.ref)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, uint32(r.ret))
+	err = binary.Write(v, binary.BigEndian, r.ret)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, uint32(r.exp))
+	err = binary.Write(v, binary.BigEndian, r.exp)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, uint32(r.min))
+	err = binary.Write(v, binary.BigEndian, r.min)
 	if err != nil {
 		return nil, err
 	}
@@ -984,14 +980,14 @@ func (r *Raddr) MarshalMap() ([]MapRecord, error) {
 	v := new(bytes.Buffer)
 	if ip4 := r.ip.To4(); ip4 != nil {
 		putrrhead(v, TypeA, r.ttl, r.lo, r.iswildcard)
-		err := binary.Write(v, binary.BigEndian, uint32(r.weight))
+		err := binary.Write(v, binary.BigEndian, r.weight)
 		if err != nil {
 			return nil, err
 		}
 		v.Write(ip4)
 	} else {
 		putrrhead(v, TypeAAAA, r.ttl, r.lo, r.iswildcard)
-		err := binary.Write(v, binary.BigEndian, uint32(r.weight))
+		err := binary.Write(v, binary.BigEndian, r.weight)
 		if err != nil {
 			return nil, err
 		}
@@ -1193,15 +1189,15 @@ func (r *Rsrv1) MarshalMap() ([]MapRecord, error) {
 	k := makedomainkey(r.dom, r.lo, r.c)
 	v := new(bytes.Buffer)                    // BUG scale
 	putrrhead(v, TypeSRV, r.ttl, r.lo, false) // BUG wildcard?
-	err := binary.Write(v, binary.BigEndian, uint16(r.pri))
+	err := binary.Write(v, binary.BigEndian, r.pri)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, uint16(r.weight))
+	err = binary.Write(v, binary.BigEndian, r.weight)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, uint16(r.port))
+	err = binary.Write(v, binary.BigEndian, r.port)
 	if err != nil {
 		return nil, err
 	}
@@ -1624,7 +1620,7 @@ func putrrhead(w io.Writer, t WireType, ttl uint32, loc Loc, iswildcard bool) {
 			glog.Errorf("%v", err)
 		}
 	}
-	err = binary.Write(w, binary.BigEndian, uint32(ttl))
+	err = binary.Write(w, binary.BigEndian, ttl)
 	if err != nil {
 		glog.Errorf("%v", err)
 	}

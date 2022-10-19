@@ -14,7 +14,6 @@ limitations under the License.
 package rdb_test
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -33,7 +32,7 @@ func TestApplyDiff0(t *testing.T) {
 	}
 }
 
-var diff1 string = `
+var diff1 = `
 -&example.org,,b.ns.example.org,172800,,
 -+b.ns.example.org,5.5.6.5,172800,,
 +&example.org,7.8.8.1,c.ns.example.org,172800,,
@@ -69,7 +68,7 @@ func TestApplyDiffV2(t *testing.T) {
 }
 
 func testApplyDiff(t *testing.T, baseDB testaid.TestDB, key1, key2, key3 []byte) {
-	testdiff, err := ioutil.TempFile("", "testdiff")
+	testdiff, err := os.CreateTemp("", "testdiff")
 	if err != nil {
 		t.Fatal(err)
 	}

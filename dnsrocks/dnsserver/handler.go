@@ -161,6 +161,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		// We cannot acquire a reader, most likely because the DB couldn't be loaded.
 		// dns.HandleFailed(w, r)
 		// FIXME error code "E"
+		// nolint: nilerr
 		return dns.RcodeServerFailure, nil
 	}
 	defer reader.Close()
@@ -184,6 +185,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		glog.Errorf("could not pack domain %s", state.Name())
 		dns.HandleFailed(w, r)
 		h.logger.LogFailed(state, r, ecs)
+		// nolint: nilerr
 		return dns.RcodeServerFailure, nil
 	}
 
@@ -351,7 +353,6 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 			timeout = time.Now().Unix() + h.cacheConfig.WRSTimeout
 			h.lru.Add(cacheKey, cacheEntry{expiration: timeout, response: a.Copy()})
 		}
-
 	}
 
 	if r.IsEdns0() != nil {

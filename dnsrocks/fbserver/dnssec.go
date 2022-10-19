@@ -35,7 +35,7 @@ const (
 )
 
 func normalizeZone(zone string) string {
-	return strings.ToLower(dns.Fqdn(string(zone)))
+	return strings.ToLower(dns.Fqdn(zone))
 }
 
 // initializeZonesKeys initialize the keys for a given set of zones.
@@ -56,7 +56,6 @@ func initializeZonesKeys(zones []string, keyfiles []string) ([]string, []*dnssec
 }
 
 func dnssecParse(keyfiles []string) ([]*dnssec.DNSKEY, int, bool, error) {
-
 	keys := []*dnssec.DNSKEY{}
 
 	capacity := defaultCap

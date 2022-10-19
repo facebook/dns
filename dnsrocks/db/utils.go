@@ -85,7 +85,6 @@ func AdditionalSectionForRecords(r Reader, a *dns.Msg, loc *Location, qclass uin
 			err = r.ForEachResourceRecord(packedName[:offset], loc, parseRecord)
 			if err != nil {
 				glog.Errorf("Failed at parse records %v", err)
-
 			}
 
 			if rr, err := wrs.AAAARecord(name, qclass); err == nil && rr != nil {

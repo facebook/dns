@@ -62,7 +62,6 @@ func TestDbKeyValidationV1Keys(t *testing.T) {
 		defer db.Destroy()
 
 		for i, test := range testCases {
-
 			t.Run(fmt.Sprintf("Testing %v", test.key), func(t *testing.T) {
 				err := db.ValidateDbKey(test.key)
 				assert.Equalf(t, test.err, err, "test %d expected error", i)
@@ -97,7 +96,6 @@ func TestDbKeyValidationV2Keys(t *testing.T) {
 		defer db.Destroy()
 
 		for i, test := range testCases {
-
 			t.Run(fmt.Sprintf("Testing %v", test.key), func(t *testing.T) {
 				err := db.ValidateDbKey(test.key)
 				assert.Equalf(t, test.err, err, "test %d expected error", i)
@@ -121,7 +119,7 @@ func TestDbReload(t *testing.T) {
 	defer ctrl.Finish()
 	mockDbi := getBaseMockDBI(ctrl)
 	oldDb := &DB{dbi: mockDbi}
-	var reloadTimeout time.Duration = 1 * time.Second
+	var reloadTimeout = 1 * time.Second
 
 	// Test 1: reload DB with an invalid DB, expect that they are not switched,
 	// the new DB is closed, and correct error is returned

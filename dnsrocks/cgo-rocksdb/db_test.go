@@ -19,7 +19,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -78,7 +77,7 @@ func runCatchup() {
 
 	fmt.Fprintln(os.Stdout, "Started")
 
-	secLogDir, err := ioutil.TempDir("", "rocksdb-test-secondary")
+	secLogDir, err := os.MkdirTemp("", "rocksdb-test-secondary")
 	if err != nil {
 		fmt.Fprintln(os.Stdout, err.Error())
 	}
@@ -316,7 +315,7 @@ func TestCatchup(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	var err error
-	mainDBDir, err = ioutil.TempDir("", "rocksdb-test")
+	mainDBDir, err = os.MkdirTemp("", "rocksdb-test")
 
 	if err != nil {
 		log.Fatal(err)
@@ -682,7 +681,7 @@ func TestSnapshots(t *testing.T) {
 				)
 			}
 			if errors[i] != nil {
-				t.Errorf("Error reading key %s: %s during %s", string(expectedKeys[i]), errors[i].Error(), string(testDescription))
+				t.Errorf("Error reading key %s: %s during %s", string(expectedKeys[i]), errors[i].Error(), testDescription)
 			}
 		}
 	}
@@ -694,7 +693,7 @@ func TestSnapshots(t *testing.T) {
 	// update the dataset, instead of 'snapval' it will contain 'latestval'
 	batch.Clear()
 	for i := 0; i < batchSize; i++ {
-		bKey, bValue := []byte(requestKeys[i]), []byte(fmt.Sprintf(valFmtAfter, i))
+		bKey, bValue := requestKeys[i], []byte(fmt.Sprintf(valFmtAfter, i))
 		batch.Put(bKey, bValue)
 		expectedLatestResponses[i] = bValue
 	}
@@ -712,7 +711,7 @@ func TestSnapshots(t *testing.T) {
 	// delete test data
 	batch.Clear()
 	for i := 0; i < batchSize; i++ {
-		batch.Delete([]byte(requestKeys[i]))
+		batch.Delete(requestKeys[i])
 		expectedLatestResponses[i] = nil
 	}
 	batch.Delete(rogueKey)
@@ -736,19 +735,19 @@ func TestBackupRestore(t *testing.T) {
 	const valFmt = "val%06d"
 	const numBackup = 3
 
-	dbSourceDir, err := ioutil.TempDir("", "rocksdb-test-src")
+	dbSourceDir, err := os.MkdirTemp("", "rocksdb-test-src")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.RemoveAll(dbSourceDir)
 
-	dbBackupDir, err := ioutil.TempDir("", "rocksdb-test-backup")
+	dbBackupDir, err := os.MkdirTemp("", "rocksdb-test-backup")
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.RemoveAll(dbBackupDir)
 
-	dbDestDir, err := ioutil.TempDir("", "rocksdb-test-dst")
+	dbDestDir, err := os.MkdirTemp("", "rocksdb-test-dst")
 	if err != nil {
 		t.Error(err)
 	}

@@ -14,7 +14,6 @@ limitations under the License.
 package cdb
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -45,7 +44,7 @@ func TestCreateCDB(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
-			tmpDir, err := ioutil.TempDir("", "cdb-test")
+			tmpDir, err := os.MkdirTemp("", "cdb-test")
 			cdb := path.Join(tmpDir, "data.cdb")
 			require.Nil(t, err)
 			defer os.RemoveAll(tmpDir)

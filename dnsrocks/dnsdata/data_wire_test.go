@@ -114,8 +114,7 @@ func TestWireRecordIsImplemented(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(string(tc.in), func(t *testing.T) {
-
+		t.Run(tc.in, func(t *testing.T) {
 			err := tc.record.UnmarshalText([]byte(tc.in))
 			assert.NoError(t, err)
 			wireRecord, ok := tc.record.(WireRecord)

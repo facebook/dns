@@ -69,7 +69,7 @@ func adjustTTL(ttl uint32) uint32 {
 	return ttl
 }
 
-func processRecs(recs []dns.RR) (map[string][]string, error) {
+func processRecs(recs []dns.RR) map[string][]string {
 	results := map[string][]string{}
 	for _, rr := range recs {
 		// TODO: we can create dnsdata records and use MarshalText,
@@ -110,7 +110,7 @@ func processRecs(recs []dns.RR) (map[string][]string, error) {
 			log.Warningf("Unsupported record type %T", rr)
 		}
 	}
-	return results, nil
+	return results
 }
 
 func getSOAns(origin string) []string {
@@ -139,10 +139,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed parsing: %v", err)
 	}
-	recMap, err := processRecs(rrs)
-	if err != nil {
-		log.Fatalf("Failed formatting: %v", err)
-	}
+	recMap := processRecs(rrs)
 	if *addSOA {
 		recs := getSOAns(origin)
 		for _, line := range recs {

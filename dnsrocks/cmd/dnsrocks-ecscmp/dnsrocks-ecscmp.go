@@ -91,7 +91,6 @@ func main() {
 		}
 		resultTotal++
 		if resolverLoc.LocID[0] != ecsLoc.LocID[0] || resolverLoc.LocID[1] != ecsLoc.LocID[1] {
-
 			resultDiffer++
 			fmt.Printf("%d %d\n", resolverLoc.LocID[1], ecsLoc.LocID[1])
 		}
@@ -111,11 +110,9 @@ func makeDNSPacket(qname string, qtype uint16) *dns.Msg {
 }
 
 func setECS(msg *dns.Msg, subnet string) {
-
 	o, err := dnsserver.MakeOPTWithECS(subnet)
 	if err != nil {
 		log.Fatalf("Failed to generate ECS option for %s %v", subnet, err)
 	}
 	msg.Extra = []dns.RR{o}
-
 }

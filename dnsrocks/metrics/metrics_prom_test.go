@@ -52,7 +52,6 @@ func TestRegistryPicksUpNewCounters(t *testing.T) {
 	stats.IncrementCounter("test")
 	time.Sleep(2 * time.Second)
 	assertMetricRegisteredAndHasExpectedValue(t, metricsServer.registry, "test_test", 2.0)
-
 }
 
 func TestSetAliveExposesAliveInMetrics(t *testing.T) {

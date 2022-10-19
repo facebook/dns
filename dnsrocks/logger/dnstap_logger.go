@@ -37,7 +37,8 @@ type anyDNSTapOutPut interface {
 	GetOutputChannel() chan []byte
 }
 
-/**
+/*
+*
 By getting this package its own source, we can seed it without stepping on the
 global source which may be initialize in some other way.
 Also, any application using this package, will get the seeding for free rather
@@ -73,7 +74,6 @@ func NewLogger(config Config) (l *DNSTapLoggger, err error) {
 
 		default:
 			return nil, fmt.Errorf("%s: is an invalid log format for dnstap stdoutlogger. Valid formats are: text, json, yaml ", config.LogFormat)
-
 		}
 		l.dnsTapOutput = dnstap.NewTextOutput(os.Stdout, formatterFunc)
 	case "tcp":
@@ -157,7 +157,6 @@ func (l *DNSTapLoggger) Log(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SU
 	default:
 		glog.Errorf("Failed to enqueue dnstap message %v for sending, buffer is full", m)
 	}
-
 }
 
 // LogFailed is used to log failures

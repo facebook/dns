@@ -14,7 +14,6 @@ limitations under the License.
 package tlsconfig
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -47,7 +46,7 @@ func TestInitTLSConfigLoadsCertAndKey(t *testing.T) {
 // TestInitTLSConfigLoadsCertAndKey tests that tls implementation returns err
 // in case of invalid tls certificate paths are provided
 func TestInitTLSConfigErrorsOnInvalidCertAndKeyPath(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "example")
+	tmpfile, err := os.CreateTemp("", "example")
 	assert.Nil(t, err)
 	os.Remove(tmpfile.Name())
 	tlsconfigstruct := makeTLSConfig(tmpfile.Name(), SessionTicketKeysConfig{})
@@ -62,7 +61,7 @@ func TestInitTLSConfigErrorsOnInvalidCertAndKeyPath(t *testing.T) {
 func TestInitTLSConfigNoErrorOnInvalidResumptionTicket(t *testing.T) {
 	certfile := testaid.MkTestCert(t)
 	defer os.Remove(certfile)
-	tmpfile, err := ioutil.TempFile("", "example")
+	tmpfile, err := os.CreateTemp("", "example")
 	assert.Nil(t, err)
 	os.Remove(tmpfile.Name())
 	tlsconfigstruct := makeTLSConfig(certfile, SessionTicketKeysConfig{SeedFile: tmpfile.Name()})

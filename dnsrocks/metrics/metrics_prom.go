@@ -14,6 +14,7 @@ limitations under the License.
 package metrics
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -85,19 +86,16 @@ func (s *PrometheusMetricsServer) UpdateExporter() {
 					Name:      flattenKey(mkey),
 					Help:      mkey,
 				})
-				err := s.registry.Register(promCollector)
-				if err != nil {
-					switch err.(type) {
-					case prometheus.AlreadyRegisteredError:
-						alreadyexistingerror := err.(prometheus.AlreadyRegisteredError)
-						promCollector = alreadyexistingerror.ExistingCollector.(prometheus.Gauge)
-					default:
+				if err := s.registry.Register(promCollector); err != nil {
+					are := &prometheus.AlreadyRegisteredError{}
+					if errors.As(err, are) {
+						promCollector = are.ExistingCollector.(prometheus.Gauge)
+					} else {
 						glog.Errorf("failed to register metric %s %v", mkey, err)
 						continue
 					}
 				}
 				promCollector.Set(float64(mval))
-
 			}
 		}
 	}

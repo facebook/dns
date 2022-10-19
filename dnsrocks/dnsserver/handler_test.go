@@ -16,7 +16,6 @@ package dnsserver
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path"
@@ -130,30 +129,23 @@ func TestDNSDBOldFindLocation(t *testing.T) {
 		db.SeparateBitMap = _separateBitMap
 	}()
 
-	for _, config := range testaid.TestDBs {
-		th := OpenDbForTesting(t, &config)
-		// defer will be called after the loop end, it is fine.
-		// it is called at the end of the function.
-		defer th.Close()
+	t.Run("cdb !SeparateBitMap", func(t *testing.T) {
+		testAnyDBOldFindLocation(t)
+	})
 
-		t.Run("cdb !SeparateBitMap", func(t *testing.T) {
-			testAnyDBOldFindLocation(t, th)
-		})
-
-		t.Run("rocksdb !SeparateBitMap", func(t *testing.T) {
-			testAnyDBOldFindLocation(t, th)
-		})
-		db.SeparateBitMap = true
-		t.Run("cdb SeparateBitMap", func(t *testing.T) {
-			testAnyDBOldFindLocation(t, th)
-		})
-		t.Run("rocksdb SeparateBitMap", func(t *testing.T) {
-			testAnyDBOldFindLocation(t, th)
-		})
-	}
+	t.Run("rocksdb !SeparateBitMap", func(t *testing.T) {
+		testAnyDBOldFindLocation(t)
+	})
+	db.SeparateBitMap = true
+	t.Run("cdb SeparateBitMap", func(t *testing.T) {
+		testAnyDBOldFindLocation(t)
+	})
+	t.Run("rocksdb SeparateBitMap", func(t *testing.T) {
+		testAnyDBOldFindLocation(t)
+	})
 }
 
-func testAnyDBOldFindLocation(t *testing.T, th *FBDNSDB) {
+func testAnyDBOldFindLocation(t *testing.T) {
 	testCases := []struct {
 		qname         string
 		qtype         uint16
@@ -377,19 +369,19 @@ func TestDNSDBMultipleQuestions(t *testing.T) {
 	}{
 		{
 			questions: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeA,
 					Qclass: dns.ClassINET,
 				},
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
 				},
 			},
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeA,
 					Qclass: dns.ClassINET,
@@ -410,19 +402,19 @@ func TestDNSDBMultipleQuestions(t *testing.T) {
 		},
 		{
 			questions: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
 				},
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeA,
 					Qclass: dns.ClassINET,
 				},
 			},
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
@@ -454,7 +446,7 @@ func TestDNSDBMultipleQuestions(t *testing.T) {
 				rec := dnstest.NewRecorder(&test.ResponseWriterCustomRemote{})
 				ctx := CreateTestContext(1)
 				code, _ := th.ServeDNSWithRCODE(ctx, rec, req)
-				assert.Equalf(t, int(tc.expectedCode), code, "expected status code %d", tc.expectedCode)
+				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
 				if assert.NotNil(t, rec.Msg) {
 					assert.Equal(t, tc.expectedQuestion, rec.Msg.Question)
 					RRSliceMatch(t, tc.expectedAnswer, rec.Msg.Answer)
@@ -567,7 +559,7 @@ func TestDNSDBMultipleAnswers1(t *testing.T) {
 				ctx := CreateTestContext(8)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equalf(t, int(tc.expectedCode), code, "expected status code %d", tc.expectedCode)
+				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
 				assert.Equal(t, err, tc.expectedErr)
 				assert.NotNil(t, rec.Msg)
 				assert.NotNil(t, rec.Msg.Answer)
@@ -621,7 +613,7 @@ func TestDNSDBMultipleAnswers2(t *testing.T) {
 				ctx := CreateTestContext(2)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equalf(t, int(tc.expectedCode), code, "expected status code %d", tc.expectedCode)
+				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
 				assert.Equal(t, err, tc.expectedErr)
 				assert.NotNil(t, rec.Msg)
 				assert.NotNil(t, rec.Msg.Answer)
@@ -673,7 +665,7 @@ func TestDNSDBWithoutContextOfMaxAnswer(t *testing.T) {
 
 				code, err := th.ServeDNSWithRCODE(context.TODO(), rec, req)
 
-				assert.Equalf(t, int(tc.expectedCode), code, "expected status code %d", tc.expectedCode)
+				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
 				assert.Equal(t, err, tc.expectedErr)
 				assert.NotNil(t, rec.Msg)
 				assert.NotNil(t, rec.Msg.Answer)
@@ -775,7 +767,7 @@ func TestDNSDBForHTTPSRecord(t *testing.T) {
 				// context TODO does not provide value to limit or specify max answers
 				code, err := th.ServeDNSWithRCODE(context.TODO(), rec, req)
 
-				assert.Equalf(t, int(tc.expectedCode), code, "expected status code %d", tc.expectedCode)
+				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
 				assert.Equal(t, err, tc.expectedErr)
 				assert.NotNil(t, rec.Msg)
 				assert.NotNil(t, rec.Msg.Answer)
@@ -911,7 +903,7 @@ func TestResolverBasedResponse(t *testing.T) {
 				rec := dnstest.NewRecorder(&test.ResponseWriterCustomRemote{RemoteIP: tc.resolver})
 				ctx := CreateTestContext(1)
 				code, _ := th.ServeDNSWithRCODE(ctx, rec, req)
-				assert.Equalf(t, int(tc.expectedCode), code, "expected status code %d", tc.expectedCode)
+				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
 
 				if tc.expectedAnswer != nil {
 					assert.NotNil(t, rec.Msg)
@@ -1476,7 +1468,6 @@ func TestDNSDB(t *testing.T) {
 				if tc.expectedExtra != nil {
 					if len(tc.expectedExtra) != 0 {
 						RRSliceMatchNoOrder(t, tc.expectedExtra, rec.Msg.Extra)
-
 					}
 				}
 			})
@@ -1751,7 +1742,7 @@ func TestReloadFull(t *testing.T) {
 	ctr := stats.NewCounters()
 	th.stats = ctr
 	th.dbConfig.ReloadTimeout = 10 * time.Second
-	rdbDir, err := ioutil.TempDir("", "reload-test")
+	rdbDir, err := os.MkdirTemp("", "reload-test")
 	require.Nil(t, err)
 	defer os.RemoveAll(rdbDir)
 	// copy existing rdb to new path, so we can switch to it
@@ -1773,7 +1764,7 @@ func TestReloadFullTimeoutRDB(t *testing.T) {
 	th.stats = ctr
 	// setting reload timeout to 0 to simulate timeout
 	th.dbConfig.ReloadTimeout = 0 * time.Millisecond
-	rdbDir, err := ioutil.TempDir("", "reload-test")
+	rdbDir, err := os.MkdirTemp("", "reload-test")
 	require.Nil(t, err)
 	defer os.RemoveAll(rdbDir)
 	// we want directory to exist
@@ -1821,7 +1812,7 @@ func TestWatchDBAndReload(t *testing.T) {
 	go func() {
 		// mtime has nanoseconds precision, therefore we need to have this sleep
 		// See http://man7.org/linux/man-pages/man2/stat.2.html
-		time.Sleep(time.Duration(1 * time.Millisecond))
+		time.Sleep(1 * time.Millisecond)
 		currenttime := time.Now()
 		err := os.Chtimes(testaid.TestCDB.Path, currenttime, currenttime)
 		assert.Nil(t, err)
@@ -1838,7 +1829,7 @@ func TestWatchDBAndReload(t *testing.T) {
 
 func TestWatchControlDirAndReloadPartial(t *testing.T) {
 	th := OpenDbForTesting(t, &testaid.TestCDB)
-	ctlDir, err := ioutil.TempDir("", "ctl-test")
+	ctlDir, err := os.MkdirTemp("", "ctl-test")
 	if err != nil {
 		require.Nil(t, err)
 	}
@@ -1851,7 +1842,7 @@ func TestWatchControlDirAndReloadPartial(t *testing.T) {
 
 	// Simulate touch of the file
 	go func() {
-		time.Sleep(time.Duration(1 * time.Millisecond))
+		time.Sleep(1 * time.Millisecond)
 		filePath := path.Join(ctlDir, ControlFilePartialReload)
 		emptyFile, err := os.Create(filePath)
 		assert.Nil(t, err)
@@ -1869,7 +1860,7 @@ func TestWatchControlDirAndReloadPartial(t *testing.T) {
 
 func TestWatchControlDirAndReloadFull(t *testing.T) {
 	th := OpenDbForTesting(t, &testaid.TestCDB)
-	ctlDir, err := ioutil.TempDir("", "ctl-test")
+	ctlDir, err := os.MkdirTemp("", "ctl-test")
 	if err != nil {
 		require.Nil(t, err)
 	}
@@ -1879,7 +1870,7 @@ func TestWatchControlDirAndReloadFull(t *testing.T) {
 		err := th.WatchControlDirAndReload()
 		assert.NoError(t, err)
 	}()
-	newPath, err := ioutil.TempDir("", "ctl-test-newdir")
+	newPath, err := os.MkdirTemp("", "ctl-test-newdir")
 	if err != nil {
 		require.Nil(t, err)
 	}
@@ -1887,9 +1878,9 @@ func TestWatchControlDirAndReloadFull(t *testing.T) {
 
 	// Simulate touch of the file
 	go func() {
-		time.Sleep(time.Duration(1 * time.Millisecond))
+		time.Sleep(1 * time.Millisecond)
 		filePath := path.Join(ctlDir, ControlFileFullReload)
-		err := ioutil.WriteFile(filePath, []byte(newPath), 0644)
+		err := os.WriteFile(filePath, []byte(newPath), 0644)
 		assert.Nil(t, err)
 	}()
 
@@ -2066,7 +2057,7 @@ func TestDNSDBQuerySingle(t *testing.T) {
 			rtype:  "A",
 			from:   "127.0.0.1",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeA,
 					Qclass: dns.ClassINET,
@@ -2090,7 +2081,7 @@ func TestDNSDBQuerySingle(t *testing.T) {
 			rtype:  "AAAA",
 			from:   "127.0.0.1",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
@@ -2114,7 +2105,7 @@ func TestDNSDBQuerySingle(t *testing.T) {
 			rtype:  "AAAA",
 			from:   "127.0.0.1",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "missing.example.org.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
@@ -2128,7 +2119,7 @@ func TestDNSDBQuerySingle(t *testing.T) {
 			rtype:  "AAAA",
 			from:   "127.0.0.1",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "www.nothere.org.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
@@ -2146,7 +2137,7 @@ func TestDNSDBQuerySingle(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/%d", db.Driver, nt), func(t *testing.T) {
 				rec, err := th.QuerySingle(tc.rtype, tc.record, tc.from, "", 1)
 				require.Nil(t, err)
-				assert.Equalf(t, int(tc.expectedCode), rec.Rcode, "expected status code %d", tc.expectedCode)
+				assert.Equalf(t, tc.expectedCode, rec.Rcode, "expected status code %d", tc.expectedCode)
 				if assert.NotNil(t, rec.Msg) {
 					assert.Equal(t, tc.expectedQuestion, rec.Msg.Question)
 					RRSliceMatch(t, tc.expectedAnswer, rec.Msg.Answer)
@@ -2173,7 +2164,7 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			rtype:  "A",
 			from:   "6.6.6.0",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeA,
 					Qclass: dns.ClassINET,
@@ -2197,7 +2188,7 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			rtype:  "AAAA",
 			from:   "6.6.6.0",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
@@ -2221,7 +2212,7 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			rtype:  "A",
 			from:   "6.6.6.1",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeA,
 					Qclass: dns.ClassINET,
@@ -2245,7 +2236,7 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			rtype:  "AAAA",
 			from:   "6.6.6.1",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
@@ -2269,7 +2260,7 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			rtype:  "A",
 			from:   "6.6.6.2",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeA,
 					Qclass: dns.ClassINET,
@@ -2293,7 +2284,7 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			rtype:  "AAAA",
 			from:   "6.6.6.2",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeAAAA,
 					Qclass: dns.ClassINET,
@@ -2317,7 +2308,7 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			rtype:  "A",
 			from:   "6.6.6.3",
 			expectedQuestion: []dns.Question{
-				dns.Question{
+				{
 					Name:   "foo.example.com.",
 					Qtype:  dns.TypeA,
 					Qclass: dns.ClassINET,
@@ -2345,7 +2336,7 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/%d", db.Driver, nt), func(t *testing.T) {
 				rec, err := th.QuerySingle(tc.rtype, tc.record, tc.from, "", 1)
 				require.Nil(t, err)
-				assert.Equalf(t, int(tc.expectedCode), rec.Rcode, "expected status code %d", tc.expectedCode)
+				assert.Equalf(t, tc.expectedCode, rec.Rcode, "expected status code %d", tc.expectedCode)
 				if assert.NotNil(t, rec.Msg) {
 					assert.Equal(t, tc.expectedQuestion, rec.Msg.Question)
 					RRSliceMatch(t, tc.expectedAnswer, rec.Msg.Answer)

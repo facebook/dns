@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"sync"
 	"testing"
@@ -609,8 +608,8 @@ func TestBatchGetAffectedKeys(t *testing.T) {
 			},
 			deleted: kvList{},
 			expectedKeys: [][]byte{
-				[]byte{1},
-				[]byte{2},
+				{1},
+				{2},
 			},
 		},
 		{
@@ -624,8 +623,8 @@ func TestBatchGetAffectedKeys(t *testing.T) {
 				},
 			},
 			expectedKeys: [][]byte{
-				[]byte{3},
-				[]byte{4},
+				{3},
+				{4},
 			},
 		},
 		{
@@ -649,11 +648,11 @@ func TestBatchGetAffectedKeys(t *testing.T) {
 				},
 			},
 			expectedKeys: [][]byte{
-				[]byte{1},
-				[]byte{2},
-				[]byte{3},
-				[]byte{4},
-				[]byte{5},
+				{1},
+				{2},
+				{3},
+				{4},
+				{5},
 			},
 		},
 	}
@@ -700,8 +699,8 @@ func TestRDBFindFirst(t *testing.T) {
 				[]byte("key_C"),
 			},
 			getMultiValues: [][]byte{
-				[]byte{8, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11},
-				[]byte{3, 0, 0, 0, 1, 2, 3},
+				{8, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11},
+				{3, 0, 0, 0, 1, 2, 3},
 			},
 			getMultiErrors: []error{
 				nil, nil,
@@ -719,7 +718,7 @@ func TestRDBFindFirst(t *testing.T) {
 			},
 			getMultiValues: [][]byte{
 				nil,
-				[]byte{3, 0, 0, 0, 1, 2, 3},
+				{3, 0, 0, 0, 1, 2, 3},
 				nil,
 			},
 			getMultiErrors: []error{
@@ -739,7 +738,7 @@ func TestRDBFindFirst(t *testing.T) {
 			getMultiValues: [][]byte{
 				nil,
 				nil,
-				[]byte{2, 0, 0, 0, 1, 2},
+				{2, 0, 0, 0, 1, 2},
 			},
 			getMultiErrors: []error{
 				nil, someStrangeError, nil,
@@ -758,7 +757,7 @@ func TestRDBFindFirst(t *testing.T) {
 			getMultiValues: [][]byte{
 				nil,
 				nil,
-				[]byte{2, 0, 0},
+				{2, 0, 0},
 			},
 			getMultiErrors: []error{
 				nil, nil, nil,
@@ -777,7 +776,7 @@ func TestRDBFindFirst(t *testing.T) {
 			getMultiValues: [][]byte{
 				nil,
 				nil,
-				[]byte{2, 0, 0, 0, 5},
+				{2, 0, 0, 0, 5},
 			},
 			getMultiErrors: []error{
 				nil, nil, nil,
@@ -797,7 +796,7 @@ func TestRDBFindFirst(t *testing.T) {
 			getMultiValues: [][]byte{
 				nil,
 				nil,
-				[]byte{
+				{
 					5, 0, 0, 0, 9, 8, 7, 6, 5,
 					3, 0, 0, 0, 4, 3, 2,
 				},
@@ -1104,7 +1103,7 @@ func TestExecuteBatch(t *testing.T) {
 		val: []byte{1, 2, 6},
 	}
 
-	dir, err := ioutil.TempDir("", "rdb_test")
+	dir, err := os.MkdirTemp("", "rdb_test")
 	if err != nil {
 		t.Fatal(err)
 	}

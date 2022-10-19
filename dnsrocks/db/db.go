@@ -28,6 +28,7 @@ import (
 )
 
 // DBI interface represents the pluggable API for the backing storage
+// nolint:revive
 type DBI interface {
 	NewContext() Context
 	Find(key []byte, context Context) ([]byte, error)
@@ -159,7 +160,6 @@ func (f *DB) Destroy() {
 // to verify that the format of the DB file is valid, by checking for the existence of a key
 // that is known to exist. If the DB file is invalid, the old DB will continue to be used.
 func (f *DB) Reload(path string, validationKey []byte, reloadTimeout time.Duration) (*DB, error) {
-
 	c := make(chan int)
 	ctx, cancel := context.WithTimeout(context.Background(), reloadTimeout)
 	defer cancel()
@@ -257,7 +257,7 @@ func (f *DB) ValidateDbKey(dbKey []byte) error {
 	err = reader.ForEach(dbKey, parseResult)
 	reader.Close()
 	if err != nil {
-		return fmt.Errorf("Reader error in ValidateDBKey %v", err)
+		return fmt.Errorf("reader error in ValidateDBKey: %w", err)
 	}
 
 	if !keyFound {

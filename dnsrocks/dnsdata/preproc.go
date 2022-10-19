@@ -85,7 +85,7 @@ func (p *PreprocReader) Scan() bool {
 			// decode line so codec's accumulator is populated and we can expand networks later on
 			_, err := p.codec.DecodeLn(line)
 			if err != nil {
-				p.err = fmt.Errorf("error decoding %s: %v", string(line), err)
+				p.err = fmt.Errorf("error decoding %s: %w", string(line), err)
 				return false
 			}
 			if p.codec.NoRnetOutput {
@@ -95,12 +95,12 @@ func (p *PreprocReader) Scan() bool {
 			// normalize SOA text representation to fix serial
 			r, err := p.codec.DecodeLn(line)
 			if err != nil {
-				p.err = fmt.Errorf("error decoding %s: %v", string(line), err)
+				p.err = fmt.Errorf("error decoding %s: %w", string(line), err)
 				return false
 			}
 			normalized, err := r.MarshalText()
 			if err != nil {
-				p.err = fmt.Errorf("error normalising %s: %v", string(line), err)
+				p.err = fmt.Errorf("error normalising %s: %w", string(line), err)
 				return false
 			}
 			p.currentLine = string(normalized)
@@ -125,7 +125,7 @@ func (p *PreprocReader) Scan() bool {
 		var err error
 		p.accumulatorScanner, err = p.codec.Acc.OpenScanner()
 		if err != nil {
-			p.err = fmt.Errorf("error encoding Acc: %v", err)
+			p.err = fmt.Errorf("error encoding Acc: %w", err)
 			return false
 		}
 	}

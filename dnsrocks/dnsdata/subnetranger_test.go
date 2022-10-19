@@ -36,37 +36,37 @@ func TestSubnetRanger(t *testing.T) {
 `
 	targMap := []MapRecord{
 		// RangePoint origin
-		MapRecord{
+		{
 			Key:   []byte{0, 0, 0, '!', 'm', '1', 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
 			Value: []byte(nil),
 		},
 		// RangePoint start ::/0
-		MapRecord{
+		{
 			Key:   []byte{0, 0, 0, '!', 'm', '1', 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 0x0, 0x0, 0x0, 0x0, 0x60},
 			Value: []byte{'d', 'e'},
 		},
 		// RangePoint start 192.168.1.0/24
-		MapRecord{
+		{
 			Key:   []byte{0, 0, 0, '!', 'm', '1', 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 192, 168, 1, 0, 120},
 			Value: []byte{'a', '\001'},
 		},
 		// RangePoint end 192.168.1.0/24
-		MapRecord{
+		{
 			Key:   []byte{0, 0, 0, '!', 'm', '1', 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 192, 168, 2, 0, 0x60},
 			Value: []byte{'d', 'e'},
 		},
 		// RangePoint end 0.0.0.0/0
-		MapRecord{
+		{
 			Key:   []byte{0, 0, 0, '!', 'm', '1', 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x00, 0x00, 0, 0, 0, 0, 0},
 			Value: []byte(nil),
 		},
 		// RangePoint start 2a00:1fa0:42d8::/64
-		MapRecord{
+		{
 			Key:   []byte{0, 0, 0, '!', 'm', '1', 0x2a, 0x0, 0x1f, 0xa0, 0x42, 0xd8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 64},
 			Value: []byte{'a', 'b'},
 		},
 		// RangePoint end 2a00:1fa0:42d8::/64
-		MapRecord{
+		{
 			Key:   []byte{0, 0, 0, '!', 'm', '1', 0x2a, 0x0, 0x1f, 0xa0, 0x42, 0xd8, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0},
 			Value: []byte(nil),
 		},
@@ -80,7 +80,7 @@ func TestSubnetRanger(t *testing.T) {
 		for _, in := range tc {
 			v, err := codec.ConvertLn([]byte(in))
 			if err != nil {
-				t.Fatalf("error converting %v: %v", string(in), err)
+				t.Fatalf("error converting %s: %v", in, err)
 			}
 			out = append(out, v...)
 		}
@@ -99,7 +99,7 @@ func TestSubnetRanger(t *testing.T) {
 		codec.Acc.NoPrefixSets = true
 		for _, in := range tc {
 			if _, err := codec.DecodeLn([]byte(in)); err != nil {
-				t.Fatalf("error decoding %v: %v", string(in), err)
+				t.Fatalf("error decoding %s: %v", in, err)
 			}
 		}
 		out, err := codec.Acc.MarshalText()

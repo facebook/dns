@@ -284,7 +284,6 @@ func TestTLSDNSServerWithQueries(t *testing.T) {
 // https://fburl.com/puemzrx0
 // This allows us to possibly write multiple requests over the same connection.
 func exchange(t *testing.T, co *dns.Conn, c *dns.Client, m *dns.Msg) (r *dns.Msg) {
-
 	opt := m.IsEdns0()
 	// If EDNS0 is used use that for size.
 	if opt != nil && opt.UDPSize() >= dns.MinMsgSize {
