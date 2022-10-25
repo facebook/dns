@@ -7,7 +7,7 @@
 # Contents
 
 
-- [Documentation] (#Documentation)
+- [Documentation](docs/getting_started.md)
 - [License](#License)
 
 ## Documentation
