@@ -1,0 +1,24 @@
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    env:
+      CGO_LDFLAGS_ALLOW: .*
+      CGO_CFLAGS_ALLOW: .*
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: install rocksdb
+        run: sudo bash .github/scripts/install_rocks_7.sh
+      - name : Compile
+        run: cd dnsrocks; go build -v ./...
+      - name: Test
+        run: cd dnsrocks; go test -v ./...
+      - name: Run coverage
+        run: cd dnsrocks; go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
