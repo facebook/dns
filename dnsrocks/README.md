@@ -27,7 +27,7 @@ Handling of dns record types
 ### dnsserver
 Basic dns server functions (and base handler)
 ### fbserver
-Full fledged implementation of an authoriative dns server
+Full fledged implementation of an authoritative dns server
 ### go-cdb-mods
 modified version of github.com/repustate/go-cdb to support go-modules
 ### testaid
