@@ -137,7 +137,7 @@ func (l *DNSTapLoggger) Log(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SU
 		glog.Errorf("Failed to set ResponseAddress %v for dnstap message", state.W.RemoteAddr())
 	}
 	msg.SetQueryTime(m, time.Now())
-	msg.SetType(m, dnstap.Message_CLIENT_QUERY)
+	msg.SetType(m, dnstap.Message_AUTH_QUERY)
 	buf, _ = r.Pack()
 	m.QueryMessage = buf
 
