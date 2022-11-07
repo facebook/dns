@@ -1,5 +1,7 @@
 # Getting started
 
+All dnsrocks executables can be found under the cmd directory and can be built using go build, once all the [dependencies](building.md) are installed.
+
 One of the most important command to get started is `dnsrocks-data` which enables creation of rocksdb or cdb databases out of input files that match our required [data_format](data_format.md)
 Example:
 ```
