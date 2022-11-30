@@ -251,7 +251,7 @@ func (srv *Server) Start() (err error) {
 		glog.Infof("-whoami-domain was not specified, not initializing whoamiHandler")
 	}
 	// Only add anyHandler to the plugin chain if it is enabled.
-	if srv.conf.RefuseANY {
+	if !srv.conf.RefuseANY {
 		glog.Infof("Enabling ANY handler")
 		if anyHandler, err = newAnyHandler(); err != nil {
 			return fmt.Errorf("failed to initialize anyHandler: %w", err)
@@ -259,7 +259,7 @@ func (srv *Server) Start() (err error) {
 		anyHandler.Next = defaultHandler
 		defaultHandler = anyHandler
 	} else {
-		glog.Infof("refuse-any flag was not specified, not initializing anyHandler")
+		glog.Infof("refuse-any flag was set to false, not initializing anyHandler")
 	}
 
 	// For each configured IP, we may start a number of DNS servers for each
