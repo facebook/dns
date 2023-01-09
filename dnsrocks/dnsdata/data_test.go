@@ -20,7 +20,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1536,7 +1535,7 @@ func TestDerivedRecords(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.in, func(t *testing.T) {
 			err := tc.record.UnmarshalText([]byte(tc.in))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			derived := tc.record.(CompositeRecord).DerivedRecords()
 			records := make([]string, 0, len(derived))
@@ -1546,7 +1545,7 @@ func TestDerivedRecords(t *testing.T) {
 				records = append(records, string(l))
 			}
 
-			assert.ElementsMatch(t, records, tc.derived)
+			require.ElementsMatch(t, records, tc.derived)
 		})
 	}
 }
@@ -1559,7 +1558,7 @@ func testMarshalText(t *testing.T, codec *Codec, inText, outText []byte, expecte
 	if len(outText) == 0 {
 		t.Fatal("testcase outText is missing")
 	}
-	assert.Equal(t, outText, gotText)
+	require.Equal(t, outText, gotText)
 
 	// now, parse marshalled text and see if it produces same record
 	out, err := codec.ConvertLn(gotText)

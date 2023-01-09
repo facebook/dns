@@ -28,7 +28,7 @@ import (
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Create a TLSConfig suitable for dotTLSAHandler
@@ -51,12 +51,12 @@ func TestDotTLSAHandlerBadTypeGoodPrefix(t *testing.T) {
 	req.SetQuestion(dns.Fqdn("_1234._tcp.example.com."), dns.TypeA)
 	rec := dnstest.NewRecorder(w)
 	dh, err := newDotTLSA(tlsconfig)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	rc, err := dh.ServeDNS(context.TODO(), rec, req)
 
-	assert.Nil(t, err)
-	assert.Equal(t, rc, dns.RcodeSuccess)
-	assert.Equal(t, len(rec.Msg.Answer), 0)
+	require.Nil(t, err)
+	require.Equal(t, rc, dns.RcodeSuccess)
+	require.Equal(t, len(rec.Msg.Answer), 0)
 }
 
 // TestDotTLSAHandlerAnyTypeBadPrefix tests that we continue to the next handler when a
@@ -75,11 +75,11 @@ func TestDotTLSAHandlerAnyTypeBadPrefix(t *testing.T) {
 			req.SetQuestion(dns.Fqdn("_12345._tcp.example.com."), tc)
 			rec := dnstest.NewRecorder(w)
 			dh, err := newDotTLSA(tlsconfig)
-			assert.Nil(t, err)
+			require.Nil(t, err)
 			rc, err := dh.ServeDNS(context.TODO(), rec, req)
 
-			assert.Equal(t, rc, dns.RcodeServerFailure)
-			assert.Equal(t, expectedError, err.Error())
+			require.Equal(t, rc, dns.RcodeServerFailure)
+			require.Equal(t, expectedError, err.Error())
 		})
 	}
 }
@@ -87,10 +87,10 @@ func TestDotTLSAHandlerAnyTypeBadPrefix(t *testing.T) {
 // loadSPKIFromCert parses a cert file and extract the SPKI
 func loadSPKIFromCert(t *testing.T, certfile string) []byte {
 	cert, err := tls.LoadX509KeyPair(certfile, certfile)
-	assert.Nilf(t, err, "Loading X509 keypair from %v", certfile)
+	require.Nilf(t, err, "Loading X509 keypair from %v", certfile)
 
 	x509cert, err := x509.ParseCertificate(cert.Certificate[0])
-	assert.Nilf(t, err, "Converting tls.Certificate to x509.Certificate %v", cert)
+	require.Nilf(t, err, "Converting tls.Certificate to x509.Certificate %v", cert)
 
 	return x509cert.RawSubjectPublicKeyInfo
 }
@@ -146,21 +146,21 @@ func TestDotTLSAHandlerGoodTypeGoodPrefix(t *testing.T) {
 		tlsconfig.DoTTLSATtl = tc.ttl
 		rec := dnstest.NewRecorder(w)
 		dh, err := newDotTLSA(tlsconfig)
-		assert.Nil(t, err)
+		require.Nil(t, err)
 		rc, err := dh.ServeDNS(context.TODO(), rec, req)
 
-		assert.Equal(t, dns.RcodeSuccess, rc)
-		assert.Nil(t, err)
-		assert.Equal(t, dns.RcodeSuccess, rec.Rcode, "RcodeSuccess was expected to be returned.")
-		assert.Equal(t, tc.expectedCount, len(rec.Msg.Answer), "Number of answers should be %d", tc.expectedCount)
-		assert.Equal(t, tc.answerUsage, rec.Msg.Answer[0].(*dns.TLSA).Usage, "Answer should be %s", tc.answerUsage)
-		assert.Equal(t, tc.answerSelector, rec.Msg.Answer[0].(*dns.TLSA).Selector, "Answer should be %s", tc.answerSelector)
-		assert.Equal(t, tc.answerMatchingType, rec.Msg.Answer[0].(*dns.TLSA).MatchingType, "Answer should be %s", tc.answerMatchingType)
-		assert.Equal(t, tc.answerCertificate, rec.Msg.Answer[0].(*dns.TLSA).Certificate, "Answer should be %#v", tc.answerCertificate)
+		require.Equal(t, dns.RcodeSuccess, rc)
+		require.Nil(t, err)
+		require.Equal(t, dns.RcodeSuccess, rec.Rcode, "RcodeSuccess was expected to be returned.")
+		require.Equal(t, tc.expectedCount, len(rec.Msg.Answer), "Number of answers should be %d", tc.expectedCount)
+		require.Equal(t, tc.answerUsage, rec.Msg.Answer[0].(*dns.TLSA).Usage, "Answer should be %s", tc.answerUsage)
+		require.Equal(t, tc.answerSelector, rec.Msg.Answer[0].(*dns.TLSA).Selector, "Answer should be %s", tc.answerSelector)
+		require.Equal(t, tc.answerMatchingType, rec.Msg.Answer[0].(*dns.TLSA).MatchingType, "Answer should be %s", tc.answerMatchingType)
+		require.Equal(t, tc.answerCertificate, rec.Msg.Answer[0].(*dns.TLSA).Certificate, "Answer should be %#v", tc.answerCertificate)
 		if tc.ttl == 0 {
-			assert.Equal(t, defaultTLSATtl, rec.Msg.Answer[0].(*dns.TLSA).Hdr.Ttl, "Answer TTL does not match default")
+			require.Equal(t, defaultTLSATtl, rec.Msg.Answer[0].(*dns.TLSA).Hdr.Ttl, "Answer TTL does not match default")
 		} else {
-			assert.Equal(t, tc.ttl, rec.Msg.Answer[0].(*dns.TLSA).Hdr.Ttl, "Answer TTL does not match provided TTL")
+			require.Equal(t, tc.ttl, rec.Msg.Answer[0].(*dns.TLSA).Hdr.Ttl, "Answer TTL does not match provided TTL")
 		}
 	}
 }

@@ -22,7 +22,7 @@ import (
 	"github.com/facebookincubator/dns/dnsrocks/testaid"
 
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -64,7 +64,7 @@ func TestDbKeyValidationV1Keys(t *testing.T) {
 		for i, test := range testCases {
 			t.Run(fmt.Sprintf("Testing %v", test.key), func(t *testing.T) {
 				err := db.ValidateDbKey(test.key)
-				assert.Equalf(t, test.err, err, "test %d expected error", i)
+				require.Equalf(t, test.err, err, "test %d expected error", i)
 			})
 		}
 	}
@@ -98,7 +98,7 @@ func TestDbKeyValidationV2Keys(t *testing.T) {
 		for i, test := range testCases {
 			t.Run(fmt.Sprintf("Testing %v", test.key), func(t *testing.T) {
 				err := db.ValidateDbKey(test.key)
-				assert.Equalf(t, test.err, err, "test %d expected error", i)
+				require.Equalf(t, test.err, err, "test %d expected error", i)
 			})
 		}
 	}
@@ -132,9 +132,9 @@ func TestDbReload(t *testing.T) {
 	// path and key do not actually matter (as long as key is not empty) since
 	// the underlying DBI is a mock
 	newDb, err := oldDb.Reload("", validationKey1, reloadTimeout)
-	assert.NotEmpty(t, err)
-	assert.NotEqual(t, ErrValidationKeyNotFound, err)
-	assert.Same(t, oldDb, newDb)
+	require.NotEmpty(t, err)
+	require.NotEqual(t, ErrValidationKeyNotFound, err)
+	require.Same(t, oldDb, newDb)
 
 	// Test 2: reload DB with a valid DB that does not contain the validation key,
 	// expect that they are not switched, the new DB is closed, and correct error
@@ -147,8 +147,8 @@ func TestDbReload(t *testing.T) {
 	mockDbi.EXPECT().Reload(gomock.Any()).Return(mockDbiMissingKey, nil)
 
 	newDb, err = oldDb.Reload("", validationKey1, reloadTimeout)
-	assert.Equal(t, ErrValidationKeyNotFound, err)
-	assert.Same(t, oldDb, newDb)
+	require.Equal(t, ErrValidationKeyNotFound, err)
+	require.Same(t, oldDb, newDb)
 
 	// Test 3: reload DB with a valid DB, expect that they are switched, the old
 	// DB is closed, and there is no error
@@ -164,6 +164,6 @@ func TestDbReload(t *testing.T) {
 	mockDbi.EXPECT().Close()
 
 	newDb, err = oldDb.Reload("", validationKey1, reloadTimeout)
-	assert.Empty(t, err)
-	assert.NotSame(t, oldDb, newDb)
+	require.Empty(t, err)
+	require.NotSame(t, oldDb, newDb)
 }

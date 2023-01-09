@@ -16,26 +16,26 @@ package fbserver
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestNewMaxAnswerHandlerNegativeNumber tests that we return an error when
 // given a negative number
 func TestNewMaxAnswerHandlerNegativeNumber(t *testing.T) {
 	_, err := newMaxAnswerHandler(-2)
-	assert.NotNil(t, err)
+	require.NotNil(t, err)
 }
 
 // TestNewMaxAnswerHandlerZeroNumber tests that we return an error when
 // given 0.
 func TestNewMaxAnswerHandlerZeroNumber(t *testing.T) {
 	_, err := newMaxAnswerHandler(0)
-	assert.NotNil(t, err)
+	require.NotNil(t, err)
 }
 
 // TestNewMaxAnswerHandlerPositiveNumber tests that we do not return an error
 // when given a positive number
 func TestNewMaxAnswerHandlerPositiveNumber(t *testing.T) {
 	_, err := newMaxAnswerHandler(1)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }

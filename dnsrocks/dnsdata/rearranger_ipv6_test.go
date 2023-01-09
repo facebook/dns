@@ -18,7 +18,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIPv6StringConversion(t *testing.T) {
@@ -37,7 +37,7 @@ func TestIPv6StringConversion(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%v", nt, tc), func(t *testing.T) {
 			ip := ParseIP(tc)
 			str := ip.String()
-			assert.Equal(t, tc, str)
+			require.Equal(t, tc, str)
 		})
 	}
 }
@@ -98,9 +98,9 @@ func TestEquality(t *testing.T) {
 			ip2 := ParseIP(tc.ip2)
 			netIP := net.ParseIP(tc.ip2)
 
-			assert.Equal(t, tc.result, ip1.Equal(ip2))
-			assert.Equal(t, tc.result, ip2.Equal(ip1))
-			assert.Equal(t, tc.result, ip1.EqualToNetIP(netIP))
+			require.Equal(t, tc.result, ip1.Equal(ip2))
+			require.Equal(t, tc.result, ip2.Equal(ip1))
+			require.Equal(t, tc.result, ip1.EqualToNetIP(netIP))
 		})
 	}
 }

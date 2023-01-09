@@ -19,7 +19,7 @@ import (
 
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestLoggerErrorBadSamplingRate makes sure that we Error if the provided
@@ -36,7 +36,7 @@ func TestLoggerErrorBadSamplingRate(t *testing.T) {
 		t.Run(fmt.Sprintf("sampling rate %f", tc), func(t *testing.T) {
 			slc := Config{SamplingRate: tc, Target: "stdout", LogFormat: "text"}
 			_, err := NewLogger(slc)
-			assert.NotNil(t, err)
+			require.NotNil(t, err)
 		})
 	}
 }
@@ -55,8 +55,8 @@ func TestLoggerNotErrorGoodSamplingRate(t *testing.T) {
 		t.Run(fmt.Sprintf("sampling rate %f", tc), func(t *testing.T) {
 			slc := Config{SamplingRate: tc, Target: "stdout", LogFormat: "text"}
 			l, err := NewLogger(slc)
-			assert.Nil(t, err)
-			assert.NotNil(t, l)
+			require.Nil(t, err)
+			require.NotNil(t, l)
 		})
 	}
 }
@@ -66,7 +66,7 @@ func TestLoggerNotErrorGoodSamplingRate(t *testing.T) {
 func TestLoggerErrorBadTarget(t *testing.T) {
 	slc := Config{Target: "invalid"}
 	_, err := NewLogger(slc)
-	assert.NotNil(t, err)
+	require.NotNil(t, err)
 }
 
 // TestLoggerNotErrorGoodTarget makes sure that we do not Error if the
@@ -91,8 +91,8 @@ func TestLoggerNotErrorGoodTarget(t *testing.T) {
 			}
 			slc := Config{Target: tc, Remote: remote, LogFormat: "text"}
 			l, err := NewLogger(slc)
-			assert.Nil(t, err)
-			assert.NotNil(t, l)
+			require.Nil(t, err)
+			require.NotNil(t, l)
 		})
 	}
 }
@@ -107,7 +107,7 @@ func TestLoggerErrorsRemoteProtoNoTarget(t *testing.T) {
 		t.Run(fmt.Sprintf("target %s", tc), func(t *testing.T) {
 			slc := Config{Target: tc, LogFormat: "text"}
 			_, err := NewLogger(slc)
-			assert.NotNil(t, err)
+			require.NotNil(t, err)
 		})
 	}
 }
@@ -117,7 +117,7 @@ func TestLoggerErrorsRemoteProtoNoTarget(t *testing.T) {
 func TestLoggerErrorBadStdoutFormat(t *testing.T) {
 	slc := Config{Target: "stdout", LogFormat: "invalid"}
 	_, err := NewLogger(slc)
-	assert.NotNil(t, err)
+	require.NotNil(t, err)
 }
 
 // TestLoggerNotErrorGoodTarget makes sure that we do not Error if the
@@ -133,8 +133,8 @@ func TestLoggerNotErrorGoodLogFormat(t *testing.T) {
 		t.Run(fmt.Sprintf("log format %s", tc), func(t *testing.T) {
 			slc := Config{Target: "stdout", LogFormat: tc}
 			l, err := NewLogger(slc)
-			assert.NotNil(t, l)
-			assert.Nil(t, err)
+			require.NotNil(t, l)
+			require.Nil(t, err)
 		})
 	}
 }
@@ -161,7 +161,7 @@ func TestIsSonarBadIG(t *testing.T) {
 			m := new(dns.Msg)
 			m.SetQuestion(tc, dns.TypeA)
 			s := request.Request{W: nil, Req: m}
-			assert.True(t, isSonar(s))
+			require.True(t, isSonar(s))
 		})
 	}
 }
@@ -187,7 +187,7 @@ func TestIsSonarMoreNames(t *testing.T) {
 			m := new(dns.Msg)
 			m.SetQuestion(tc, dns.TypeA)
 			s := request.Request{W: nil, Req: m}
-			assert.True(t, isSonar(s))
+			require.True(t, isSonar(s))
 		})
 	}
 }
@@ -210,7 +210,7 @@ func TestIsSonarInvalidNames(t *testing.T) {
 			m := new(dns.Msg)
 			m.SetQuestion(tc, dns.TypeA)
 			s := request.Request{W: nil, Req: m}
-			assert.False(t, isSonar(s))
+			require.False(t, isSonar(s))
 		})
 	}
 }
@@ -219,42 +219,42 @@ func TestIsSonarInvalidNames(t *testing.T) {
 func TestComputeDNSFlag(t *testing.T) {
 	m := new(dns.Msg)
 	var flags int
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.Response = true
 	flags |= _QR
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.Authoritative = true
 	flags |= _AA
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.Truncated = true
 	flags |= _TC
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.RecursionDesired = true
 	flags |= _RD
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.RecursionAvailable = true
 	flags |= _RA
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.Zero = true
 	flags |= _Z
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.AuthenticatedData = true
 	flags |= _AD
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.CheckingDisabled = true
 	flags |= _CD
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 
 	m.Opcode = 5
 	m.Rcode = 3
 	flags |= (5 << 11) | 3
-	assert.Equal(t, int(computeDNSFlag(m)), flags)
+	require.Equal(t, int(computeDNSFlag(m)), flags)
 }

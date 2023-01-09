@@ -17,7 +17,7 @@ import (
 	"encoding"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWireRecordIsImplemented(t *testing.T) {
@@ -116,15 +116,15 @@ func TestWireRecordIsImplemented(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.in, func(t *testing.T) {
 			err := tc.record.UnmarshalText([]byte(tc.in))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			wireRecord, ok := tc.record.(WireRecord)
 
-			assert.True(t, ok)
+			require.True(t, ok)
 
-			assert.Equal(t, tc.wireType, wireRecord.WireType())
-			assert.Equal(t, tc.domainName, wireRecord.DomainName())
-			assert.Equal(t, tc.location, wireRecord.Location())
-			assert.Equal(t, tc.ttl, wireRecord.TTL())
+			require.Equal(t, tc.wireType, wireRecord.WireType())
+			require.Equal(t, tc.domainName, wireRecord.DomainName())
+			require.Equal(t, tc.location, wireRecord.Location())
+			require.Equal(t, tc.ttl, wireRecord.TTL())
 		})
 	}
 }

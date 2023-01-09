@@ -25,7 +25,7 @@ import (
 
 	rocksdb "github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type mockedDB struct {
@@ -101,8 +101,8 @@ func TestRDBAddErrorGettingValue(t *testing.T) {
 		writeMutex: &sync.Mutex{},
 	}
 	err := rdb.Add([]byte{}, []byte{})
-	if assert.NotNil(t, err) {
-		assert.Equal(t, err.Error(), errorMsg)
+	if err != nil {
+		require.Equal(t, err.Error(), errorMsg)
 	}
 }
 
@@ -116,14 +116,14 @@ func TestRDBAddToNewKey(t *testing.T) {
 				return nil, nil
 			},
 			put: func(key, value []byte) error {
-				assert.Equal(t, key, newKey)
-				assert.Equal(t, value, []byte{5, 0, 0, 0, 1, 2, 255, 3, 0}) // length(newValue) in unit32 + value itself
+				require.Equal(t, key, newKey)
+				require.Equal(t, value, []byte{5, 0, 0, 0, 1, 2, 255, 3, 0}) // length(newValue) in unit32 + value itself
 				return nil
 			},
 		},
 		writeMutex: &sync.Mutex{},
 	}
-	assert.Nil(t, rdb.Add(newKey, newValue))
+	require.Nil(t, rdb.Add(newKey, newValue))
 }
 
 func TestRDBAddErrorAddToExistingKey(t *testing.T) {
@@ -137,8 +137,8 @@ func TestRDBAddErrorAddToExistingKey(t *testing.T) {
 				return oldValue, nil
 			},
 			put: func(key, value []byte) error {
-				assert.Equal(t, key, newKey)
-				assert.Equal(
+				require.Equal(t, key, newKey)
+				require.Equal(
 					t,
 					value,
 					[]byte{
@@ -153,7 +153,7 @@ func TestRDBAddErrorAddToExistingKey(t *testing.T) {
 		},
 		writeMutex: &sync.Mutex{},
 	}
-	assert.Nil(t, rdb.Add(newKey, newValue))
+	require.Nil(t, rdb.Add(newKey, newValue))
 }
 
 func TestRDBDelErrorGettingKey(t *testing.T) {
@@ -168,8 +168,8 @@ func TestRDBDelErrorGettingKey(t *testing.T) {
 		writeMutex: &sync.Mutex{},
 	}
 	err := rdb.Del([]byte{}, []byte{})
-	if assert.NotNil(t, err) {
-		assert.Equal(t, err.Error(), errorMsg)
+	if err != nil {
+		require.Equal(t, err.Error(), errorMsg)
 	}
 }
 
@@ -184,7 +184,7 @@ func TestRDBDelErrorMissingKey(t *testing.T) {
 		writeMutex: &sync.Mutex{},
 	}
 	err := rdb.Del([]byte{}, []byte{})
-	assert.Equal(t, err, ErrNXKey)
+	require.Equal(t, err, ErrNXKey)
 }
 
 func TestRDBDelErrorNonExistingValue(t *testing.T) {
@@ -199,7 +199,7 @@ func TestRDBDelErrorNonExistingValue(t *testing.T) {
 	rdb := &RDB{
 		db: &mockedDB{
 			get: func(key []byte) ([]byte, error) {
-				assert.Equal(t, key, simpleKey)
+				require.Equal(t, key, simpleKey)
 				return simpleValStored, nil
 			},
 			put: func(key, value []byte) error {
@@ -214,8 +214,8 @@ func TestRDBDelErrorNonExistingValue(t *testing.T) {
 		writeMutex: &sync.Mutex{},
 	}
 	err := rdb.Del(simpleKey, simpleVal)
-	assert.Equal(t, err, ErrNXVal)
-	assert.Equal(t, deleteCalled, false)
+	require.Equal(t, err, ErrNXVal)
+	require.Equal(t, deleteCalled, false)
 }
 
 func TestRDBDelErrorTruncatedValue1(t *testing.T) {
@@ -230,7 +230,7 @@ func TestRDBDelErrorTruncatedValue1(t *testing.T) {
 	rdb := &RDB{
 		db: &mockedDB{
 			get: func(key []byte) ([]byte, error) {
-				assert.Equal(t, key, simpleKey)
+				require.Equal(t, key, simpleKey)
 				return simpleValStored, nil
 			},
 			put: func(key, value []byte) error {
@@ -245,8 +245,8 @@ func TestRDBDelErrorTruncatedValue1(t *testing.T) {
 		writeMutex: &sync.Mutex{},
 	}
 	err := rdb.Del(simpleKey, simpleVal)
-	assert.Equal(t, err, io.ErrUnexpectedEOF)
-	assert.Equal(t, deleteCalled, false)
+	require.Equal(t, err, io.ErrUnexpectedEOF)
+	require.Equal(t, deleteCalled, false)
 }
 
 func TestRDBDelErrorTruncatedValue2(t *testing.T) {
@@ -261,7 +261,7 @@ func TestRDBDelErrorTruncatedValue2(t *testing.T) {
 	rdb := &RDB{
 		db: &mockedDB{
 			get: func(key []byte) ([]byte, error) {
-				assert.Equal(t, key, simpleKey)
+				require.Equal(t, key, simpleKey)
 				return simpleValStored, nil
 			},
 			put: func(key, value []byte) error {
@@ -276,10 +276,10 @@ func TestRDBDelErrorTruncatedValue2(t *testing.T) {
 		writeMutex: &sync.Mutex{},
 	}
 	err := rdb.Del(simpleKey, simpleVal)
-	if assert.NotNil(t, err) {
-		assert.Equal(t, err.Error(), "unexpected EOF")
+	if err != nil {
+		require.Equal(t, err.Error(), "unexpected EOF")
 	}
-	assert.Equal(t, deleteCalled, false)
+	require.Equal(t, deleteCalled, false)
 }
 
 func TestRDBDelOnlyValue(t *testing.T) {
@@ -291,7 +291,7 @@ func TestRDBDelOnlyValue(t *testing.T) {
 	rdb := &RDB{
 		db: &mockedDB{
 			get: func(key []byte) ([]byte, error) {
-				assert.Equal(t, key, simpleKey)
+				require.Equal(t, key, simpleKey)
 				return simpleValStored, nil
 			},
 			put: func(key, value []byte) error {
@@ -300,15 +300,15 @@ func TestRDBDelOnlyValue(t *testing.T) {
 			},
 			delete: func(key []byte) error {
 				deleteCalled = true
-				assert.Equal(t, key, simpleKey)
+				require.Equal(t, key, simpleKey)
 				return nil
 			},
 		},
 		writeMutex: &sync.Mutex{},
 	}
 	err := rdb.Del(simpleKey, simpleVal)
-	assert.Nil(t, err)
-	assert.Equal(t, deleteCalled, true)
+	require.Nil(t, err)
+	require.Equal(t, deleteCalled, true)
 }
 
 func TestRDBDelWithOffset(t *testing.T) {
@@ -353,14 +353,14 @@ func TestRDBDelWithOffset(t *testing.T) {
 		rdb := &RDB{
 			db: &mockedDB{
 				get: func(key []byte) ([]byte, error) {
-					assert.Equal(t, simpleKey, key)
+					require.Equal(t, simpleKey, key)
 					valBefore := make([]byte, len(simpleValBefore))
 					copy(valBefore, simpleValBefore)
 					return valBefore, nil
 				},
 				put: func(key, value []byte) error {
-					assert.Equal(t, simpleKey, key)
-					assert.Equal(t, test.after, value)
+					require.Equal(t, simpleKey, key)
+					require.Equal(t, test.after, value)
 					return nil
 				},
 				delete: func(key []byte) error {
@@ -370,7 +370,7 @@ func TestRDBDelWithOffset(t *testing.T) {
 			},
 			writeMutex: &sync.Mutex{},
 		}
-		assert.Nil(t, rdb.Del(simpleKey, test.deletedValue))
+		require.Nil(t, rdb.Del(simpleKey, test.deletedValue))
 	}
 }
 
@@ -487,7 +487,7 @@ func TestRDBBatchGetAffectedKeys(t *testing.T) {
 				addedPairs:   tc.added,
 				deletedPairs: tc.deleted,
 			}
-			assert.Equal(t, tc.output, testBatch.getAffectedKeys())
+			require.Equal(t, tc.output, testBatch.getAffectedKeys())
 		})
 	}
 }
@@ -554,7 +554,7 @@ func TestRDBContext(t *testing.T) {
 		rdb := &RDB{
 			db: &mockedDB{
 				get: func(key []byte) ([]byte, error) {
-					assert.Equal(t, simpleKey, key)
+					require.Equal(t, simpleKey, key)
 					return test.data, nil
 				},
 				put: func(key, value []byte) error {
@@ -569,19 +569,19 @@ func TestRDBContext(t *testing.T) {
 			writeMutex: &sync.Mutex{},
 		}
 		context := NewContext()
-		assert.NotNil(t, context)
+		require.NotNil(t, context)
 		i := 0
 		err := rdb.ForEach(
 			simpleKey,
 			func(value []byte) error {
-				assert.Equal(t, value, test.unpackedValues[i])
+				require.Equal(t, value, test.unpackedValues[i])
 				i++
 				return nil
 			},
 			context)
 
-		assert.Equal(t, err, test.expectedError)
-		assert.Equal(t, len(test.unpackedValues), i)
+		require.Equal(t, err, test.expectedError)
+		require.Equal(t, len(test.unpackedValues), i)
 	}
 }
 
@@ -662,7 +662,7 @@ func TestBatchGetAffectedKeys(t *testing.T) {
 		batch.addedPairs = test.added
 		batch.deletedPairs = test.deleted
 		keys := batch.getAffectedKeys()
-		assert.Equal(t, keys, test.expectedKeys)
+		require.Equal(t, keys, test.expectedKeys)
 	}
 }
 
@@ -814,7 +814,7 @@ func TestRDBFindFirst(t *testing.T) {
 			rdb := &RDB{
 				db: &mockedDB{
 					getMulti: func(readOptions *rocksdb.ReadOptions, keys [][]byte) ([][]byte, []error) {
-						assert.Equal(t, keys, test.requestedKeys)
+						require.Equal(t, keys, test.requestedKeys)
 						return test.getMultiValues, test.getMultiErrors
 					},
 					get: func(key []byte) ([]byte, error) {
@@ -832,9 +832,9 @@ func TestRDBFindFirst(t *testing.T) {
 				},
 			}
 			val, offset, err := rdb.FindFirst(test.requestedKeys)
-			assert.Equal(t, val, test.expectedValue)
-			assert.Equal(t, offset, test.expectedOffset)
-			assert.Equal(t, err, test.expectedError)
+			require.Equal(t, val, test.expectedValue)
+			require.Equal(t, offset, test.expectedOffset)
+			require.Equal(t, err, test.expectedError)
 		})
 	}
 }
@@ -1001,8 +1001,8 @@ func TestRDBBatchIntegrate(t *testing.T) {
 				deletedPairs: tc.deleted,
 			}
 			err := testBatch.integrate(tc.uniqueKeys, &tc.valuesBefore)
-			assert.Equal(t, tc.expectedError, err)
-			assert.Equal(t, tc.valuesAfter, tc.valuesBefore)
+			require.Equal(t, tc.expectedError, err)
+			require.Equal(t, tc.valuesAfter, tc.valuesBefore)
 		})
 	}
 }
@@ -1133,9 +1133,9 @@ func TestExecuteBatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equalf(t, makeFullVal(toAdd.val), value1, "added value should be present in DB")
+	require.Equalf(t, makeFullVal(toAdd.val), value1, "added value should be present in DB")
 
 	value2, err := testdb.db.Get(testdb.readOptions, toDel.key)
-	assert.Nil(t, err)
-	assert.Nilf(t, value2, "key should be removed from DB, not just value set to []byte{}")
+	require.Nil(t, err)
+	require.Nilf(t, value2, "key should be removed from DB, not just value set to []byte{}")
 }

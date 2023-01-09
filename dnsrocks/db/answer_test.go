@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/facebookincubator/dns/dnsrocks/testaid"
 )
@@ -139,7 +139,7 @@ func TestFBDNSDBDnsLabelWildsafe(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
 			result := dnsLabelWildsafe(tc.label)
-			assert.Equal(t, tc.result, result)
+			require.Equal(t, tc.result, result)
 		})
 	}
 }
@@ -153,27 +153,27 @@ func TestDBAuthoritative(t *testing.T) {
 
 	for _, config := range testaid.TestDBs {
 		db, err = Open(config.Path, config.Driver)
-		assert.Nil(t, err, "could not open fixture database")
+		require.Nil(t, err, "could not open fixture database")
 		r, err := NewReader(db)
-		assert.Nil(t, err, "could not open db file")
+		require.Nil(t, err, "could not open db file")
 
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("%s-%v", tc.qname, tc.location.LocID), func(t *testing.T) {
 				offset, err := dns.PackDomainName(tc.qname, q, 0, nil, false)
-				assert.Nilf(t, err, "failed at packing domain %s", tc.qname)
+				require.Nilf(t, err, "failed at packing domain %s", tc.qname)
 
 				flagns, flagauthoritative, domain, err := r.IsAuthoritative(q[:offset], tc.location)
-				assert.Equalf(t, tc.flagns, flagns, "expected flagns %t", tc.flagns)
-				assert.Equalf(
+				require.Equalf(t, tc.flagns, flagns, "expected flagns %t", tc.flagns)
+				require.Equalf(
 					t, tc.flagauthoritative, flagauthoritative,
 					"expected flagauthoritative %t", tc.flagauthoritative,
 				)
-				assert.Equalf(t, err, tc.expectedErr, "expected error %v", tc.expectedErr)
+				require.Equalf(t, err, tc.expectedErr, "expected error %v", tc.expectedErr)
 
-				assert.Nil(t, err)
+				require.Nil(t, err)
 				fqdn, _, err := dns.UnpackDomainName(domain, 0)
 				if err == nil {
-					assert.Equalf(t, tc.authdomain, fqdn, "expected auth domain %s", tc.authdomain)
+					require.Equalf(t, tc.authdomain, fqdn, "expected auth domain %s", tc.authdomain)
 				}
 			})
 		}
@@ -210,17 +210,17 @@ func TestDBFindSOA(t *testing.T) {
 
 	for _, config := range testaid.TestDBs {
 		db, err = Open(config.Path, config.Driver)
-		assert.Nil(t, err, "could not open fixture database")
+		require.Nil(t, err, "could not open fixture database")
 		r, err := NewReader(db)
-		assert.Nil(t, err, "could not open db file")
+		require.Nil(t, err, "could not open db file")
 
 		for _, tc := range testCases {
 			t.Run(tc.zoneCutString, func(t *testing.T) {
 				a := new(dns.Msg)
 				offset, err := dns.PackDomainName(tc.zoneCutString, zoneCut, 0, nil, false)
-				assert.Nilf(t, err, "Failed at packing zoneCut %s", tc.zoneCutString)
+				require.Nilf(t, err, "Failed at packing zoneCut %s", tc.zoneCutString)
 				FindSOA(r, zoneCut[:offset], tc.zoneCutString, loc, a)
-				assert.Equalf(t, tc.expectedLength, len(a.Ns),
+				require.Equalf(t, tc.expectedLength, len(a.Ns),
 					"Expected authoritative section length %d, got %d",
 					tc.expectedLength, len(a.Ns))
 			})

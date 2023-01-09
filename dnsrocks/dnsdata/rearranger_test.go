@@ -19,7 +19,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func strToNet(t *testing.T, s string) *net.IPNet {
@@ -722,20 +722,20 @@ func TestRearranger(t *testing.T) {
 			r := NewRearranger(len(tc.input))
 			for _, in := range tc.input {
 				err := r.AddLocation(strToNet(t, in.network), in.locID)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 			res := r.Rearrange()
-			assert.Equal(t, len(tc.output), len(res))
+			require.Equal(t, len(tc.output), len(res))
 			for i, out := range tc.output {
 				if i >= len(res) {
 					break
 				}
 				assertEqual(t, net.ParseIP(out.startIP), res[i].To16())
-				assert.Equal(t, out.maskLen, res[i].MaskLen())
-				assert.Equal(t, out.locIsNull, res[i].LocIsNull())
+				require.Equal(t, out.maskLen, res[i].MaskLen())
+				require.Equal(t, out.locIsNull, res[i].LocIsNull())
 
 				if !out.locIsNull {
-					assert.Equal(t, out.locID, res[i].LocID())
+					require.Equal(t, out.locID, res[i].LocID())
 				}
 			}
 		})
@@ -822,22 +822,22 @@ func TestAddSingleLocation(t *testing.T) {
 			r := NewRearranger(1) // we expect just one location
 			err := r.AddLocation(strToNet(t, tc.network), tc.locID)
 
-			assert.Nil(t, err)
+			require.Nil(t, err)
 
-			assert.Equal(t, 2, len(r.points))
+			require.Equal(t, 2, len(r.points))
 
 			// the first RangePoint is the start of the range, has IP address of the beginning of this network, and known location
 			assertEqual(t, net.ParseIP(tc.startIP), r.points[0].To16())
-			assert.Equal(t, tc.locID, r.points[0].LocID())
-			assert.False(t, r.points[0].LocIsNull())
-			assert.Equal(t, tc.startPointKind, r.points[0].pointKind)
-			assert.Equal(t, tc.maskLen, r.points[0].MaskLen())
+			require.Equal(t, tc.locID, r.points[0].LocID())
+			require.False(t, r.points[0].LocIsNull())
+			require.Equal(t, tc.startPointKind, r.points[0].pointKind)
+			require.Equal(t, tc.maskLen, r.points[0].MaskLen())
 
 			// the second RangePoint is end of the range, and has IP address that follows this network (last IP address of this network + 1),
 			// the location is not known yet
 			assertEqual(t, net.ParseIP(tc.nextIP), r.points[1].To16())
-			assert.Equal(t, tc.nextPointKind, r.points[1].pointKind)
-			assert.Equal(t, tc.maskLen, r.points[0].MaskLen())
+			require.Equal(t, tc.nextPointKind, r.points[1].pointKind)
+			require.Equal(t, tc.maskLen, r.points[0].MaskLen())
 		})
 	}
 }
@@ -868,8 +868,8 @@ func TestInvalidLocation(t *testing.T) {
 			r := NewRearranger(1) // we expect just one location
 			err := r.AddLocation(strToNet(t, tc.network), tc.locID)
 
-			assert.NotNil(t, err)
-			assert.ErrorIs(t, err, ErrInvalidLocation)
+			require.NotNil(t, err)
+			require.ErrorIs(t, err, ErrInvalidLocation)
 		})
 	}
 }
@@ -1013,7 +1013,7 @@ func TestIPIncrementByOne(t *testing.T) {
 }
 
 func assertEqual(t *testing.T, expected net.IP, actual IPv6) {
-	assert.Equal(t, []byte(expected), actual[:])
+	require.Equal(t, []byte(expected), actual[:])
 }
 
 func BenchmarkRearranger(b *testing.B) {

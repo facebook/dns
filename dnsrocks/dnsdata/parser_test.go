@@ -19,7 +19,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 )
@@ -136,7 +135,7 @@ func TestParseLinearBroken(t *testing.T) {
 	)
 	r := bytes.NewReader(dataset)
 	_, err := Parse(r, &Codec{Serial: testSerial}, 1)
-	assert.NotNil(t, err, "must err on bad input")
+	require.NotNil(t, err, "must err on bad input")
 }
 
 func TestParseLinear(t *testing.T) {
@@ -145,7 +144,7 @@ func TestParseLinear(t *testing.T) {
 	results, err := Parse(r, &Codec{Serial: testSerial}, 1)
 	require.Nil(t, err)
 	expected := getExpected(false)
-	assert.Equal(t, expected, results, "data correctly parsed")
+	require.Equal(t, expected, results, "data correctly parsed")
 }
 
 func TestParseLinearV2(t *testing.T) {
@@ -156,7 +155,7 @@ func TestParseLinearV2(t *testing.T) {
 	results, err := Parse(r, codec, 1)
 	require.Nil(t, err)
 	expected := getExpected(true)
-	assert.Equal(t, expected, results, "data correctly parsed")
+	require.Equal(t, expected, results, "data correctly parsed")
 }
 
 func TestParseLinearGen(t *testing.T) {
@@ -164,7 +163,7 @@ func TestParseLinearGen(t *testing.T) {
 	r := bytes.NewReader(dataset)
 	results, err := Parse(r, &Codec{Serial: testSerial}, 1)
 	require.Nil(t, err)
-	assert.Equal(t, expected, results, "data correctly parsed")
+	require.Equal(t, expected, results, "data correctly parsed")
 }
 
 func TestParseParallelBroken(t *testing.T) {
@@ -173,7 +172,7 @@ func TestParseParallelBroken(t *testing.T) {
 	)
 	r := bytes.NewReader(dataset)
 	_, err := Parse(r, &Codec{Serial: testSerial}, 0)
-	assert.NotNil(t, err, "must err on bad input")
+	require.NotNil(t, err, "must err on bad input")
 }
 
 func TestParseParallelBrokenTricky(t *testing.T) {
@@ -187,7 +186,7 @@ func TestParseParallelBrokenTricky(t *testing.T) {
 	// with just 2 workers and lots of broken records we would hang
 	// if file reading was blocking
 	_, err := Parse(r, &Codec{Serial: testSerial}, 2)
-	assert.NotNil(t, err, "must err on bad input")
+	require.NotNil(t, err, "must err on bad input")
 }
 
 func TestParseParallel(t *testing.T) {
@@ -196,7 +195,7 @@ func TestParseParallel(t *testing.T) {
 	results, err := Parse(r, &Codec{Serial: testSerial}, 0)
 	require.Nil(t, err)
 	expected := getExpected(false)
-	assert.ElementsMatch(t, expected, results, "data correctly parsed")
+	require.ElementsMatch(t, expected, results, "data correctly parsed")
 }
 
 func TestParseParallelV2(t *testing.T) {
@@ -207,7 +206,7 @@ func TestParseParallelV2(t *testing.T) {
 	results, err := Parse(r, codec, 0)
 	require.Nil(t, err)
 	expected := getExpected(true)
-	assert.ElementsMatch(t, expected, results, "data correctly parsed")
+	require.ElementsMatch(t, expected, results, "data correctly parsed")
 }
 
 func TestParseParallelGen(t *testing.T) {
@@ -215,7 +214,7 @@ func TestParseParallelGen(t *testing.T) {
 	r := bytes.NewReader(dataset)
 	results, err := Parse(r, &Codec{Serial: testSerial}, 0)
 	require.Nil(t, err)
-	assert.ElementsMatch(t, expected, results, "data correctly parsed")
+	require.ElementsMatch(t, expected, results, "data correctly parsed")
 }
 
 func TestParseRecordsLinear(t *testing.T) {
@@ -228,7 +227,7 @@ func TestParseRecordsLinear(t *testing.T) {
 	results, err := parseRecords(r, &Codec{Serial: testSerial}, 1)
 	require.Nil(t, err)
 
-	assert.Equal(t, 3, len(results), "unexpected number of results")
+	require.Equal(t, 3, len(results), "unexpected number of results")
 }
 
 func parseRecords(r io.Reader, codec *Codec, workers int) ([]Record, error) {

@@ -18,7 +18,7 @@ import (
 	"testing"
 
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/facebookincubator/dns/dnsrocks/testaid"
 )
@@ -38,15 +38,15 @@ func BenchmarkGetNs(b *testing.B) {
 
 	for _, config := range testaid.TestDBs {
 		db, err = Open(config.Path, config.Driver)
-		assert.Nilf(b, err, "Could not open fixture database")
+		require.Nilf(b, err, "Could not open fixture database")
 		r, err := NewReader(db)
-		assert.Nilf(b, err, "Could not acquire new reader")
+		require.Nilf(b, err, "Could not acquire new reader")
 
 		for _, bm := range benchmarks {
 			b.Run(fmt.Sprintf("%s/%s", config.Driver, bm), func(b *testing.B) {
 				for n := 0; n < b.N; n++ {
 					offset, err := dns.PackDomainName(bm, packedQName, 0, nil, false)
-					assert.Nilf(b, err, "Could not pack domain %s", bm)
+					require.Nilf(b, err, "Could not pack domain %s", bm)
 					_, err = GetNs(r, packedQName[:offset], bm, dns.ClassINET, loc)
 					if err != nil {
 						b.Fatalf("%v", err)
@@ -97,17 +97,17 @@ func TestGetNs(t *testing.T) {
 
 	for _, config := range testaid.TestDBs {
 		db, err = Open(config.Path, config.Driver)
-		assert.Nilf(t, err, "Could not open fixture database")
+		require.Nilf(t, err, "Could not open fixture database")
 		r, err := NewReader(db)
-		assert.Nilf(t, err, "Could not acquire new reader")
+		require.Nilf(t, err, "Could not acquire new reader")
 
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("%s/%v", config.Driver, tc), func(t *testing.T) {
 				offset, err := dns.PackDomainName(tc.qname, q, 0, nil, false)
-				assert.Nilf(t, err, "Failed at packing domain %s: %v", tc.qname)
+				require.Nilf(t, err, "Failed at packing domain %s: %v", tc.qname)
 				rrs, err := GetNs(r, q[:offset], tc.qname, dns.ClassINET, &tc.location)
-				assert.Nil(t, err)
-				assert.Equal(t, tc.expectedCount, len(rrs))
+				require.Nil(t, err)
+				require.Equal(t, tc.expectedCount, len(rrs))
 			})
 		}
 	}

@@ -18,7 +18,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRDBkvSort(t *testing.T) {
@@ -35,7 +35,7 @@ func TestRDBkvSort(t *testing.T) {
 		{key: []byte{2}},
 	}
 	kvBefore.Sort()
-	assert.Equal(t, kvAfter, kvBefore)
+	require.Equal(t, kvAfter, kvBefore)
 }
 
 func TestRDBappendValues(t *testing.T) {
@@ -85,7 +85,7 @@ func TestRDBappendValues(t *testing.T) {
 	}
 	for i := 0; i < len(testCases); i++ {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			assert.Equal(
+			require.Equal(
 				t,
 				testCases[i].dataAfter,
 				appendValues(testCases[i].dataBefore, testCases[i].newVals),
@@ -162,8 +162,8 @@ func TestRDBdelValues(t *testing.T) {
 	for i := 0; i < len(testCases); i++ {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			after, err := delValue(testCases[i].dataBefore, testCases[i].delVal)
-			assert.Equal(t, testCases[i].dataAfter, after)
-			assert.Equal(t, testCases[i].expectedErr, err)
+			require.Equal(t, testCases[i].dataAfter, after)
+			require.Equal(t, testCases[i].expectedErr, err)
 		})
 	}
 }

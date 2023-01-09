@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
 	"github.com/facebookincubator/dns/dnsrocks/dnsserver/stats"
@@ -72,7 +72,7 @@ func makeTestServer(t *testing.T, config ServerConfig) (map[string]string, *Serv
 	}
 
 	srv.NotifyStartedFunc = onUp
-	assert.Nil(t, srv.Start(), "Failed to start servers!")
+	require.Nil(t, srv.Start(), "Failed to start servers!")
 
 	for i := numServers; i > 0; i-- {
 		<-serverUpChan
@@ -121,8 +121,8 @@ func RunUDPTLSTestServer(t *testing.T) (map[string]string, *Server) {
 func TestRunUDPTestServer(t *testing.T) {
 	portMap, srv := RunUDPTestServer(t)
 	defer srv.Shutdown()
-	assert.Len(t, portMap, 1)
-	assert.Contains(t, portMap, "udp")
+	require.Len(t, portMap, 1)
+	require.Contains(t, portMap, "udp")
 }
 
 // TestRunUDPTCPTestServer simple test to ensure that we create a TCP server.
@@ -130,9 +130,9 @@ func TestRunUDPTestServer(t *testing.T) {
 func TestRunUDPTCPTestServer(t *testing.T) {
 	portMap, srv := RunUDPTCPTestServer(t)
 	defer srv.Shutdown()
-	assert.Len(t, portMap, 2)
-	assert.Contains(t, portMap, "udp")
-	assert.Contains(t, portMap, "tcp")
+	require.Len(t, portMap, 2)
+	require.Contains(t, portMap, "udp")
+	require.Contains(t, portMap, "tcp")
 }
 
 // TestRunUDPTLSTestServer simple test to ensure that we create a TCP server.
@@ -140,9 +140,9 @@ func TestRunUDPTCPTestServer(t *testing.T) {
 func TestRunUDPTLSTestServer(t *testing.T) {
 	portMap, srv := RunUDPTLSTestServer(t)
 	defer srv.Shutdown()
-	assert.Len(t, portMap, 2)
-	assert.Contains(t, portMap, "udp")
-	assert.Contains(t, portMap, "tcp-tls")
+	require.Len(t, portMap, 2)
+	require.Contains(t, portMap, "udp")
+	require.Contains(t, portMap, "tcp-tls")
 }
 
 // TestUDPDNSServerWithQueries creates a standalone UDP server and test a
@@ -170,11 +170,11 @@ func TestUDPDNSServerWithQueries(t *testing.T) {
 			m := new(dns.Msg)
 			m.SetQuestion(tc.qname, dns.TypeA)
 			r, _, err := c.Exchange(m, portMap["udp"])
-			assert.Nil(t, err)
-			assert.NotEqual(t, 0, len(r.Answer))
+			require.Nil(t, err)
+			require.NotEqual(t, 0, len(r.Answer))
 
 			cname := r.Answer[0].(*dns.CNAME).Target
-			assert.Equal(t, tc.target, cname)
+			require.Equal(t, tc.target, cname)
 		})
 	}
 }
@@ -197,13 +197,13 @@ func TestUDPDNSServerQueryMultipleQuestions(t *testing.T) {
 		dns.Question{Name: qname, Qtype: dns.TypeAAAA, Qclass: dns.ClassINET},
 	)
 	r, _, err := c.Exchange(m, portMap["udp"])
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	// We expect a FORMERR and nothing in question or answer section (and anything
 	// else for that matter).
-	assert.Equal(t, r.Rcode, dns.RcodeFormatError)
-	assert.Equal(t, 0, len(r.Question))
-	assert.Equal(t, 0, len(r.Answer))
+	require.Equal(t, r.Rcode, dns.RcodeFormatError)
+	require.Equal(t, 0, len(r.Question))
+	require.Equal(t, 0, len(r.Answer))
 }
 
 // TestTCPDNSServerWithQueries creates a standalone TCP server and test a
@@ -232,11 +232,11 @@ func TestTCPDNSServerWithQueries(t *testing.T) {
 			m := new(dns.Msg)
 			m.SetQuestion(tc.qname, dns.TypeA)
 			r, _, err := c.Exchange(m, portMap["tcp"])
-			assert.Nil(t, err)
-			assert.NotEqual(t, 0, len(r.Answer))
+			require.Nil(t, err)
+			require.NotEqual(t, 0, len(r.Answer))
 
 			cname := r.Answer[0].(*dns.CNAME).Target
-			assert.Equal(t, tc.target, cname)
+			require.Equal(t, tc.target, cname)
 		})
 	}
 }
@@ -270,11 +270,11 @@ func TestTLSDNSServerWithQueries(t *testing.T) {
 			m := new(dns.Msg)
 			m.SetQuestion(tc.qname, dns.TypeA)
 			r, _, err := c.Exchange(m, portMap["tcp-tls"])
-			assert.Nil(t, err)
-			assert.NotEqual(t, 0, len(r.Answer))
+			require.Nil(t, err)
+			require.NotEqual(t, 0, len(r.Answer))
 
 			cname := r.Answer[0].(*dns.CNAME).Target
-			assert.Equal(t, tc.target, cname)
+			require.Equal(t, tc.target, cname)
 		})
 	}
 }
@@ -296,15 +296,15 @@ func exchange(t *testing.T, co *dns.Conn, c *dns.Client, m *dns.Msg) (r *dns.Msg
 
 	// write with the appropriate write timeout
 	err := co.SetWriteDeadline(time.Now().Add(2 * time.Second))
-	assert.NoError(t, err, "Error setting write deadline")
+	require.NoError(t, err, "Error setting write deadline")
 	err = co.WriteMsg(m)
-	assert.Nil(t, err, "Error writing message")
+	require.Nil(t, err, "Error writing message")
 
 	err = co.SetReadDeadline(time.Now().Add(2 * time.Second))
-	assert.NoError(t, err, "Error setting Read Deadline")
+	require.NoError(t, err, "Error setting Read Deadline")
 	r, err = co.ReadMsg()
-	assert.Nil(t, err, "Error reading message")
-	assert.Equal(t, m.Id, r.Id, "Response message does not have the same ID")
+	require.Nil(t, err, "Error reading message")
+	require.Equal(t, m.Id, r.Id, "Response message does not have the same ID")
 
 	return r
 }
@@ -331,22 +331,22 @@ func TestTCPTimeout(t *testing.T) {
 	// Create connection
 	var co *dns.Conn
 	co, err := c.Dial(portMap["tcp"])
-	assert.Nil(t, err, "Error connecting to server")
+	require.Nil(t, err, "Error connecting to server")
 	defer co.Close()
 
 	// First request, which is using ReadTimeout
 	r := exchange(t, co, c, m)
-	assert.Equal(t, r.Question[0].Name, "example.com.", "Mismatching question")
+	require.Equal(t, r.Question[0].Name, "example.com.", "Mismatching question")
 	time.Sleep(config.TCPIdleTimeout + 1)
 
 	// Now we are going to read something and expect to get EOF before the
 	// timeout occurs.
 	one := make([]byte, 1)
 	err = co.SetReadDeadline(time.Now().Add(1 * time.Second))
-	assert.NoError(t, err, "Error setting Read Deadline")
+	require.NoError(t, err, "Error setting Read Deadline")
 
 	_, err = co.Read(one)
-	assert.Equal(t, io.EOF, err, "Connection was expected to be closed by server")
+	require.Equal(t, io.EOF, err, "Connection was expected to be closed by server")
 }
 
 // TestMultipleQueryoverTCP confirm that we can send multiple queries over the
@@ -369,12 +369,12 @@ func TestMultipleQueryoverTCP(t *testing.T) {
 	// Create connection
 	var co *dns.Conn
 	co, err := c.Dial(portMap["tcp"])
-	assert.Nil(t, err, "Error connecting to server")
+	require.Nil(t, err, "Error connecting to server")
 	defer co.Close()
 
 	for _, m := range msgs {
 		r := exchange(t, co, c, m)
-		assert.Equal(t, m.Question[0].Name, r.Question[0].Name, "Mismatching question name")
-		assert.Equal(t, m.Question[0].Qtype, r.Question[0].Qtype, "Mismatching question type")
+		require.Equal(t, m.Question[0].Name, r.Question[0].Name, "Mismatching question name")
+		require.Equal(t, m.Question[0].Qtype, r.Question[0].Qtype, "Mismatching question type")
 	}
 }

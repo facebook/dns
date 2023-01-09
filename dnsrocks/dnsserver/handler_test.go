@@ -25,7 +25,6 @@ import (
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/miekg/dns"
 	newCopy "github.com/otiai10/copy"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/facebookincubator/dns/dnsrocks/db"
@@ -54,7 +53,7 @@ func OpenDbForTesting(t *testing.T, db *testaid.TestDB) (th *FBDNSDB) {
 }
 
 // RRSliceMatch matches the RR in a slice with specific order.
-func RRSliceMatch(t *testing.T, expected, actual []dns.RR) bool {
+func RRSliceMatch(t *testing.T, expected, actual []dns.RR) {
 	a := make([]string, 8)
 	b := make([]string, 8)
 	for _, x := range expected {
@@ -63,11 +62,11 @@ func RRSliceMatch(t *testing.T, expected, actual []dns.RR) bool {
 	for _, x := range actual {
 		b = append(b, x.String())
 	}
-	return assert.Equal(t, a, b)
+	require.Equal(t, a, b)
 }
 
 // RRSliceMatchNoOrder matches the RR in a slice without specific order.
-func RRSliceMatchNoOrder(t *testing.T, expected, actual []dns.RR) bool {
+func RRSliceMatchNoOrder(t *testing.T, expected, actual []dns.RR) {
 	a := make([]string, 8)
 	b := make([]string, 8)
 	for _, x := range expected {
@@ -76,7 +75,7 @@ func RRSliceMatchNoOrder(t *testing.T, expected, actual []dns.RR) bool {
 	for _, x := range actual {
 		b = append(b, x.String())
 	}
-	return assert.ElementsMatch(t, a, b)
+	require.ElementsMatch(t, a, b)
 }
 
 func CreateTestContext(maxAnswer int) context.Context {
@@ -94,15 +93,15 @@ func TestFBDNSDBBadPathDontWrite(t *testing.T) {
 	// Force the DB creation
 	th, _ := NewFBDNSDB(handlerConfig, dbConfig, cacheConfig, &TextLogger{IoWriter: os.Stdout}, &stats.DummyStats{})
 	err := th.Load()
-	assert.Error(t, err)
+	require.Error(t, err)
 	w := &test.ResponseWriter{}
 	req := new(dns.Msg)
 	req.SetQuestion(dns.Fqdn("example.com."), dns.TypeA)
 	rec := dnstest.NewRecorder(w)
 	ctx := CreateTestContext(1)
 	code, _ := th.ServeDNSWithRCODE(ctx, rec, req)
-	assert.Equal(t, dns.RcodeServerFailure, code, "RcodeServerFailure was expected to be returned.")
-	assert.False(t, w.GetWriteMsgCallCount() > 0, "WriteMsg was called")
+	require.Equal(t, dns.RcodeServerFailure, code, "RcodeServerFailure was expected to be returned.")
+	require.False(t, w.GetWriteMsgCallCount() > 0, "WriteMsg was called")
 }
 
 // TestFBDNSDBBadDBDontWrite confirms that when the CDB is bad, we don't
@@ -116,9 +115,9 @@ func TestFBDNSDBBadDBDontWrite(t *testing.T) {
 	rec := dnstest.NewRecorder(w)
 	ctx := CreateTestContext(1)
 	code, err := th.ServeDNSWithRCODE(ctx, rec, req)
-	assert.Nil(t, err)
-	assert.Equal(t, dns.RcodeServerFailure, code, "RcodeServerFailure was expected to be returned")
-	assert.False(t, w.GetWriteMsgCallCount() > 0, "WriteMsg was called")
+	require.Nil(t, err)
+	require.Equal(t, dns.RcodeServerFailure, code, "RcodeServerFailure was expected to be returned")
+	require.False(t, w.GetWriteMsgCallCount() > 0, "WriteMsg was called")
 }
 
 // TestDNSDBOldFindLocation checks locations
@@ -174,7 +173,7 @@ func testAnyDBOldFindLocation(t *testing.T) {
 				if tc.ecs != "" {
 					o, err := MakeOPTWithECS(tc.ecs)
 
-					assert.Nilf(t, err, "failed to generate ECS option for %s", tc.ecs)
+					require.Nilf(t, err, "failed to generate ECS option for %s", tc.ecs)
 					req.Extra = []dns.RR{o}
 				}
 
@@ -182,15 +181,13 @@ func testAnyDBOldFindLocation(t *testing.T) {
 				ctx := CreateTestContext(1)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equalf(t, tc.expectedErr, err, "test %d unexpected error", i)
-				assert.Equalf(t, tc.expectedCode, code, "test %d unexpected code", i)
-				if !assert.Equalf(t, len(tc.expectedReply), len(rec.Msg.Answer), "test %d wrong replies length", i) {
-					t.Fatal("response too short:", len(rec.Msg.Answer), "instead of", len(tc.expectedReply))
-				}
+				require.Equalf(t, tc.expectedErr, err, "test %d unexpected error", i)
+				require.Equalf(t, tc.expectedCode, code, "test %d unexpected code", i)
+				require.Equalf(t, len(tc.expectedReply), len(rec.Msg.Answer), "test %d wrong replies length", i)
 
 				for i, expected := range tc.expectedReply {
 					actual := rec.Msg.Answer[i].(*dns.CNAME).Target
-					assert.Equalf(t, expected, actual, "test %d unexpected answer", i)
+					require.Equalf(t, expected, actual, "test %d unexpected answer", i)
 				}
 			})
 		}
@@ -338,12 +335,12 @@ func TestDNSDBRoundRobinRecord(t *testing.T) {
 				rec := dnstest.NewRecorder(&test.ResponseWriter{})
 				ctx := CreateTestContext(1)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
-				assert.Equal(t, dns.RcodeSuccess, code)
-				assert.Nil(t, err)
-				assert.Equal(t, 1, len(rec.Msg.Answer), "expected exactly 1 record")
+				require.Equal(t, dns.RcodeSuccess, code)
+				require.Nil(t, err)
+				require.Equal(t, 1, len(rec.Msg.Answer), "expected exactly 1 record")
 
-				assert.Equal(t, 0, len(rec.Msg.Ns))
-				assert.Equal(t, 0, len(rec.Msg.Extra))
+				require.Equal(t, 0, len(rec.Msg.Ns))
+				require.Equal(t, 0, len(rec.Msg.Extra))
 			})
 		}
 	}
@@ -446,9 +443,9 @@ func TestDNSDBMultipleQuestions(t *testing.T) {
 				rec := dnstest.NewRecorder(&test.ResponseWriterCustomRemote{})
 				ctx := CreateTestContext(1)
 				code, _ := th.ServeDNSWithRCODE(ctx, rec, req)
-				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
-				if assert.NotNil(t, rec.Msg) {
-					assert.Equal(t, tc.expectedQuestion, rec.Msg.Question)
+				require.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
+				if rec.Msg != nil {
+					require.Equal(t, tc.expectedQuestion, rec.Msg.Question)
 					RRSliceMatch(t, tc.expectedAnswer, rec.Msg.Answer)
 				}
 			})
@@ -559,11 +556,11 @@ func TestDNSDBMultipleAnswers1(t *testing.T) {
 				ctx := CreateTestContext(8)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
-				assert.Equal(t, err, tc.expectedErr)
-				assert.NotNil(t, rec.Msg)
-				assert.NotNil(t, rec.Msg.Answer)
-				assert.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "expected answer length %d", tc.expectedCode)
+				require.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
+				require.Equal(t, err, tc.expectedErr)
+				require.NotNil(t, rec.Msg)
+				require.NotNil(t, rec.Msg.Answer)
+				require.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "expected answer length %d", tc.expectedCode)
 				RRSliceMatchNoOrder(t, tc.expectedAnswer, rec.Msg.Answer)
 				RRSliceMatch(t, tc.expectedAuth, rec.Msg.Ns)
 				RRSliceMatch(t, tc.expectedExtra, rec.Msg.Extra)
@@ -613,11 +610,11 @@ func TestDNSDBMultipleAnswers2(t *testing.T) {
 				ctx := CreateTestContext(2)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
-				assert.Equal(t, err, tc.expectedErr)
-				assert.NotNil(t, rec.Msg)
-				assert.NotNil(t, rec.Msg.Answer)
-				assert.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "expected answer length %d", tc.expectedCode)
+				require.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
+				require.Equal(t, err, tc.expectedErr)
+				require.NotNil(t, rec.Msg)
+				require.NotNil(t, rec.Msg.Answer)
+				require.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "expected answer length %d", tc.expectedCode)
 				RRSliceMatch(t, tc.expectedAuth, rec.Msg.Ns)
 				RRSliceMatch(t, tc.expectedExtra, rec.Msg.Extra)
 			})
@@ -665,11 +662,11 @@ func TestDNSDBWithoutContextOfMaxAnswer(t *testing.T) {
 
 				code, err := th.ServeDNSWithRCODE(context.TODO(), rec, req)
 
-				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
-				assert.Equal(t, err, tc.expectedErr)
-				assert.NotNil(t, rec.Msg)
-				assert.NotNil(t, rec.Msg.Answer)
-				assert.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "expected answer length %d", tc.expectedCode)
+				require.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
+				require.Equal(t, err, tc.expectedErr)
+				require.NotNil(t, rec.Msg)
+				require.NotNil(t, rec.Msg.Answer)
+				require.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "expected answer length %d", tc.expectedCode)
 				RRSliceMatch(t, tc.expectedAuth, rec.Msg.Ns)
 				RRSliceMatch(t, tc.expectedExtra, rec.Msg.Extra)
 			})
@@ -767,11 +764,11 @@ func TestDNSDBForHTTPSRecord(t *testing.T) {
 				// context TODO does not provide value to limit or specify max answers
 				code, err := th.ServeDNSWithRCODE(context.TODO(), rec, req)
 
-				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
-				assert.Equal(t, err, tc.expectedErr)
-				assert.NotNil(t, rec.Msg)
-				assert.NotNil(t, rec.Msg.Answer)
-				assert.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "expected answer length %d", tc.answerListLength)
+				require.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
+				require.Equal(t, err, tc.expectedErr)
+				require.NotNil(t, rec.Msg)
+				require.NotNil(t, rec.Msg.Answer)
+				require.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "expected answer length %d", tc.answerListLength)
 				RRSliceMatch(t, tc.expectedAuth, rec.Msg.Ns)
 				RRSliceMatch(t, tc.expectedExtra, rec.Msg.Extra)
 				RRSliceMatchNoOrder(t, tc.expectedAnswer, rec.Msg.Answer)
@@ -903,11 +900,11 @@ func TestResolverBasedResponse(t *testing.T) {
 				rec := dnstest.NewRecorder(&test.ResponseWriterCustomRemote{RemoteIP: tc.resolver})
 				ctx := CreateTestContext(1)
 				code, _ := th.ServeDNSWithRCODE(ctx, rec, req)
-				assert.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
+				require.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
 
 				if tc.expectedAnswer != nil {
-					assert.NotNil(t, rec.Msg)
-					assert.NotNil(t, rec.Msg.Answer)
+					require.NotNil(t, rec.Msg)
+					require.NotNil(t, rec.Msg.Answer)
 					RRSliceMatch(t, tc.expectedAnswer, rec.Msg.Answer)
 				}
 			})
@@ -1445,15 +1442,15 @@ func TestDNSDB(t *testing.T) {
 				if tc.ecs != "" {
 					o, err := MakeOPTWithECS(tc.ecs)
 
-					assert.Nilf(t, err, "failed to generate ECS option for %s", tc.ecs)
+					require.Nilf(t, err, "failed to generate ECS option for %s", tc.ecs)
 					req.Extra = append(req.Extra, []dns.RR{o}...)
 				}
 				rec := dnstest.NewRecorder(&test.ResponseWriter{})
 				ctx := CreateTestContext(1)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equal(t, tc.expectedErr, err)
-				assert.Equal(t, tc.expectedCode, code)
+				require.Equal(t, tc.expectedErr, err)
+				require.Equal(t, tc.expectedCode, code)
 
 				if tc.expectedAnswer != nil {
 					if len(tc.expectedAnswer) != 0 {
@@ -1493,7 +1490,7 @@ func TestTypeToStatsKey(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
-			assert.Equal(t, tc.keyName, typeToStatsKey(tc.qType))
+			require.Equal(t, tc.keyName, typeToStatsKey(tc.qType))
 		})
 	}
 }
@@ -1516,29 +1513,29 @@ func TestEDNSComplianceUnknownVersion(t *testing.T) {
 			ctx := CreateTestContext(1)
 			code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-			assert.Nil(t, err)
+			require.Nil(t, err)
 
 			// First pass, check extended rcode is not set....
 			opt := rec.Msg.IsEdns0()
-			assert.NotNil(t, opt)
-			assert.Equal(t, int(opt.Hdr.Ttl&0xFF000000>>24)<<4, 0)
+			require.NotNil(t, opt)
+			require.Equal(t, int(opt.Hdr.Ttl&0xFF000000>>24)<<4, 0)
 
 			// Pack... to force actually setting the extended code. This is lame, but
 			// SetExtendedRcode() gets called upon calling Pack()... which is not called
 			// within the unittests.
 			_, err = rec.Msg.Pack()
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			// Second pass, this time it should be set.
 			opt = rec.Msg.IsEdns0()
-			assert.NotNil(t, opt)
-			assert.Equal(t, int(opt.Hdr.Ttl&0xFF000000>>24)<<4, dns.RcodeBadVers&0xFFFFFFF0)
+			require.NotNil(t, opt)
+			require.Equal(t, int(opt.Hdr.Ttl&0xFF000000>>24)<<4, dns.RcodeBadVers&0xFFFFFFF0)
 
-			assert.Equalf(t, dns.RcodeBadVers, code, "Expected BADVERS/BADSIG, got %s", dns.RcodeToString[code])
+			require.Equalf(t, dns.RcodeBadVers, code, "Expected BADVERS/BADSIG, got %s", dns.RcodeToString[code])
 			o = rec.Msg.IsEdns0()
-			assert.Equalf(t, uint8(0), o.Version(), "Expected EDNS0 version to be set to 0, got %d", o.Version())
+			require.Equalf(t, uint8(0), o.Version(), "Expected EDNS0 version to be set to 0, got %d", o.Version())
 
-			assert.Equalf(t, 0, len(rec.Msg.Answer), "Expected no answer set. Got %v", rec.Msg.Answer)
+			require.Equalf(t, 0, len(rec.Msg.Answer), "Expected no answer set. Got %v", rec.Msg.Answer)
 		})
 	}
 }
@@ -1570,7 +1567,7 @@ func TestPackExtendedBadCookie(t *testing.T) {
 		t.Errorf("ExtendedRcode is expected to not be BADCOOKIE before Pack")
 	}
 	_, err := a.Pack()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	edns0 = a.IsEdns0()
 	if edns0 == nil {
 		t.Fatal("Expected OPT RR")
@@ -1625,11 +1622,11 @@ func TestEDNSComplianceUnknownOption(t *testing.T) {
 				req.Extra = []dns.RR{o}
 				ctx := CreateTestContext(1)
 				code, _ := th.ServeDNSWithRCODE(ctx, rec, req)
-				assert.Equalf(t, tc.expectedRcode, code, "Wrong RCODE, got %s, expected %s", dns.RcodeToString[code], dns.RcodeToString[tc.expectedRcode])
+				require.Equalf(t, tc.expectedRcode, code, "Wrong RCODE, got %s, expected %s", dns.RcodeToString[code], dns.RcodeToString[tc.expectedRcode])
 				o = rec.Msg.IsEdns0()
-				assert.Equal(t, tc.expectedEDNSVersion, o.Version(), "Wrong EDNS0 version")
-				assert.Equalf(t, tc.optionListLength, len(o.Option), "Wrong EDNS option list size. got: %v", o.Option)
-				assert.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "Expected no answer set. Got %v", rec.Msg.Answer)
+				require.Equal(t, tc.expectedEDNSVersion, o.Version(), "Wrong EDNS0 version")
+				require.Equalf(t, tc.optionListLength, len(o.Option), "Wrong EDNS option list size. got: %v", o.Option)
+				require.Equalf(t, tc.answerListLength, len(rec.Msg.Answer), "Expected no answer set. Got %v", rec.Msg.Answer)
 			})
 		}
 	}
@@ -1642,10 +1639,10 @@ func createFBDNSDBWithCache(t *testing.T, counters stats.Stats) (th *FBDNSDB) {
 	handlerConfig := HandlerConfig{}
 
 	th, err := NewFBDNSDB(handlerConfig, dbConfig, cacheConfig, &TextLogger{IoWriter: os.Stdout}, counters)
-	assert.Nil(t, err, "Failed to initialize CDB")
+	require.Nil(t, err, "Failed to initialize CDB")
 
 	err = th.Load()
-	assert.Nil(t, err, "Failed to load CDB")
+	require.Nil(t, err, "Failed to load CDB")
 	return
 }
 
@@ -1654,7 +1651,7 @@ func createFBDNSDBWithCache(t *testing.T, counters stats.Stats) (th *FBDNSDB) {
 func TestHandlerCache(t *testing.T) {
 	ctr := stats.NewCounters()
 	th := createFBDNSDBWithCache(t, ctr)
-	assert.NotZero(t, ctr["DNS_db.reload"])
+	require.NotZero(t, ctr["DNS_db.reload"])
 
 	iterations := 10
 
@@ -1673,19 +1670,19 @@ func TestHandlerCache(t *testing.T) {
 		req.SetQuestion(dns.Fqdn("www.example.com."), dns.TypeA)
 		ctx := CreateTestContext(1)
 		rcode, err := th.ServeDNSWithRCODE(ctx, rec, req)
-		assert.NoError(t, err)
-		assert.Equal(t, rcode, dns.RcodeSuccess)
+		require.NoError(t, err)
+		require.Equal(t, rcode, dns.RcodeSuccess)
 
-		assert.NotZero(t, ctr["DNS_queries"])
-		assert.NotZero(t, ctr["DNS_query.A"])
-		assert.Zero(t, ctr["DNS_location.resolver"])
-		assert.NotZero(t, ctr["DNS_location.empty"])
+		require.NotZero(t, ctr["DNS_queries"])
+		require.NotZero(t, ctr["DNS_query.A"])
+		require.Zero(t, ctr["DNS_location.resolver"])
+		require.NotZero(t, ctr["DNS_location.empty"])
 		if i == 0 {
 			// First query is a miss and we perform the resolution
-			assert.NotZero(t, ctr["DNS_cache.missed"])
-			assert.NotZero(t, ctr["DNS_response.authoritative"])
+			require.NotZero(t, ctr["DNS_cache.missed"])
+			require.NotZero(t, ctr["DNS_response.authoritative"])
 		} else {
-			assert.NotZero(t, ctr["DNS_cache.hit"])
+			require.NotZero(t, ctr["DNS_cache.hit"])
 		}
 	}
 }
@@ -1695,7 +1692,7 @@ func TestHandlerCache(t *testing.T) {
 func TestHandlerNoCache(t *testing.T) {
 	ctr := stats.NewCounters()
 	th := createFBDNSDBWithCache(t, ctr)
-	assert.NotZero(t, ctr["DNS_db.reload"])
+	require.NotZero(t, ctr["DNS_db.reload"])
 	// disable cache
 	th.cacheConfig.Enabled = false
 	iterations := 10
@@ -1713,15 +1710,15 @@ func TestHandlerNoCache(t *testing.T) {
 		req.SetQuestion(dns.Fqdn("www.example.com."), dns.TypeA)
 		ctx := CreateTestContext(1)
 		rcode, err := th.ServeDNSWithRCODE(ctx, rec, req)
-		assert.Equal(t, rcode, dns.RcodeSuccess)
-		assert.NoError(t, err)
+		require.Equal(t, rcode, dns.RcodeSuccess)
+		require.NoError(t, err)
 
-		assert.NotZero(t, ctr["DNS_queries"])
-		assert.NotZero(t, ctr["DNS_query.A"])
-		assert.Zero(t, ctr["DNS_location.resolver"])
-		assert.NotZero(t, ctr["DNS_location.empty"])
-		assert.NotZero(t, ctr["DNS_response.authoritative"])
-		assert.Zero(t, ctr["DNS_cache.hit"])
+		require.NotZero(t, ctr["DNS_queries"])
+		require.NotZero(t, ctr["DNS_query.A"])
+		require.Zero(t, ctr["DNS_location.resolver"])
+		require.NotZero(t, ctr["DNS_location.empty"])
+		require.NotZero(t, ctr["DNS_response.authoritative"])
+		require.Zero(t, ctr["DNS_cache.hit"])
 	}
 }
 
@@ -1733,8 +1730,8 @@ func TestReloadPartial(t *testing.T) {
 	signal := NewPartialReloadSignal()
 	err := th.Reload(*signal)
 	require.Nil(t, err)
-	assert.NotZero(t, ctr["DNS_db.reload"])
-	assert.Zero(t, ctr["DNS_db.ErrReloadTimeout"])
+	require.NotZero(t, ctr["DNS_db.reload"])
+	require.Zero(t, ctr["DNS_db.ErrReloadTimeout"])
 }
 
 func TestReloadFull(t *testing.T) {
@@ -1754,8 +1751,8 @@ func TestReloadFull(t *testing.T) {
 	signal := NewFullReloadSignal(rdbDir)
 	err = th.Reload(*signal)
 	require.Nil(t, err)
-	assert.NotZero(t, ctr["DNS_db.reload"])
-	assert.Zero(t, ctr["DNS_db.ErrReloadTimeout"])
+	require.NotZero(t, ctr["DNS_db.reload"])
+	require.Zero(t, ctr["DNS_db.ErrReloadTimeout"])
 }
 
 func TestReloadFullTimeoutRDB(t *testing.T) {
@@ -1771,8 +1768,8 @@ func TestReloadFullTimeoutRDB(t *testing.T) {
 	signal := NewFullReloadSignal(rdbDir)
 	err = th.Reload(*signal)
 	require.NotNil(t, err)
-	assert.Zero(t, ctr["DNS_db.reload"])
-	assert.NotZero(t, ctr["DNS_db.ErrReloadTimeout"])
+	require.Zero(t, ctr["DNS_db.reload"])
+	require.NotZero(t, ctr["DNS_db.ErrReloadTimeout"])
 }
 
 func TestReloadFullTimeoutCDB(t *testing.T) {
@@ -1783,8 +1780,8 @@ func TestReloadFullTimeoutCDB(t *testing.T) {
 	signal := NewFullReloadSignal(testaid.TestCDBBad.Path)
 	err := th.Reload(*signal)
 	require.NotNil(t, err)
-	assert.Zero(t, ctr["DNS_db.reload"])
-	assert.NotZero(t, ctr["DNS_db.ErrReloadTimeout"])
+	require.Zero(t, ctr["DNS_db.reload"])
+	require.NotZero(t, ctr["DNS_db.ErrReloadTimeout"])
 }
 
 func TestReloadFullBroken(t *testing.T) {
@@ -1797,8 +1794,8 @@ func TestReloadFullBroken(t *testing.T) {
 	signal := NewFullReloadSignal(testaid.TestCDBBad.Path)
 	err := th.Reload(*signal)
 	require.NotNil(t, err)
-	assert.Zero(t, ctr["DNS_db.reload"])
-	assert.Zero(t, ctr["DNS_db.ErrReloadTimeout"])
+	require.Zero(t, ctr["DNS_db.reload"])
+	require.Zero(t, ctr["DNS_db.ErrReloadTimeout"])
 }
 
 func TestWatchDBAndReload(t *testing.T) {
@@ -1810,7 +1807,7 @@ func TestWatchDBAndReload(t *testing.T) {
 	require.NoError(t, err)
 	go func() {
 		err := th.watchDBAndReload(watcher)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}()
 
 	// Simulate touch of the file
@@ -1824,7 +1821,7 @@ func TestWatchDBAndReload(t *testing.T) {
 	select {
 	case reload := <-th.ReloadChan:
 		expectedSignal := *NewPartialReloadSignal()
-		assert.Equal(t, expectedSignal, reload)
+		require.Equal(t, expectedSignal, reload)
 	case <-time.After(2 * time.Second):
 		t.Errorf("Expected to receive PartialReloadSignal in ReloadChan, but did not")
 	}
@@ -1845,20 +1842,20 @@ func TestWatchControlDirAndReloadPartial(t *testing.T) {
 	require.NoError(t, err)
 	go func() {
 		err := th.watchControlDirAndReload(watcher)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}()
 
 	// Simulate touch of the file
 	time.Sleep(1 * time.Millisecond)
 	filePath := path.Join(ctlDir, ControlFilePartialReload)
 	emptyFile, err := os.Create(filePath)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	emptyFile.Close()
 
 	select {
 	case reload := <-th.ReloadChan:
 		expectedSignal := *NewPartialReloadSignal()
-		assert.Equal(t, expectedSignal, reload)
+		require.Equal(t, expectedSignal, reload)
 	case <-time.After(2 * time.Second):
 		t.Errorf("Expected to receive PartialReloadSignal in ReloadChan, but did not")
 	}
@@ -1879,7 +1876,7 @@ func TestWatchControlDirAndReloadFull(t *testing.T) {
 	require.NoError(t, err)
 	go func() {
 		err := th.watchControlDirAndReload(watcher)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}()
 	newPath, err := os.MkdirTemp("", "ctl-test-newdir")
 	if err != nil {
@@ -1900,7 +1897,7 @@ func TestWatchControlDirAndReloadFull(t *testing.T) {
 	select {
 	case reload := <-th.ReloadChan:
 		expectedSignal := *NewFullReloadSignal(newPath)
-		assert.Equal(t, expectedSignal, reload)
+		require.Equal(t, expectedSignal, reload)
 	case <-time.After(2 * time.Second):
 		t.Errorf("Expected to receive FullReloadSignal in ReloadChan, but did not")
 	}
@@ -1970,25 +1967,25 @@ func TestDNSDBMinimalNSInAuth(t *testing.T) {
 				if tc.ecs != "" {
 					o, err := MakeOPTWithECS(tc.ecs)
 
-					assert.Nilf(t, err, "failed to generate ECS option for %s", tc.ecs)
+					require.Nilf(t, err, "failed to generate ECS option for %s", tc.ecs)
 					req.Extra = append(req.Extra, []dns.RR{o}...)
 				}
 				rec := dnstest.NewRecorder(&test.ResponseWriter{})
 				ctx := CreateTestContext(1)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equal(t, tc.expectedErr, err)
-				assert.Equal(t, tc.expectedCode, code)
+				require.Equal(t, tc.expectedErr, err)
+				require.Equal(t, tc.expectedCode, code)
 
 				// Answer
-				assert.Equal(t, len(tc.expectedAnswer), len(rec.Msg.Answer), "Answer length")
+				require.Equal(t, len(tc.expectedAnswer), len(rec.Msg.Answer), "Answer length")
 				RRSliceMatch(t, rec.Msg.Answer, tc.expectedAnswer)
 
 				// Auth
-				assert.Equal(t, len(tc.expectedAuth), len(rec.Msg.Ns), "Auth length")
+				require.Equal(t, len(tc.expectedAuth), len(rec.Msg.Ns), "Auth length")
 				RRSliceMatchNoOrder(t, rec.Msg.Ns, tc.expectedAuth)
 				// Extra
-				assert.Equal(t, len(tc.expectedExtra), len(rec.Msg.Extra), "Additional length")
+				require.Equal(t, len(tc.expectedExtra), len(rec.Msg.Extra), "Additional length")
 				RRSliceMatchNoOrder(t, rec.Msg.Extra, tc.expectedExtra)
 			})
 		}
@@ -2039,16 +2036,16 @@ func TestLotOfAdditionalAndTruncation(t *testing.T) {
 				ctx := CreateTestContext(1)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equal(t, nil, err)
-				assert.Equal(t, dns.RcodeSuccess, code)
+				require.Equal(t, nil, err)
+				require.Equal(t, dns.RcodeSuccess, code)
 				// Remove EDNS to compare number of NS vs number of additional
 				popEdns0(rec.Msg)
 				if tc.truncated {
-					assert.Greater(t, len(rec.Msg.Ns), (len(rec.Msg.Extra))/2)
+					require.Greater(t, len(rec.Msg.Ns), (len(rec.Msg.Extra))/2)
 				} else {
-					assert.Equal(t, len(rec.Msg.Ns), (len(rec.Msg.Extra))/2)
+					require.Equal(t, len(rec.Msg.Ns), (len(rec.Msg.Extra))/2)
 				}
-				assert.Equal(t, tc.truncated, rec.Msg.Truncated)
+				require.Equal(t, tc.truncated, rec.Msg.Truncated)
 			})
 		}
 	}
@@ -2150,9 +2147,9 @@ func TestDNSDBQuerySingle(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/%d", db.Driver, nt), func(t *testing.T) {
 				rec, err := th.QuerySingle(tc.rtype, tc.record, tc.from, "", 1)
 				require.Nil(t, err)
-				assert.Equalf(t, tc.expectedCode, rec.Rcode, "expected status code %d", tc.expectedCode)
-				if assert.NotNil(t, rec.Msg) {
-					assert.Equal(t, tc.expectedQuestion, rec.Msg.Question)
+				require.Equalf(t, tc.expectedCode, rec.Rcode, "expected status code %d", tc.expectedCode)
+				if rec.Msg != nil {
+					require.Equal(t, tc.expectedQuestion, rec.Msg.Question)
 					RRSliceMatch(t, tc.expectedAnswer, rec.Msg.Answer)
 				}
 			})
@@ -2349,9 +2346,9 @@ func TestSpecialCharactersInLocationFields(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/%d", db.Driver, nt), func(t *testing.T) {
 				rec, err := th.QuerySingle(tc.rtype, tc.record, tc.from, "", 1)
 				require.Nil(t, err)
-				assert.Equalf(t, tc.expectedCode, rec.Rcode, "expected status code %d", tc.expectedCode)
-				if assert.NotNil(t, rec.Msg) {
-					assert.Equal(t, tc.expectedQuestion, rec.Msg.Question)
+				require.Equalf(t, tc.expectedCode, rec.Rcode, "expected status code %d", tc.expectedCode)
+				if rec.Msg != nil {
+					require.Equal(t, tc.expectedQuestion, rec.Msg.Question)
 					RRSliceMatch(t, tc.expectedAnswer, rec.Msg.Answer)
 				}
 			})
@@ -2407,9 +2404,9 @@ func TestCompressionEnforced(t *testing.T) {
 				ctx := CreateTestContext(1)
 				code, err := th.ServeDNSWithRCODE(ctx, rec, req)
 
-				assert.Equal(t, nil, err)
-				assert.Equal(t, dns.RcodeSuccess, code)
-				assert.Equal(t, tc.compressed, rec.Msg.Compress)
+				require.Equal(t, nil, err)
+				require.Equal(t, dns.RcodeSuccess, code)
+				require.Equal(t, tc.compressed, rec.Msg.Compress)
 			})
 		}
 	}

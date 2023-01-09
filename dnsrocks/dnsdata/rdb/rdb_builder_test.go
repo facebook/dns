@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRDBcreateBuckets(t *testing.T) {
@@ -119,7 +119,7 @@ func TestRDBcreateBuckets(t *testing.T) {
 	for i, testCase := range testCases {
 		b := Builder{values: testCase.values}
 		b.createBuckets(testCase.minBucketSize, testCase.maxBucketNum)
-		assert.Equal(
+		require.Equal(
 			t,
 			testCase.buckets,
 			b.buckets,

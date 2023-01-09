@@ -33,7 +33,7 @@ import (
 	"github.com/facebookincubator/dns/dnsrocks/dnsdata/rdb"
 	"github.com/facebookincubator/dns/dnsrocks/testutils"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestDB is a description of a test database
@@ -148,7 +148,7 @@ func pemBlockForKey(priv interface{}) *pem.Block {
 // the file.
 func MkTestCert(t *testing.T) string {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	template := &x509.Certificate{
 		Version:      1,
@@ -160,22 +160,22 @@ func MkTestCert(t *testing.T) string {
 		NotAfter:  time.Now().Add(time.Hour),
 	}
 	pemBytes, err := x509.CreateCertificate(rand.Reader, template, template, &privateKey.PublicKey, privateKey)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	tmpfile, err := os.CreateTemp("", "example")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	err = pem.Encode(tmpfile, &pem.Block{Type: "CERTIFICATE", Bytes: pemBytes})
 	if err != nil {
-		// Fail to write cert, delete the temp file and assert.
+		// Fail to write cert, delete the temp file and require.
 		os.Remove(tmpfile.Name())
-		assert.Nil(t, err)
+		require.Nil(t, err)
 	}
 	err = pem.Encode(tmpfile, pemBlockForKey(privateKey))
 	if err != nil {
-		// Fail to write cert, delete the temp file and assert.
+		// Fail to write cert, delete the temp file and require.
 		os.Remove(tmpfile.Name())
-		assert.Nil(t, err)
+		require.Nil(t, err)
 	}
 	tmpfile.Close()
 	return tmpfile.Name()

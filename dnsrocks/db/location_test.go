@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/facebookincubator/dns/dnsrocks/testaid"
 )
@@ -516,7 +516,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 
 		for i, tc := range testCases {
 			offset, err := dns.PackDomainName(tc.qname, q, 0, nil, false)
-			assert.Nilf(t, err, "failed at packing domain %s", tc.qname)
+			require.Nilf(t, err, "failed at packing domain %s", tc.qname)
 			if err != nil {
 				t.Fatalf("failed at packing domain %s: %v", tc.qname, err)
 			}
@@ -526,18 +526,18 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 				if id != nil {
 					copy(location.MapID[:], id)
 				}
-				assert.Nil(t, err)
-				assert.Equal(t, tc.expectedLocation.MapID, location.MapID, "MapID does not match.")
+				require.Nil(t, err)
+				require.Equal(t, tc.expectedLocation.MapID, location.MapID, "MapID does not match.")
 			})
 			t.Run(fmt.Sprintf("%s/%d/%s", dbconfig.Driver, i, tc.desc), func(t *testing.T) {
 				offset, err := dns.PackDomainName(tc.qname, q, 0, nil, false)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				_, ipnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", tc.ip, tc.mask))
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				location, err := r.findLocation(q[:offset], tc.qmap, ipnet)
-				assert.Nil(t, err)
-				if assert.NotNil(t, location) {
-					assert.Equal(t, tc.expectedLocation, *location, "Location does not match.")
+				require.Nil(t, err)
+				if location != nil {
+					require.Equal(t, tc.expectedLocation, *location, "Location does not match.")
 				}
 			})
 		}
@@ -622,9 +622,10 @@ func testFindLocationForResolversCustomBitmap(t *testing.T, separateBitmap bool)
 				req.SetQuestion(dns.Fqdn(tc.domain), dns.TypeA)
 				offset, _ := dns.PackDomainName(tc.domain, packedQName, 0, nil, false)
 				ecs, loc, err := r.FindLocation(packedQName[:offset], req, tc.resolver)
-				assert.Nil(t, ecs)
-				if assert.Nil(t, err) && assert.NotNil(t, loc) {
-					assert.Equal(t, tc.expectedLocation, *loc)
+				require.Nil(t, ecs)
+				require.Nil(t, err)
+				if loc != nil {
+					require.Equal(t, tc.expectedLocation, *loc)
 				}
 			})
 		}
@@ -633,9 +634,9 @@ func testFindLocationForResolversCustomBitmap(t *testing.T, separateBitmap bool)
 			t.Run(fmt.Sprintf("%s/resolver location %v", config.Driver, tc), func(t *testing.T) {
 				offset, _ := dns.PackDomainName(tc.domain, packedQName, 0, nil, false)
 				loc, err := r.ResolverLocation(packedQName[:offset], tc.resolver)
-				assert.Nil(t, err)
-				if assert.NotNil(t, loc) {
-					assert.Equal(t, tc.expectedLocation, *loc)
+				require.Nil(t, err)
+				if loc != nil {
+					require.Equal(t, tc.expectedLocation, *loc)
 				}
 			})
 		}
@@ -712,13 +713,13 @@ func testDBEcsLocationCustomBitmap(t *testing.T, separateBitMap bool) {
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("%s/%v", config.Driver, tc), func(t *testing.T) {
 				edns, err := makeECSOption(tc.ecs)
-				assert.Nilf(t, err, "Failed to generate ECS option for %s", tc.ecs)
+				require.Nilf(t, err, "Failed to generate ECS option for %s", tc.ecs)
 				ecs := edns.Option[0].(*dns.EDNS0_SUBNET)
 				offset, err := dns.PackDomainName(tc.domain, packedQName, 0, nil, false)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				_, err = r.EcsLocation(packedQName[:offset], ecs)
-				assert.Nil(t, err)
-				assert.Equal(t, tc.scope, ecs.SourceScope)
+				require.Nil(t, err)
+				require.Equal(t, tc.scope, ecs.SourceScope)
 			})
 		}
 	}
@@ -790,18 +791,18 @@ func testDBCorrectEcsAnswerCustomBitmap(t *testing.T, separateBitMap bool) {
 			t.Fatalf("Could not open fixture database: %v", err)
 		}
 		r, err := NewReader(db)
-		assert.Nil(t, err, "Could not open db file")
+		require.Nil(t, err, "Could not open db file")
 
 		for _, tc := range testCases {
 			t.Run(fmt.Sprintf("%s/%v", config.Driver, tc), func(t *testing.T) {
 				edns, err := makeECSOption(tc.ecs)
-				assert.Nilf(t, err, "Failed to generate ECS option for %s", tc.ecs)
+				require.Nilf(t, err, "Failed to generate ECS option for %s", tc.ecs)
 				ecs := edns.Option[0].(*dns.EDNS0_SUBNET)
 				offset, err := dns.PackDomainName("example.com.", packedQName, 0, nil, false)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				_, err = r.EcsLocation(packedQName[:offset], ecs)
-				assert.NoError(t, err)
-				assert.Equalf(t, tc.expectedECS, *ecs, "unexpected ECS response value")
+				require.NoError(t, err)
+				require.Equalf(t, tc.expectedECS, *ecs, "unexpected ECS response value")
 			})
 		}
 	}
@@ -907,8 +908,8 @@ func TestDBECSResolverFindMap(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/%v", config.Driver, tc), func(t *testing.T) {
 				offset, _ := dns.PackDomainName(dns.Fqdn(tc.domain), packedQName, 0, nil, false)
 				mapID, err := db.dbi.FindMap(packedQName[:offset], mapType[tc.mapType], db.dbi.NewContext())
-				assert.Nilf(t, err, "Failed to fetch map for %#v", tc)
-				assert.Equal(t, tc.mapID, mapID)
+				require.Nilf(t, err, "Failed to fetch map for %#v", tc)
+				require.Equal(t, tc.mapID, mapID)
 			})
 		}
 	}

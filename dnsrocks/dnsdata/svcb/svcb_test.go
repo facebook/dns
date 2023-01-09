@@ -18,7 +18,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -246,7 +245,7 @@ func TestBadParam(t *testing.T) {
 		kv := param{}
 		err := kv.fromText(bad)
 
-		assert.Error(t, err, "%s should be an invalid parameter", bad)
+		require.Error(t, err, "%s should be an invalid parameter", bad)
 	}
 }
 
@@ -255,6 +254,6 @@ func TestBadParamList(t *testing.T) {
 		l := ParamList{}
 		err := l.FromText(bad)
 
-		assert.Error(t, err, "%s should be an invalid SVCB/HTTPS TinyDNS record", bad)
+		require.Error(t, err, "%s should be an invalid SVCB/HTTPS TinyDNS record", bad)
 	}
 }

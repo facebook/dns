@@ -25,7 +25,7 @@ import (
 	"github.com/facebookincubator/dns/dnsrocks/metrics"
 	"github.com/facebookincubator/dns/dnsrocks/testaid"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Reasonable timeout (database is small and it should not take long to load it
@@ -69,7 +69,7 @@ func getFBServer(t *testing.T) (*fbserver.Server, func()) {
 
 	// Thrift server
 	dummyServer, err := metrics.NewMetricsServer(thriftAddr)
-	assert.Nilf(t, err, "Error initializing thrift server: %s", err)
+	require.Nilf(t, err, "Error initializing thrift server: %s", err)
 
 	// Logger
 	l := &dnsserver.DummyLogger{}
@@ -88,7 +88,7 @@ func Test_ServerWGWaitShouldHangForever(t *testing.T) {
 	srv, cleanup := getFBServer(t)
 	defer cleanup()
 
-	assert.Nil(t, srv.Start(), "Failed to start server")
+	require.Nil(t, srv.Start(), "Failed to start server")
 	waitChan := make(chan bool, 1)
 	go func() {
 		srv.ServersStartedWG.Wait()
@@ -110,7 +110,7 @@ func Test_ServerWGWaitShouldReturn(t *testing.T) {
 	srv.NotifyStartedFunc = func() {
 		srv.ServersStartedWG.Done()
 	}
-	assert.Nil(t, srv.Start(), "Failed to start server")
+	require.Nil(t, srv.Start(), "Failed to start server")
 	waitChan := make(chan bool, 1)
 	go func() {
 		srv.ServersStartedWG.Wait()

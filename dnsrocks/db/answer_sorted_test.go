@@ -16,7 +16,7 @@ package db
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQNameReverse2(t *testing.T) {
@@ -25,7 +25,7 @@ func TestQNameReverse2(t *testing.T) {
 
 	reversed := reverseZoneName(straight)
 
-	assert.Equal(t, expected, reversed)
+	require.Equal(t, expected, reversed)
 }
 
 func TestQNameReverse3(t *testing.T) {
@@ -33,7 +33,7 @@ func TestQNameReverse3(t *testing.T) {
 
 	reversed := reverseZoneName(reverseZoneName(straight))
 
-	assert.Equal(t, straight, reversed)
+	require.Equal(t, straight, reversed)
 }
 
 func TestFindLongestCommonPrefix(t *testing.T) {
@@ -43,9 +43,9 @@ func TestFindLongestCommonPrefix(t *testing.T) {
 
 	prefixLen := findCommonLongestPrefix(str1, str2)
 
-	assert.Equal(t, len(expectedPrefix)-1, prefixLen)
+	require.Equal(t, len(expectedPrefix)-1, prefixLen)
 
 	prefixLen = findCommonLongestPrefix(str2, str1)
 
-	assert.Equal(t, len(expectedPrefix)-1, prefixLen)
+	require.Equal(t, len(expectedPrefix)-1, prefixLen)
 }

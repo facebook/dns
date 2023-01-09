@@ -21,7 +21,6 @@ import (
 	"github.com/facebookincubator/dns/dnsrocks/testutils"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,7 +29,7 @@ func getData(name string) string {
 }
 
 func TestCreateCDB(t *testing.T) {
-	assert := assert.New(t)
+	assert := require.New(t)
 	tests := []struct {
 		input          string
 		expectedErr    error

@@ -21,7 +21,7 @@ import (
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestAnyHandlerBadType tests that we continue to the next handler when a
@@ -33,11 +33,11 @@ func TestAnyHandlerBadType(t *testing.T) {
 	req.SetQuestion(dns.Fqdn("example.com."), dns.TypeA)
 	rec := dnstest.NewRecorder(w)
 	ah, err := newAnyHandler()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	rc, err := ah.ServeDNS(context.TODO(), rec, req)
 
-	assert.Equal(t, rc, dns.RcodeServerFailure)
-	assert.Equal(t, expectedError, err.Error())
+	require.Equal(t, rc, dns.RcodeServerFailure)
+	require.Equal(t, expectedError, err.Error())
 }
 
 // TestWhoamiHandlerCorrectType tests that we return "RFC 8482" ""
@@ -63,14 +63,14 @@ func TestAnyHandlerCorrectType(t *testing.T) {
 		req.SetQuestion(dns.Fqdn(tc.qname), dns.TypeANY)
 		rec := dnstest.NewRecorder(w)
 		ah, err := newAnyHandler()
-		assert.Nil(t, err)
+		require.Nil(t, err)
 		rc, err := ah.ServeDNS(context.TODO(), rec, req)
 
-		assert.Equal(t, dns.RcodeSuccess, rc)
-		assert.Nil(t, err)
-		assert.Equal(t, dns.RcodeSuccess, rec.Rcode, "RcodeSuccess was expected to be returned.")
-		assert.Equal(t, tc.expectedCount, len(rec.Msg.Answer), "Number of answers should be %d", tc.expectedCount)
-		assert.Equal(t, tc.answerCPU, rec.Msg.Answer[0].(*dns.HINFO).Cpu, "Answer should be %s", tc.answerCPU)
-		assert.Equal(t, tc.answerOS, rec.Msg.Answer[0].(*dns.HINFO).Os, "Answer should be %s", tc.answerOS)
+		require.Equal(t, dns.RcodeSuccess, rc)
+		require.Nil(t, err)
+		require.Equal(t, dns.RcodeSuccess, rec.Rcode, "RcodeSuccess was expected to be returned.")
+		require.Equal(t, tc.expectedCount, len(rec.Msg.Answer), "Number of answers should be %d", tc.expectedCount)
+		require.Equal(t, tc.answerCPU, rec.Msg.Answer[0].(*dns.HINFO).Cpu, "Answer should be %s", tc.answerCPU)
+		require.Equal(t, tc.answerOS, rec.Msg.Answer[0].(*dns.HINFO).Os, "Answer should be %s", tc.answerOS)
 	}
 }

@@ -16,7 +16,7 @@ package dnsdata
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTerraformFormatting(t *testing.T) {
@@ -76,25 +76,25 @@ func TestTerraformFormatting(t *testing.T) {
 			codec.NoRnetOutput = true
 
 			record, err := codec.decodeRecord([]byte(tc.input))
-			assert.Nil(t, err)
+			require.Nil(t, err)
 
 			if compositeRecord, ok := record.(CompositeRecord); ok {
 				records := compositeRecord.DerivedRecords()
 
 				// for the purpose of this test we consider only single mapped records
-				assert.Len(t, records, 1)
+				require.Len(t, records, 1)
 				record = records[0]
 			}
 
 			terraformRecord := record.(TerraformRecord)
 
 			terraformType, err := WireTypeToTerraformString(terraformRecord.WireType())
-			assert.Nil(t, err)
-			assert.Equal(t, tc.expectedType, terraformType)
+			require.Nil(t, err)
+			require.Equal(t, tc.expectedType, terraformType)
 
 			terraformValue, err := terraformRecord.TerraformValue()
-			assert.Nil(t, err)
-			assert.Equal(t, tc.expectedValue, terraformValue)
+			require.Nil(t, err)
+			require.Equal(t, tc.expectedValue, terraformValue)
 		})
 	}
 }

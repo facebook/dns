@@ -19,7 +19,7 @@ import (
 
 	"github.com/facebookincubator/dns/dnsrocks/testaid"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // Create a TLSConfig suitable for dotTLSAHandler
@@ -39,21 +39,21 @@ func TestInitTLSConfigLoadsCertAndKey(t *testing.T) {
 	tlsconfigstruct := makeTLSConfig(certfile, SessionTicketKeysConfig{})
 
 	tlsconfig, err := InitTLSConfig(tlsconfigstruct)
-	assert.NotNil(t, tlsconfig.Certificates)
-	assert.Nil(t, err)
+	require.NotNil(t, tlsconfig.Certificates)
+	require.Nil(t, err)
 }
 
 // TestInitTLSConfigLoadsCertAndKey tests that tls implementation returns err
 // in case of invalid tls certificate paths are provided
 func TestInitTLSConfigErrorsOnInvalidCertAndKeyPath(t *testing.T) {
 	tmpfile, err := os.CreateTemp("", "example")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	os.Remove(tmpfile.Name())
 	tlsconfigstruct := makeTLSConfig(tmpfile.Name(), SessionTicketKeysConfig{})
 
 	tlsconfig, err := InitTLSConfig(tlsconfigstruct)
-	assert.NotNil(t, err)
-	assert.Nil(t, tlsconfig)
+	require.NotNil(t, err)
+	require.Nil(t, tlsconfig)
 }
 
 // TestInitTLSConfigLoadsCertAndKey tests that tls implementation returns no err
@@ -62,11 +62,11 @@ func TestInitTLSConfigNoErrorOnInvalidResumptionTicket(t *testing.T) {
 	certfile := testaid.MkTestCert(t)
 	defer os.Remove(certfile)
 	tmpfile, err := os.CreateTemp("", "example")
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	os.Remove(tmpfile.Name())
 	tlsconfigstruct := makeTLSConfig(certfile, SessionTicketKeysConfig{SeedFile: tmpfile.Name()})
 
 	tlsconfig, err := InitTLSConfig(tlsconfigstruct)
-	assert.Nil(t, err)
-	assert.NotNil(t, tlsconfig)
+	require.Nil(t, err)
+	require.NotNil(t, tlsconfig)
 }

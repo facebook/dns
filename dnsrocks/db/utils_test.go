@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/facebookincubator/dns/dnsrocks/testaid"
 )
@@ -30,7 +30,7 @@ const (
 	AdditionalSection = iota
 )
 
-func RRSliceMatchSubsetf(t *testing.T, list, subset []dns.RR, msg string, args ...interface{}) bool {
+func RRSliceMatchSubsetf(t *testing.T, list, subset []dns.RR, msg string, args ...interface{}) {
 	a := make([]string, 8)
 	b := make([]string, 8)
 	for _, x := range list {
@@ -39,7 +39,7 @@ func RRSliceMatchSubsetf(t *testing.T, list, subset []dns.RR, msg string, args .
 	for _, x := range subset {
 		b = append(b, x.String())
 	}
-	return assert.Subsetf(t, a, b, msg, args...)
+	require.Subsetf(t, a, b, msg, args...)
 }
 
 func answerSkeleton() *dns.Msg {
@@ -169,7 +169,7 @@ func TestHasRecord(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
 			r := HasRecord(a, tc.qname, tc.qtype)
-			assert.Equalf(t, tc.expected, r, "Failed at finding if %s/%s is in answer %v", tc.qname, dns.TypeToString[tc.qtype], a)
+			require.Equalf(t, tc.expected, r, "Failed at finding if %s/%s is in answer %v", tc.qname, dns.TypeToString[tc.qtype], a)
 		})
 	}
 }
@@ -330,7 +330,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 
 				*section = append(*section, tc.rr...)
 				w := AdditionalSectionForRecords(reader, a, &tc.location, dns.ClassINET, *section)
-				assert.Falsef(t, w, "Did not expect a weighted result")
+				require.Falsef(t, w, "Did not expect a weighted result")
 				RRSliceMatchSubsetf(t, a.Extra, tc.expectInExtra, "Failed at finding %s in answer %v", tc.expectInExtra, a)
 			})
 		}
