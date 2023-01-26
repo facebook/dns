@@ -13,9 +13,12 @@ limitations under the License.
 
 package rocksdb
 
-// #cgo pkg-config: rocksdb
-// #include "rocksdb/c.h"
-// #include <stdlib.h> // for free()
+/*
+// @fb-only: #include "rocksdb/src/include/rocksdb/c.h"
+#cgo pkg-config: "rocksdb"
+#include "rocksdb/c.h" // @oss-only
+#include <stdlib.h> // for free()
+*/
 import "C"
 
 import (
@@ -38,9 +41,12 @@ func CreateSSTFileWriter(path string) (*SSTFileWriter, error) {
 	sstPath := C.CString(path)
 	defer C.free(unsafe.Pointer(sstPath))
 
-	var envOptions *C.rocksdb_envoptions_t = C.rocksdb_envoptions_create()
+	var envOptions *C.rocksdb_envoptions_t
+	envOptions = C.rocksdb_envoptions_create()
 
-	var fileWriter *C.rocksdb_sstfilewriter_t = C.rocksdb_sstfilewriter_create(envOptions, options.cOptions)
+	var fileWriter *C.rocksdb_sstfilewriter_t
+
+	fileWriter = C.rocksdb_sstfilewriter_create(envOptions, options.cOptions)
 	var cError *C.char
 	C.rocksdb_sstfilewriter_open(fileWriter, sstPath, &cError)
 

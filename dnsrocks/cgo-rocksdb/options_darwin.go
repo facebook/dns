@@ -1,5 +1,5 @@
-//go:build !darwin
-// +build !darwin
+//go:build darwin
+// +build darwin
 
 /*
 Copyright (c) Meta Platforms, Inc. and affiliates.
@@ -101,7 +101,7 @@ func (options *Options) EnableCreateIfMissing() {
 // process will still get automatically delete on every compaction,
 // regardless of this setting
 func (options *Options) SetDeleteObsoleteFilesPeriodMicros(micros uint) {
-	C.rocksdb_options_set_delete_obsolete_files_period_micros(options.cOptions, C.ulong(micros))
+	C.rocksdb_options_set_delete_obsolete_files_period_micros(options.cOptions, C.ulonglong(micros))
 }
 
 // SetKeepLogFileNum sets maximal info log files to be kept.
@@ -245,7 +245,7 @@ func (options *Options) SetWriteBufferSize(size int) {
 func (options *Options) SetTargetFileSizeBase(size int) {
 	C.rocksdb_options_set_target_file_size_base(
 		options.cOptions,
-		C.ulong(size),
+		C.ulonglong(size),
 	)
 }
 
@@ -255,7 +255,7 @@ func (options *Options) SetTargetFileSizeBase(size int) {
 func (options *Options) SetMaxBytesForLevelBase(size int) {
 	C.rocksdb_options_set_max_bytes_for_level_base(
 		options.cOptions,
-		C.ulong(size),
+		C.ulonglong(size),
 	)
 }
 

@@ -13,9 +13,13 @@ limitations under the License.
 
 package rocksdb
 
-// #cgo pkg-config: rocksdb
-// #include "rocksdb/c.h"
-// #include <stdlib.h> // for free()
+/*
+// @fb-only: #include "rocksdb/src/include/rocksdb/c.h"
+#cgo pkg-config: "rocksdb"
+#include "rocksdb/c.h" // @oss-only
+
+#include <stdlib.h> // for free()
+*/
 import "C"
 
 import (
@@ -35,9 +39,9 @@ type RocksDB struct {
 // OpenDatabase opens the database directory with provided options,
 // returns RocksDB instance or error.
 // Parameters:
-//   - name: path to db (directory)
-//   - readOnly: open in read-only mode
-//   - readOnlyErrorIfLogExists: for read-only mode will throw error if logfile exists
+//  - name: path to db (directory)
+//  - readOnly: open in read-only mode
+//  - readOnlyErrorIfLogExists: for read-only mode will throw error if logfile exists
 func OpenDatabase(name string, readOnly, readOnlyErrorIfLogExist bool, options *Options) (*RocksDB, error) {
 	var (
 		cError *C.char
@@ -77,7 +81,9 @@ func OpenSecondary(name, secondaryPath string, options *Options) (*RocksDB, erro
 	defer C.free(unsafe.Pointer(dbName))
 	cSecondaryPath := C.CString(secondaryPath)
 	defer C.free(unsafe.Pointer(cSecondaryPath))
-	var db *C.rocksdb_t = C.rocksdb_open_as_secondary(
+	var db *C.rocksdb_t
+
+	db = C.rocksdb_open_as_secondary(
 		options.cOptions, dbName, cSecondaryPath, &cError,
 	)
 	if cError != nil {

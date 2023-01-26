@@ -13,9 +13,10 @@ limitations under the License.
 
 package rocksdb
 
-// #cgo pkg-config: rocksdb
 /*
-#include "rocksdb/c.h"
+// @fb-only: #include "rocksdb/src/include/rocksdb/c.h"
+#cgo pkg-config: "rocksdb"
+#include "rocksdb/c.h" // @oss-only
 #include <stdlib.h> // for free()
 
 const int BACKUP_BOOL_INT_TRUE = 1;
@@ -128,7 +129,8 @@ func (e *BackupEngine) PurgeOldBackups(numBackupsToKeep uint32) error {
 // of a time a strange thing to do)
 func (e *BackupEngine) RestoreFromLastBackup(destPath string, keepLogFiles bool) error {
 	// create restore options
-	var cRestoreOptions *C.rocksdb_restore_options_t = C.rocksdb_restore_options_create()
+	var cRestoreOptions *C.rocksdb_restore_options_t
+	cRestoreOptions = C.rocksdb_restore_options_create()
 	defer C.rocksdb_restore_options_destroy(cRestoreOptions)
 
 	if keepLogFiles {

@@ -13,9 +13,10 @@ limitations under the License.
 
 package rocksdb
 
-// #cgo pkg-config: rocksdb
 /*
-#include "rocksdb/c.h"
+// @fb-only: #include "rocksdb/src/include/rocksdb/c.h"
+#cgo pkg-config: "rocksdb"
+#include "rocksdb/c.h" // @oss-only
 #include <stdlib.h> // for free()
 
 const unsigned char ITER_BOOL_CHAR_TRUE = 1;
