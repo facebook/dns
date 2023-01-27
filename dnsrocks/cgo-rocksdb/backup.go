@@ -13,9 +13,10 @@ limitations under the License.
 
 package rocksdb
 
-// #cgo pkg-config: rocksdb
 /*
-#include "rocksdb/c.h"
+// @fb-only: #include "rocksdb/src/include/rocksdb/c.h"
+#cgo pkg-config: "rocksdb"
+#include "rocksdb/c.h" // @oss-only
 #include <stdlib.h> // for free()
 
 const int BACKUP_BOOL_INT_TRUE = 1;

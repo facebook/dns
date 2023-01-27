@@ -13,7 +13,11 @@ limitations under the License.
 
 package rocksdb
 
-// #include "rocksdb/c.h"
+/*
+// @fb-only: #include "rocksdb/src/include/rocksdb/c.h"
+#cgo pkg-config: "rocksdb"
+#include "rocksdb/c.h" // @oss-only
+*/
 import "C"
 
 // FilterPolicy is a box for policy filter. Bloom Filters and policy filters: https://github.com/facebook/rocksdb/wiki/RocksDB-Bloom-Filter
