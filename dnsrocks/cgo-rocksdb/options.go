@@ -401,9 +401,10 @@ func NewDefaultReadOptions() *ReadOptions {
 
 // NewReadOptions creates ReadOptions object
 // Parameters:
-//  - verifyChecksum: all data read from underlying storage will be
-//  verified against corresponding checksums
-//  - fillCache: Should the "data block"/"index block"" read for this
+//   - verifyChecksum: all data read from underlying storage will be
+//     verified against corresponding checksums
+//   - fillCache: Should the "data block"/"index block"" read for this
+//
 // iteration be placed in block cache?
 func NewReadOptions(verifyChecksum, fillCache bool) *ReadOptions {
 	readOptions := NewDefaultReadOptions()
