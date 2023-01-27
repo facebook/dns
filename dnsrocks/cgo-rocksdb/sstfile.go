@@ -13,9 +13,12 @@ limitations under the License.
 
 package rocksdb
 
-// #cgo pkg-config: rocksdb
-// #include "rocksdb/c.h"
-// #include <stdlib.h> // for free()
+/*
+// @fb-only: #include "rocksdb/src/include/rocksdb/c.h"
+#cgo pkg-config: "rocksdb"
+#include "rocksdb/c.h" // @oss-only
+#include <stdlib.h> // for free()
+*/
 import "C"
 
 import (

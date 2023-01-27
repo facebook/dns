@@ -13,8 +13,11 @@ limitations under the License.
 
 package rocksdb
 
-// #cgo pkg-config: rocksdb
-// #include "rocksdb/c.h"
+/*
+// @fb-only: #include "rocksdb/src/include/rocksdb/c.h"
+#cgo pkg-config: "rocksdb"
+#include "rocksdb/c.h" // @oss-only
+*/
 import "C"
 
 // BlockBasedOptions is a box for rocksdb_block_based_table_options_t
