@@ -147,7 +147,8 @@ func getEnvVar(key string, defaultValue int) int {
 	return i
 }
 
-func defaultOptions() *rocksdb.Options {
+// DefaultOptions returns rocksdb Options inialized with DNSROCKS default values, including potential overrides from ENV variables.
+func DefaultOptions() *rocksdb.Options {
 	options := rocksdb.NewOptions()
 	bloom := getEnvVar("FBDNS_ROCKSDB_FULL_BLOOM_FILTER_BITS", defaultBloomFilterBits)
 	options.SetFullBloomFilter(bloom)
@@ -204,7 +205,7 @@ func NewReader(path string) (*RDB, error) {
 		return nil, err
 	}
 
-	options := defaultOptions()
+	options := DefaultOptions()
 	db, err := rocksdb.OpenSecondary(path, logDir, options)
 	if err != nil {
 		options.FreeOptions()
@@ -228,7 +229,7 @@ func NewReader(path string) (*RDB, error) {
 // It returns an instance of RDB; dbpath should be an existing path to the directory
 // containing a RocksDB database.
 func NewUpdater(dbpath string) (*RDB, error) {
-	opt := defaultOptions()
+	opt := DefaultOptions()
 	// The options below were copied from NewRDB() — their effect on the update performance is not yet determined
 	opt.SetParallelism(runtime.NumCPU())
 	// never call opt.PrepareForBulkLoad() here, it's made to be used on empty DB only,
