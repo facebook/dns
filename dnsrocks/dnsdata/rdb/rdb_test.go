@@ -991,7 +991,7 @@ func TestRDBBatchIntegrate(t *testing.T) {
 				{0, 46}, {0, 52}, {0, 53},
 			},
 			valuesAfter:   nil,
-			expectedError: fmt.Errorf("Internal error: batch integration is incorrect 1 != 4 || 0 != 2"),
+			expectedError: fmt.Errorf("internal error: batch integration is incorrect 1 != 4 || 0 != 2"),
 		},
 	}
 	for nt, tc := range testCases {

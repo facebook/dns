@@ -17,9 +17,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 var (
@@ -95,4 +98,29 @@ func copyBytes(b []byte) []byte {
 	cc := make([]byte, len(b))
 	copy(cc, b)
 	return cc
+}
+
+// rdbStats parses the stats line exported by RDB
+func rdbStats(q string) map[string]int64 {
+	stats := make(map[string]int64)
+	var value float64
+	for _, line := range strings.Split(q, "\n") {
+		split := strings.Split(line, " ")
+		switch len(split) {
+		case 4:
+			// rocksdb.no.file.opens COUNT : 43
+			value, _ = strconv.ParseFloat(split[3], 64)
+			stats[split[0]] = int64(value)
+		case 19:
+			// rocksdb.db.get.micros P50 : 42.500000 P95 : 88.750000 P99 : 96.000000 P100 : 96.000000 COUNT : 25 SUM : 1191
+			metric := split[0]
+			for i := 1; i < len(split)-2; i += 3 {
+				if strings.HasPrefix(split[i], "P") {
+					value, _ = strconv.ParseFloat(split[i+2], 64)
+					stats[fmt.Sprintf("%s.%s", metric, split[i])] = int64(value)
+				}
+			}
+		}
+	}
+	return stats
 }

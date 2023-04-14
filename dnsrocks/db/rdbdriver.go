@@ -239,12 +239,7 @@ func (r *rdbdriver) Reload(path string) (DBI, error) {
 
 // GetStats reports DB backend stats
 func (r *rdbdriver) GetStats() map[string]int64 {
-	// maybe we'll get other stats, but for now just return mem stats
-	stats := map[string]int64{}
-	for k, v := range r.db.GetMemStats() {
-		stats["rocksdb.mem."+k] = v
-	}
-	return stats
+	return r.db.GetStats()
 }
 
 func (r *rdbdriver) findClosest(key []byte, ctx Context) (k []byte, v []byte, err error) {

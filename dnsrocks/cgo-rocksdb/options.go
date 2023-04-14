@@ -30,6 +30,7 @@ const int BOOL_INT_TRUE = 1;
 import (
 	"C"
 )
+import "unsafe"
 
 // BoolToChar is a helper to convert boolean value to C.uchar
 func BoolToChar(b bool) C.uchar {
@@ -87,6 +88,20 @@ func NewOptions() *Options {
 	return &Options{
 		cOptions: cOptions,
 	}
+}
+
+// EnableStatistics enables collecting and exporting statistics
+// https://github.com/facebook/rocksdb/wiki/Statistics
+func (options *Options) EnableStatistics() {
+	C.rocksdb_options_enable_statistics(options.cOptions)
+}
+
+// GetStatisticsString returns stats string
+func (options *Options) GetStatisticsString() string {
+	var cStat *C.char
+	cStat = C.rocksdb_options_statistics_get_string(options.cOptions)
+	defer C.rocksdb_free(unsafe.Pointer(cStat))
+	return C.GoString(cStat)
 }
 
 // EnableCreateIfMissing flags that the database should be created if it doesn't exist.

@@ -167,3 +167,37 @@ func TestRDBdelValues(t *testing.T) {
 		})
 	}
 }
+
+func TestRdbStats(t *testing.T) {
+	statsStr := `
+rocksdb.block.cache.miss COUNT : 2
+rocksdb.block.cache.hit COUNT : 0
+rocksdb.block.cache.add COUNT : 2
+rocksdb.block.cache.add.failures COUNT : 0
+rocksdb.block.cache.index.miss COUNT : 0
+rocksdb.block.cache.index.hit COUNT : 0
+rocksdb.db.get.micros P50 : 34.000000 P95 : 58.000000 P99 : 58.000000 P100 : 58.000000 COUNT : 2 SUM : 88
+rocksdb.compaction.times.micros P50 : 0.000000 P95 : 0.000000 P99 : 0.000000 P100 : 0.000000 COUNT : 0 SUM : 0
+some broken line which will be discarded
+pretending to be good
+`
+	expected := map[string]int64{
+		"rocksdb.block.cache.miss":             2,
+		"rocksdb.block.cache.hit":              0,
+		"rocksdb.block.cache.add":              2,
+		"rocksdb.block.cache.add.failures":     0,
+		"rocksdb.block.cache.index.miss":       0,
+		"rocksdb.block.cache.index.hit":        0,
+		"rocksdb.db.get.micros.P50":            34,
+		"rocksdb.db.get.micros.P95":            58,
+		"rocksdb.db.get.micros.P99":            58,
+		"rocksdb.db.get.micros.P100":           58,
+		"rocksdb.compaction.times.micros.P50":  0,
+		"rocksdb.compaction.times.micros.P95":  0,
+		"rocksdb.compaction.times.micros.P99":  0,
+		"rocksdb.compaction.times.micros.P100": 0,
+		"pretending":                           0,
+	}
+	s := rdbStats(statsStr)
+	require.Equal(t, expected, s)
+}

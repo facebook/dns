@@ -178,6 +178,7 @@ func DefaultOptions() *rocksdb.Options {
 	options.SetTargetFileSizeBase(targetFileSizeBase)
 	maxBytesForLevelBase := getEnvVar("FBDNS_ROCKSDB_MAX_BYTES_FOR_LEVEL_BASE_MB", defaultMaxBytesForLevelBaseMB) * Mb
 	options.SetMaxBytesForLevelBase(maxBytesForLevelBase)
+	options.EnableStatistics()
 
 	levels := make([]rocksdb.CompressionType, rocksdb.DefaultCompactionNumLevels)
 	for i := 0; i < rocksdb.DefaultCompactionNumLevels; i++ {
@@ -261,7 +262,7 @@ func NewUpdater(dbpath string) (*RDB, error) {
 // CatchWithPrimary is the best effort catching up with primary database.
 func (rdb *RDB) CatchWithPrimary() error {
 	if !rdb.secondary {
-		return errors.New("Database is not in secondary mode")
+		return errors.New("database is not in secondary mode")
 	}
 
 	// pooled iterators should be cleaned here
@@ -291,22 +292,29 @@ func (rdb *RDB) Add(key, value []byte) error {
 	return rdb.db.Put(rdb.writeOptions, key, appendValues(oldData, [][]byte{value}))
 }
 
-// GetMemStats reports main memory stats from RocksDB.
+// GetStats reports main memory stats from RocksDB.
 // See https://github.com/facebook/rocksdb/wiki/Memory-usage-in-RocksDB for details.
-func (rdb *RDB) GetMemStats() map[string]int64 {
+func (rdb *RDB) GetStats() map[string]int64 {
 	tableMem, _ := strconv.ParseInt(rdb.db.GetProperty("rocksdb.estimate-table-readers-mem"), 10, 64)
 	memtableSize, _ := strconv.ParseInt(rdb.db.GetProperty("rocksdb.cur-size-all-mem-tables"), 10, 64)
 	stats := map[string]int64{
-		"estimate-table-readers.bytes":  tableMem,
-		"cur-size-all-mem-tables.bytes": memtableSize,
+		"rocksdb.mem.estimate-table-readers.bytes":  tableMem,
+		"rocksdb.mem.cur-size-all-mem-tables.bytes": memtableSize,
 	}
 
 	opts := rdb.db.GetOptions()
 	if opts != nil {
 		cache := opts.GetCache()
 		if cache != nil {
-			stats["block-cache.usage.bytes"] = int64(cache.GetUsage())
-			stats["block-cache.pinned-usage.bytes"] = int64(cache.GetPinnedUsage())
+			stats["rocksdb.mem.block-cache.usage.bytes"] = int64(cache.GetUsage())
+			stats["rocksdb.mem.block-cache.pinned-usage.bytes"] = int64(cache.GetPinnedUsage())
+		}
+	}
+
+	if opts != nil {
+		s := rdbStats(opts.GetStatisticsString())
+		for k, v := range s {
+			stats[k] = v
 		}
 	}
 	return stats
@@ -531,7 +539,7 @@ func (batch *Batch) integrate(uniqueKeys [][]byte, dbValues *[][]byte) error {
 
 	if aOffset != len(batch.addedPairs) || dOffset != len(batch.deletedPairs) {
 		*dbValues = nil
-		return fmt.Errorf("Internal error: batch integration is incorrect %d != %d || %d != %d", aOffset, len(batch.addedPairs), dOffset, len(batch.deletedPairs))
+		return fmt.Errorf("internal error: batch integration is incorrect %d != %d || %d != %d", aOffset, len(batch.addedPairs), dOffset, len(batch.deletedPairs))
 	}
 
 	return nil
