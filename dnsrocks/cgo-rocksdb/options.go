@@ -98,8 +98,7 @@ func (options *Options) EnableStatistics() {
 
 // GetStatisticsString returns stats string
 func (options *Options) GetStatisticsString() string {
-	var cStat *C.char
-	cStat = C.rocksdb_options_statistics_get_string(options.cOptions)
+	cStat := C.rocksdb_options_statistics_get_string(options.cOptions)
 	defer C.rocksdb_free(unsafe.Pointer(cStat))
 	return C.GoString(cStat)
 }

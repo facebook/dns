@@ -137,10 +137,7 @@ func parse(r io.Reader, process func([]byte) error, workers int) error {
 	wg.Wait()
 
 	// Check we have reached EOF properly
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-	return nil
+	return scanner.Err()
 }
 
 // Parse parses data from Reader in parallel, wrapping ParseStream

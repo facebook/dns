@@ -18,7 +18,7 @@ type DummyServer struct {
 }
 
 // NewDummyMetricsServer creates a new dummy metrics server
-func NewDummyMetricsServer(addr string) (server *DummyServer, err error) {
+func NewDummyMetricsServer(_ string) (server *DummyServer, err error) {
 	return &DummyServer{}, nil
 }
 
@@ -32,7 +32,7 @@ func (s *DummyServer) SetAlive() {
 }
 
 // ConsumeStats for dummy metrics server does nothing
-func (s *DummyServer) ConsumeStats(category string, stats *Stats) error {
+func (s *DummyServer) ConsumeStats(_ string, _ *Stats) error {
 	return nil
 }
 

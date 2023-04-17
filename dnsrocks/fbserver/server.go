@@ -511,7 +511,7 @@ func joinAddress(host string, port int) string {
 // reusePort sets a UNIX socket option that allows the listener to bind to a
 // port that is already in use. The delegation of traffic to listeners is
 // equally distributed via this method.
-func reusePort(network, address string, c syscall.RawConn) error {
+func reusePort(_, _ string, c syscall.RawConn) error {
 	var opErr error
 	err := c.Control(func(fd uintptr) {
 		opErr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)

@@ -27,16 +27,16 @@ type DummyStats struct {
 }
 
 // ResetCounterTo stub implementation
-func (s *DummyStats) ResetCounterTo(key string, value int64) {}
+func (s *DummyStats) ResetCounterTo(_ string, _ int64) {}
 
 // ResetCounter stub implementation
-func (s *DummyStats) ResetCounter(key string) {}
+func (s *DummyStats) ResetCounter(_ string) {}
 
 // IncrementCounterBy stub implementation
-func (s *DummyStats) IncrementCounterBy(key string, value int64) {}
+func (s *DummyStats) IncrementCounterBy(_ string, _ int64) {}
 
 // IncrementCounter stub implementation
-func (s *DummyStats) IncrementCounter(key string) {}
+func (s *DummyStats) IncrementCounter(_ string) {}
 
 // AddSample stub implementation
-func (s *DummyStats) AddSample(key string, value int64) {}
+func (s *DummyStats) AddSample(_ string, _ int64) {}

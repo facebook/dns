@@ -119,7 +119,7 @@ func (l *DNSTapLoggger) StartLoggerOutput() {
 }
 
 // Log is used to log to dnstap.
-func (l *DNSTapLoggger) Log(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET) {
+func (l *DNSTapLoggger) Log(state request.Request, r *dns.Msg, _ *dns.EDNS0_SUBNET) {
 	// FIXME: implement Bad_query, EDNS_FORMERR, EDNS_BADVERS
 
 	// We only sample non-sonar names

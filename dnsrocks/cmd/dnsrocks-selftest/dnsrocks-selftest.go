@@ -97,10 +97,7 @@ func doWork(dbConfig dnsserver.DBConfig, nets []*net.IPNet, workers int, qType, 
 		})
 	}
 
-	if err := g.Wait(); err != nil {
-		return err
-	}
-	return nil
+	return g.Wait()
 }
 
 func verifyMaps() error {

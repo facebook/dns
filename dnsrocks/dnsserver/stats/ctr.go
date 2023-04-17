@@ -42,5 +42,5 @@ func (s Counters) IncrementCounter(key string) {
 }
 
 // AddSample is not implemented here
-func (s Counters) AddSample(key string, value int64) {
+func (s Counters) AddSample(_ string, _ int64) {
 }

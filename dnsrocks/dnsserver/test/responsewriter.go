@@ -34,7 +34,7 @@ type ResponseWriterCustomRemote struct {
 }
 
 // WriteMsg implement dns.ResponseWriter interface.
-func (t *ResponseWriter) WriteMsg(m *dns.Msg) error { t.writeMsgCallCount++; return nil }
+func (t *ResponseWriter) WriteMsg(_ *dns.Msg) error { t.writeMsgCallCount++; return nil }
 
 // GetWriteMsgCallCount returns the number of WriteMsg calls that were made.
 func (t *ResponseWriter) GetWriteMsgCallCount() uint64 { return t.writeMsgCallCount }
