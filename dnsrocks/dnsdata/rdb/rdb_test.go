@@ -35,15 +35,15 @@ type mockedDB struct {
 	delete   func(key []byte) error
 }
 
-func (mock *mockedDB) Put(writeOptions *rocksdb.WriteOptions, key, value []byte) error {
+func (mock *mockedDB) Put(_ *rocksdb.WriteOptions, key, value []byte) error {
 	return mock.put(key, value)
 }
 
-func (mock *mockedDB) Get(readOptions *rocksdb.ReadOptions, key []byte) ([]byte, error) {
+func (mock *mockedDB) Get(_ *rocksdb.ReadOptions, key []byte) ([]byte, error) {
 	return mock.get(key)
 }
 
-func (mock *mockedDB) Delete(writeOptions *rocksdb.WriteOptions, key []byte) error {
+func (mock *mockedDB) Delete(_ *rocksdb.WriteOptions, key []byte) error {
 	return mock.delete(key)
 }
 
@@ -55,7 +55,7 @@ func (mock *mockedDB) GetMulti(readOptions *rocksdb.ReadOptions, keys [][]byte) 
 	return mock.getMulti(readOptions, keys)
 }
 
-func (mock *mockedDB) ExecuteBatch(batch *rocksdb.Batch, writeOptions *rocksdb.WriteOptions) error {
+func (mock *mockedDB) ExecuteBatch(_ *rocksdb.Batch, _ *rocksdb.WriteOptions) error {
 	return nil
 }
 func (mock *mockedDB) CatchWithPrimary() error {
@@ -68,7 +68,7 @@ func (mock *mockedDB) Flush() error {
 
 func (mock *mockedDB) CompactRangeAll() {}
 
-func (mock *mockedDB) IngestSSTFiles(files []string, useHardlinks bool) error {
+func (mock *mockedDB) IngestSSTFiles(_ []string, _ bool) error {
 	return nil
 }
 

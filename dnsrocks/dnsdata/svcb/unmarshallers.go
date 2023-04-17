@@ -56,8 +56,7 @@ func alpnUnmarshaller(input []byte, out *bytes.Buffer) {
 }
 
 // no-default-alpn should print no value
-func nodefaultalpnUnmarshaller(input []byte, out *bytes.Buffer) {
-}
+func nodefaultalpnUnmarshaller(_ []byte, _ *bytes.Buffer) {}
 
 func portUnmarshaller(input []byte, out *bytes.Buffer) {
 	port := binary.BigEndian.Uint16(input)

@@ -36,7 +36,7 @@ type TextLogger struct {
 }
 
 // Log is used to log to an ioWriter.
-func (l *TextLogger) Log(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET) {
+func (l *TextLogger) Log(state request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET) {
 	fmt.Fprintf(l.IoWriter, "[%s] %s %s %s\n",
 		state.IP(), strings.ToUpper(state.Proto()),
 		state.Name(), state.Type())
@@ -53,9 +53,7 @@ func (l *TextLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0
 type DummyLogger struct{}
 
 // Log is used to log to an ioWriter.
-func (l *DummyLogger) Log(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET) {}
+func (l *DummyLogger) Log(_ request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET) {}
 
 // LogFailed is used to log failures
-func (l *DummyLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET) {
-
-}
+func (l *DummyLogger) LogFailed(_ request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET) {}
