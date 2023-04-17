@@ -23,7 +23,7 @@ import (
 
 func main() {
 	inputFileName := flag.String("i", "", "File path to input dns data diff")
-	serial := flag.Uint("serial", 0, "Serial")
+	serial := flag.Uint("serial", 0, "Value for the Serial field of the changed SOA records")
 	outputDirPath := flag.String("o", "", "Output directory path to write compiled DNS DB")
 	flag.Parse()
 
