@@ -295,11 +295,25 @@ func (rdb *RDB) Add(key, value []byte) error {
 // GetStats reports main memory stats from RocksDB.
 // See https://github.com/facebook/rocksdb/wiki/Memory-usage-in-RocksDB for details.
 func (rdb *RDB) GetStats() map[string]int64 {
-	tableMem, _ := strconv.ParseInt(rdb.db.GetProperty("rocksdb.estimate-table-readers-mem"), 10, 64)
-	memtableSize, _ := strconv.ParseInt(rdb.db.GetProperty("rocksdb.cur-size-all-mem-tables"), 10, 64)
+	getProp := func(prop string) int64 {
+		vs := rdb.db.GetProperty(prop)
+		if vs == "" {
+			log.Printf("failed fetching unknown DB property %q", prop)
+			return 0
+		}
+		v, err := strconv.ParseInt(vs, 10, 64)
+		if err != nil {
+			log.Printf("failed parsing DB property %q: %v", prop, err)
+		}
+		return v
+	}
+	tableMem := getProp("rocksdb.estimate-table-readers-mem")
+	memtableSize := getProp("rocksdb.cur-size-all-mem-tables")
+	compactions := getProp("rocksdb.num-running-compactions")
 	stats := map[string]int64{
 		"rocksdb.mem.estimate-table-readers.bytes":  tableMem,
 		"rocksdb.mem.cur-size-all-mem-tables.bytes": memtableSize,
+		"rocksdb.num-running-compactions":           compactions,
 	}
 
 	opts := rdb.db.GetOptions()
