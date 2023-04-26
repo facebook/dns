@@ -310,10 +310,12 @@ func (rdb *RDB) GetStats() map[string]int64 {
 	tableMem := getProp("rocksdb.estimate-table-readers-mem")
 	memtableSize := getProp("rocksdb.cur-size-all-mem-tables")
 	compactions := getProp("rocksdb.num-running-compactions")
+	levelzerofiles := getProp("rocksdb.num-files-at-level0")
 	stats := map[string]int64{
 		"rocksdb.mem.estimate-table-readers.bytes":  tableMem,
 		"rocksdb.mem.cur-size-all-mem-tables.bytes": memtableSize,
 		"rocksdb.num-running-compactions":           compactions,
+		"rocksdb.num-files-at-level0":               levelzerofiles,
 	}
 
 	opts := rdb.db.GetOptions()
