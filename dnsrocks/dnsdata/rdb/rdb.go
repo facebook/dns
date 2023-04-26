@@ -327,12 +327,6 @@ func (rdb *RDB) GetStats() map[string]int64 {
 		}
 	}
 
-	if opts != nil {
-		s := rdbStats(opts.GetStatisticsString())
-		for k, v := range s {
-			stats[k] = v
-		}
-	}
 	return stats
 }
 
