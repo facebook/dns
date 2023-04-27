@@ -181,6 +181,16 @@ func (options *Options) SetFullBloomFilter(fullBloomBits int) {
 	)
 }
 
+// SetCompactOnDeletion activates compaction on deletion
+// https://github.com/facebook/rocksdb/blob/59673e299951b96c35ebf4acef15e90da10ed0eb/include/rocksdb/utilities/table_properties_collectors.h#L14
+func (options *Options) SetCompactOnDeletion(windowSize int, numDelsTrigger int) {
+	C.rocksdb_options_add_compact_on_deletion_collector_factory(
+		options.cOptions,
+		C.size_t(windowSize),
+		C.size_t(numDelsTrigger),
+	)
+}
+
 // some compaction options
 
 // SetNumLevels sets number of compaction levels when level-based compaction is used.
