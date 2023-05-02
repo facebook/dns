@@ -37,12 +37,14 @@ const (
 	defaultBloomFilterBits = 10
 	defaultBlockCacheMB    = 8
 	// compaction
-	defaultWriteBufferSizeMB              = 128
-	defaultTargetFileSizeBaseMB           = 64
-	defaultMaxBytesForLevelBaseMB         = 512
-	defaultLevel0FileNumCompactionTrigger = 2
-	defaultMinWriteBufferNumberToMerge    = 2
-	defaultMaxWriteBufferNumber           = 6
+	defaultWriteBufferSizeMB               = 128
+	defaultTargetFileSizeBaseMB            = 64
+	defaultMaxBytesForLevelBaseMB          = 512
+	defaultLevel0FileNumCompactionTrigger  = 2
+	defaultMinWriteBufferNumberToMerge     = 2
+	defaultMaxWriteBufferNumber            = 6
+	defaultCompactOnDeletionWindow         = 10000
+	defaultCompactOnDeletionNumDelsTrigger = 9500
 )
 
 // Mb is megabyte
@@ -178,6 +180,9 @@ func DefaultOptions() *rocksdb.Options {
 	options.SetTargetFileSizeBase(targetFileSizeBase)
 	maxBytesForLevelBase := getEnvVar("FBDNS_ROCKSDB_MAX_BYTES_FOR_LEVEL_BASE_MB", defaultMaxBytesForLevelBaseMB) * Mb
 	options.SetMaxBytesForLevelBase(maxBytesForLevelBase)
+	compactOnDeletionWindow := getEnvVar("FBDNS_ROCKSDB_COMPACT_ON_DELETION_WINDOW", defaultCompactOnDeletionWindow)
+	compactOnDeletionNumDelsTrigger := getEnvVar("FBDNS_ROCKSDB_COMPACT_ON_DELETION_NUM_DELS_TRIGGER", defaultCompactOnDeletionNumDelsTrigger)
+	options.SetCompactOnDeletion(compactOnDeletionWindow, compactOnDeletionNumDelsTrigger)
 	options.EnableStatistics()
 
 	levels := make([]rocksdb.CompressionType, rocksdb.DefaultCompactionNumLevels)
