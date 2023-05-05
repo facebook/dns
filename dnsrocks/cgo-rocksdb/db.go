@@ -312,7 +312,9 @@ func (db *RocksDB) IngestSSTFiles(fileNames []string, useHardlinks bool) error {
 	return nil
 }
 
-// Flush flushes in-memory WAL to disk
+// Flush flushes in-memory WAL to disk. It's important to know that Flush can trigger background operations like compaction,
+// which may be interrupted if Close is called immediately after flush. Such operations can be waited upon by
+// checking DB properties like 'rocksdb.num-running-compactions' via GetProperty call.
 func (db *RocksDB) Flush() error {
 	cFlushOptions := C.rocksdb_flushoptions_create()
 	defer func() {
