@@ -18,9 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
-	"time"
 
 	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
 	"github.com/facebookincubator/dns/dnsrocks/dnsdata/rdb/dbdiff"
@@ -61,20 +59,6 @@ func (rdb *RDB) ApplyDiff(r io.Reader, serial uint32) error {
 	}
 	if err := rdb.ExecuteBatch(batch); err != nil {
 		return fmt.Errorf("database update failed: %w", err)
-	}
-	log.Printf("waiting for potential compactions to finish")
-	for {
-		stats := rdb.GetStats()
-		numComp, ok := stats["rocksdb.num-running-compactions"]
-		if !ok {
-			log.Printf("cannot find \"rocksdb.num-running-compactions\" key in RocksDB stats, unable to wait for potential compactions to finish")
-			break
-		}
-		log.Printf("currently running compactions: %d", numComp)
-		if numComp == 0 {
-			break
-		}
-		time.Sleep(time.Second)
 	}
 	return nil
 }
