@@ -56,30 +56,33 @@ func newSlidingWindow(sampleLifetime time.Duration) (*slidingWindow, error) {
 	return w, nil
 }
 
+func (sw *slidingWindow) clean(now time.Time) {
+	sw.mutex.Lock()
+	newstartidx := 0
+	for idx, val := range sw.samples {
+		if val.expires.Before(now) {
+			newstartidx = idx + 1
+		} else {
+			break
+		}
+	}
+	if len(sw.samples) > newstartidx {
+		newsamples := make([]sample, len(sw.samples)-newstartidx)
+		copy(newsamples, sw.samples[newstartidx:])
+		sw.samples = newsamples
+	} else {
+		sw.samples = make([]sample, 0)
+	}
+	sw.mutex.Unlock()
+}
+
 func (sw *slidingWindow) cleaner() {
 	ticker := time.NewTicker(1 * time.Second)
-
+	var now time.Time
 	for {
 		select {
-		case <-ticker.C:
-			sw.mutex.Lock()
-			newstartidx := 0
-			for idx, val := range sw.samples {
-				if val.expires.Before(time.Now()) {
-					newstartidx = idx + 1
-				} else {
-					break
-				}
-				if len(sw.samples) > newstartidx {
-					newsamples := make([]sample, len(sw.samples)-newstartidx)
-					copy(sw.samples[newstartidx:], newsamples)
-					sw.samples = newsamples
-				} else {
-					sw.samples = make([]sample, 0)
-				}
-			}
-			sw.mutex.Unlock()
-
+		case now = <-ticker.C:
+			sw.clean(now)
 		case <-sw.stopping:
 			return
 		}
