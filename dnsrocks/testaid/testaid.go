@@ -38,8 +38,9 @@ import (
 
 // TestDB is a description of a test database
 type TestDB struct {
-	Driver string
-	Path   string
+	Driver  string
+	Path    string
+	Flavour string
 }
 
 const (
@@ -55,9 +56,9 @@ var (
 	// TestCDBv2 points to a valid CDB with data, it is pre-compiled
 	TestCDBv2 = TestDB{Driver: "cdb", Path: "THIS_WILL_BE_OVERRIDDEN_CDBV2"}
 	// TestRDB points to a temporary RDB, it is compiled on each run
-	TestRDB = TestDB{Driver: "rocksdb", Path: "THIS_WILL_BE_OVERRIDDEN_RDB"}
+	TestRDB = TestDB{Driver: "rocksdb", Path: "THIS_WILL_BE_OVERRIDDEN_RDB", Flavour: "keys v1"}
 	// TestRDBV2 points to a temporary RDB with v2 keys, it is compiled on each run
-	TestRDBV2 = TestDB{Driver: "rocksdb", Path: "THIS_WILL_BE_OVERRIDDEN_RDB"}
+	TestRDBV2 = TestDB{Driver: "rocksdb", Path: "THIS_WILL_BE_OVERRIDDEN_RDB", Flavour: "keys v2"}
 )
 
 // TestDBs consists of all test databases

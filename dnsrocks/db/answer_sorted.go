@@ -75,9 +75,13 @@ func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname 
 	preIterationCheck := func(q []byte, length int) bool {
 		// we iterate on labels of initial qName, so length check should be sufficient to determine
 		// whether we passed zone border
-		if len(q) < len(packedControlName) {
+		if length < len(packedControlName) {
 			return false
 		}
+		// we can also check if reversed control name is part of new q
+		// (which can be any key less than what we look for),
+		// but that will require another allocation to actually store this reversed control name,
+		// plus `bytes.Equal` call
 
 		// i points to the first character of the label
 		// i-1 is length of the label
@@ -198,6 +202,10 @@ func (r *sortedDataReader) find(
 		copy(key[locationStart:], loc.LocID[:])
 		key = key[:locationStart+locationLength]
 
+		// new key that is equal to what we asked for, or less than it.
+		// This new key can be very different from what we requested, i.e.
+		// for com.example.foo (if exact match is not found) previous key will be returned,
+		// which doesn't guaranteed to even start with com.example, it can be com.examnle.foo for what we know
 		var k []byte
 		k, err = r.TryForEach(key, parseResult)
 
