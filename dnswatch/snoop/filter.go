@@ -22,7 +22,6 @@ import (
 	"github.com/google/gopacket/afpacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
-
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/bpf"
 )

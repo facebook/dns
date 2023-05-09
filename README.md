@@ -20,5 +20,8 @@ Collection of Meta's DNS Libraries
 ### dnsrocks
 Meta's authoritative dns server
 
+### dnswatch
+Meta's dns snooping utility
+
 # License
 fbdns is licensed under Apache 2.0 as found in the [LICENSE file](LICENSE).

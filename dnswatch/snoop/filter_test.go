@@ -20,6 +20,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func copySlice(data []byte) []byte {
+	dest := make([]byte, len(data))
+	copy(dest, data)
+	return dest
+}
+
 func TestComputeRingSizes(t *testing.T) {
 	ringSize := 10 * 1024 * 1024
 	pageSize := 4 * 1024
@@ -47,7 +53,7 @@ func TestSetBPFFilter(t *testing.T) {
 
 	rule := "random rule"
 	err := SetBPFFilter(nil, rule, frameSize)
-	require.Equal(t, "syntax error in filter expression: syntax error", err.Error())
+	require.Contains(t, err.Error(), "filter expression: syntax error")
 	require.NotNil(t, err)
 }
 
@@ -55,7 +61,7 @@ func TestDeepCopyDNS(t *testing.T) {
 	d, err := RawDecoderByType("dns")
 	require.Nil(t, err)
 
-	err = d.Unmarshal(dnsRawResponseIPv4)
+	err = d.Unmarshal(copySlice(dnsRawResponseIPv4))
 
 	shallowCopy := d.(*DNSDecoder).dns
 	deepCopy := deepCopyDNS(d.(*DNSDecoder).dns)

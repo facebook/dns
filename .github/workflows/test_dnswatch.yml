@@ -1,0 +1,25 @@
+name: test_dnswatch
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    env:
+      GO_LDFLAGS: -lbpf
+      CGO_CFLAGS: -I /usr/include/bpf  -I /usr/include/pcap
+      CGO_CFLAGS_ALLOW: .*
+      CGO_LDFLAGS_ALLOW: .*
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: "Install deps"
+        run: sudo apt-get update; sudo apt-get install -y libpcap0.8 libpcap0.8-dev make clang  gcc-multilib
+      - name: "Install libbpf-1"
+        run: sudo bash .github/scripts/install_libbpf1.sh
+      - name: "Build all"
+        run: cd dnswatch; make
+      - name: Test
+        run: cd dnswatch;  make test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3

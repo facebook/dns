@@ -67,7 +67,7 @@ func startPrometheusExporter(refreshChan <-chan *ToplikeData, prometheusBind str
 		log.Infof("Prometheus DNSWatch exporter listening on %s", prometheusBind)
 		err := http.ListenAndServe(prometheusBind, nil)
 		if err != nil {
-			log.Error("failed to listen on %s :", prometheusBind)
+			log.Errorf("failed to listen on %s\n:", prometheusBind)
 		}
 	}()
 	for {

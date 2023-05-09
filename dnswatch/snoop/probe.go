@@ -16,7 +16,9 @@ package snoop
 import (
 	"bytes"
 	_ "embed" // Embed needs to be imported for the []byte containing the embedded Bpf object
+
 	"encoding/binary"
+
 	"fmt"
 	"os"
 	"os/signal"

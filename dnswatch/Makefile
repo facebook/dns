@@ -7,6 +7,12 @@ snoop/out/dnswatch_bpf_probe_core.o: bpf/vmlinux.h
 	clang -g -O2 -Wall -fpie -fno-stack-protector -I /usr/include/bpf -target bpf -D__TARGET_ARCH_x86 -I bpf  -c bpf/dnswatch.bpf.c -o $@
 build: snoop/out/dnswatch_bpf_probe_core.o
 	CGO_LDFLAGS="-lbpf" CGO_CFLAGS="-I /usr/include/bpf  -I /usr/include/pcap" go build .
+test: snoop/out/dnswatch_bpf_probe_core.o
+	CGO_LDFLAGS="-lbpf" CGO_CFLAGS="-I /usr/include/bpf  -I /usr/include/pcap" go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+install_linter:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ~ 
+lint: snoop/out/dnswatch_bpf_probe_core.o install_linter
+	CGO_LDFLAGS="-lbpf" CGO_CFLAGS="-I /usr/include/bpf  -I /usr/include/pcap" ~/golangci-lint run -v  ./...
 clean:
-	rm -f snoop/out/dnswatch_bpf_core.o
+	rm -f snoop/out/dnswatch_bpf_probe_core.o
 	rm -f bpf/vmlinux.h
