@@ -24,7 +24,6 @@ import (
 	"github.com/google/gopacket/layers"
 	mkdns "github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
-
 	"golang.org/x/sys/unix"
 )
 

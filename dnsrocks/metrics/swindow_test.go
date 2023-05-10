@@ -100,7 +100,7 @@ func BenchmarkClean(b *testing.B) {
 	}
 	wantSamples := secs * qps
 	if len(samples) != wantSamples {
-		b.Fatalf("unexpected number of inital samples, want %d, got %d", wantSamples, len(samples))
+		b.Fatalf("unexpected number of initial samples, want %d, got %d", wantSamples, len(samples))
 	}
 	for n := 0; n < b.N; n++ {
 		sw, err := newWindow(time.Second * 2)
@@ -108,7 +108,7 @@ func BenchmarkClean(b *testing.B) {
 			b.Fatalf("failed to create window: %v", err)
 		}
 		sw.samples = samples
-		sw.clean(time.Unix(int64(start+int(secs/2)), 0)) // 30 seconds from start
+		sw.clean(time.Unix(int64(start+secs/2), 0)) // 30 seconds from start
 		wantSamples = 30 * qps
 		if len(sw.samples) != wantSamples {
 			b.Fatalf("unexpected number of remaining samples after half-cleanup, want %d, got %d", wantSamples, len(sw.samples))

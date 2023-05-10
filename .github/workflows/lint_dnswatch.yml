@@ -1,0 +1,18 @@
+name: lint_dnswatch
+on: [push, pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: "Install deps"
+        run: sudo apt-get update; sudo apt-get install -y libpcap0.8 libpcap0.8-dev make clang  gcc-multilib
+      - name: "Install libbpf-1"
+        run: sudo bash .github/scripts/install_libbpf1.sh
+      - name: "Build all"
+        run: cd dnswatch; make
+      - name: "Run linter"
+        run: cd dnswatch; make lint

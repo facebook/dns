@@ -1,3 +1,4 @@
+#!/bin/bash
 echo """
 deb http://archive.ubuntu.com/ubuntu/ kinetic main restricted
 deb http://archive.ubuntu.com/ubuntu/ kinetic-updates main restricted

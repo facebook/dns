@@ -299,7 +299,6 @@ func BenchmarkFindAnswer(b *testing.B) {
 		for _, bm := range benchmarks {
 			benchname := fmt.Sprintf("%s(%s)/%s-%v", config.Driver, config.Flavour, bm.qname, bm.location.LocID)
 			b.Run(benchname, func(b *testing.B) {
-
 				offset, err := dns.PackDomainName(bm.qname, packedQName, 0, nil, false)
 				require.Nilf(b, err, "failed at packing domain %s", bm.qname)
 				controlOffset, err := dns.PackDomainName(bm.authdomain, controlName, 0, nil, false)
