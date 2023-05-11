@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/coredns/coredns v1.10.0
 	github.com/dnstap/golang-dnstap v0.4.0
+	github.com/eclesh/welford v0.0.0-20150116075914-eec62615b1f0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/golang/glog v1.0.0
 	github.com/golang/mock v1.6.0

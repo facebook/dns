@@ -15,7 +15,6 @@ package metrics
 
 import (
 	"fmt"
-	"sort"
 	"sync"
 	"time"
 
@@ -112,21 +111,10 @@ func (stats *Stats) Get() map[string]int64 {
 	stats.vlock.Unlock()
 	stats.wlock.Lock()
 	for key, val := range stats.windows {
-		samples := val.Samples()
-		sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
-		if len(samples) > 0 {
-			ret[fmt.Sprintf("%s.min", key)] = samples[0]
-			ret[fmt.Sprintf("%s.max", key)] = samples[len(samples)-1]
-			var sum int64
-			for _, numb := range samples {
-				sum += numb
-			}
-			ret[fmt.Sprintf("%s.avg", key)] = sum / int64(len(samples))
-		} else {
-			ret[fmt.Sprintf("%s.min", key)] = 0
-			ret[fmt.Sprintf("%s.max", key)] = 0
-			ret[fmt.Sprintf("%s.avg", key)] = 0
-		}
+		s := val.Stats()
+		ret[fmt.Sprintf("%s.min", key)] = s.min
+		ret[fmt.Sprintf("%s.max", key)] = s.max
+		ret[fmt.Sprintf("%s.avg", key)] = s.avg
 	}
 	stats.wlock.Unlock()
 	return ret

@@ -15,32 +15,45 @@ package metrics
 
 import (
 	"errors"
+	"math"
 	"sync"
 	"time"
-)
 
-type sample struct {
-	Value   int64
-	expires time.Time
-}
+	"github.com/eclesh/welford"
+)
 
 // slidingWindow defines a sliding window for use to count averages over time.
 type slidingWindow struct {
 	mutex          sync.RWMutex
 	sampleLifetime time.Duration
-	samples        []sample
+	stats          []*welford.Stats
+	pointer        int
 	stopping       chan struct{}
+}
+
+type swindowStats struct {
+	min   int64
+	max   int64
+	avg   int64
+	count int64
 }
 
 func newWindow(sampleLifetime time.Duration) (*slidingWindow, error) {
 	if sampleLifetime == 0 {
 		return nil, errors.New("sliding window cannot be zero")
 	}
+	// how many seconds of data we store
+	secs := int(math.Ceil(sampleLifetime.Seconds()))
 
 	sw := &slidingWindow{
 		sampleLifetime: sampleLifetime,
-		samples:        make([]sample, 0),
+		stats:          make([]*welford.Stats, secs),
 		stopping:       make(chan struct{}, 1),
+	}
+	// for N seconds, we store 60 aggregates, which allows us to
+	// have a N-second 'lookback' with natural removal of 'outdated' samples
+	for i := 0; i < secs; i++ {
+		sw.stats[i] = welford.New()
 	}
 
 	return sw, nil
@@ -56,33 +69,24 @@ func newSlidingWindow(sampleLifetime time.Duration) (*slidingWindow, error) {
 	return w, nil
 }
 
-func (sw *slidingWindow) clean(now time.Time) {
+// refresh moves pointer to next stat cell and resets this cell content
+func (sw *slidingWindow) refresh() {
 	sw.mutex.Lock()
-	newstartidx := 0
-	for idx, val := range sw.samples {
-		if val.expires.Before(now) {
-			newstartidx = idx + 1
-		} else {
-			break
-		}
+	sw.pointer++
+	if sw.pointer >= len(sw.stats) {
+		sw.pointer = 0
 	}
-	if len(sw.samples) > newstartidx {
-		newsamples := make([]sample, len(sw.samples)-newstartidx)
-		copy(newsamples, sw.samples[newstartidx:])
-		sw.samples = newsamples
-	} else {
-		sw.samples = make([]sample, 0)
-	}
+	sw.stats[sw.pointer] = welford.New()
+
 	sw.mutex.Unlock()
 }
 
 func (sw *slidingWindow) cleaner() {
-	ticker := time.NewTicker(1 * time.Second)
-	var now time.Time
+	ticker := time.NewTicker(time.Second)
 	for {
 		select {
-		case now = <-ticker.C:
-			sw.clean(now)
+		case <-ticker.C:
+			sw.refresh()
 		case <-sw.stopping:
 			return
 		}
@@ -93,16 +97,25 @@ func (sw *slidingWindow) cleaner() {
 func (sw *slidingWindow) Add(v int64) {
 	sw.mutex.Lock()
 	defer sw.mutex.Unlock()
-	sw.samples = append(sw.samples, sample{v, time.Now().Add(sw.sampleLifetime)})
+	for i := 0; i < len(sw.stats); i++ {
+		sw.stats[i].Add(float64(v))
+	}
 }
 
 // Samples returns current samples from the sliding window
-func (sw *slidingWindow) Samples() []int64 {
+func (sw *slidingWindow) Stats() swindowStats {
 	sw.mutex.Lock()
 	defer sw.mutex.Unlock()
-	samples := make([]int64, len(sw.samples))
-	for idx, sws := range sw.samples {
-		samples[idx] = sws.Value
+	// report data from last cell (the one that will be overwritten on next refresh)
+	// because it contains aggregates through last sampleLifetime seconds
+	oldest := sw.pointer + 1
+	if oldest >= len(sw.stats) {
+		oldest = 0
 	}
-	return samples
+	return swindowStats{
+		min:   int64(sw.stats[oldest].Min()),
+		max:   int64(sw.stats[oldest].Max()),
+		avg:   int64(sw.stats[oldest].Mean()),
+		count: int64(sw.stats[oldest].Count()),
+	}
 }
