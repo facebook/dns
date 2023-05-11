@@ -27,96 +27,69 @@ func TestSlidewindow(t *testing.T) {
 	sw.Add(1)
 	sw.Add(2)
 	time.Sleep(time.Second)
-	samples := sw.Samples()
-	require.Equal(t, 3, len(samples))
+	got := sw.Stats()
+	want := swindowStats{
+		min:   1,
+		max:   2,
+		avg:   1,
+		count: 3,
+	}
+	require.Equal(t, want, got)
 	time.Sleep(time.Second * 8)
 	sw.Add(5)
-	samples = sw.Samples()
-	require.Equal(t, 1, len(samples))
+	got = sw.Stats()
+	want = swindowStats{
+		min:   5,
+		max:   5,
+		avg:   5,
+		count: 1,
+	}
+	require.Equal(t, want, got)
 }
 
 func TestSlideWindowClean(t *testing.T) {
 	// create window without background cleaning goroutine
-	sw, err := newWindow(time.Second * 2)
+	sw, err := newWindow(time.Second * 3)
 	require.NoError(t, err)
-	sw.samples = []sample{
-		{
-			Value:   1,
-			expires: time.Unix(1683557425, 0),
-		},
-		{
-			Value:   2,
-			expires: time.Unix(1683557425, 0),
-		},
-		{
-			Value:   3,
-			expires: time.Unix(1683557425, 0),
-		},
-		{
-			Value:   4,
-			expires: time.Unix(1683557426, 0),
-		},
-		{
-			Value:   5,
-			expires: time.Unix(1683557429, 0),
-		},
-		{
-			Value:   6,
-			expires: time.Unix(1683557438, 0),
-		},
+	sw.Add(1)
+	sw.Add(2)
+	sw.refresh() // one second passed
+	sw.Add(3)
+	sw.Add(4)
+	sw.Add(5)
+	got := sw.Stats()
+	want := swindowStats{
+		min:   1,
+		max:   5,
+		avg:   3,
+		count: 5,
 	}
-
-	sw.clean(time.Unix(1683557427, 0))
-	want := []sample{
-		{
-			Value:   5,
-			expires: time.Unix(1683557429, 0),
-		},
-		{
-			Value:   6,
-			expires: time.Unix(1683557438, 0),
-		},
+	require.Equal(t, want, got, "after one second")
+	sw.refresh() // two seconds passed, all values are still 'visible'
+	got = sw.Stats()
+	require.Equal(t, want, got, "after two seconds")
+	sw.refresh() // three seconds passed
+	got = sw.Stats()
+	want = swindowStats{
+		min:   3,
+		max:   5,
+		avg:   4,
+		count: 3,
 	}
-	require.Equal(t, want, sw.samples)
-
-	sw.clean(time.Unix(1683557447, 0))
-	want = []sample{}
-	require.Equal(t, want, sw.samples)
+	require.Equal(t, want, got, "after three seconds some values got dropped")
+	sw.refresh() // four seconds passed
+	got = sw.Stats()
+	want = swindowStats{}
+	require.Equal(t, want, got, "after four seconds")
 }
 
-func BenchmarkClean(b *testing.B) {
-	samples := []sample{}
-	start := 1683557420
-	// test against potential 60 sec * 80k QPS
-	secs := 60
-	qps := 80 * 1000
-	for i := 0; i < secs; i++ {
-		for j := 0; j < qps; j++ {
-			samples = append(samples, sample{
-				Value:   int64(j),
-				expires: time.Unix(int64(start+i), 0),
-			})
-		}
-	}
-	wantSamples := secs * qps
-	if len(samples) != wantSamples {
-		b.Fatalf("unexpected number of initial samples, want %d, got %d", wantSamples, len(samples))
+func BenchmarkSlidingWindowAdd(b *testing.B) {
+	// create window without background cleaning goroutine
+	sw, err := newWindow(time.Second * 2)
+	if err != nil {
+		b.Fatalf("failed to create window: %v", err)
 	}
 	for n := 0; n < b.N; n++ {
-		sw, err := newWindow(time.Second * 2)
-		if err != nil {
-			b.Fatalf("failed to create window: %v", err)
-		}
-		sw.samples = samples
-		sw.clean(time.Unix(int64(start+secs/2), 0)) // 30 seconds from start
-		wantSamples = 30 * qps
-		if len(sw.samples) != wantSamples {
-			b.Fatalf("unexpected number of remaining samples after half-cleanup, want %d, got %d", wantSamples, len(sw.samples))
-		}
-		sw.clean(time.Unix(int64(start+secs), 0)) // 60 seconds from start
-		wantSamples = 0
-		if len(sw.samples) != wantSamples {
-			b.Fatalf("unexpected number of remaining samples after full cleanup, want %d, got %d", wantSamples, len(sw.samples))
-		}
+		sw.Add(int64(n))
 	}
 }

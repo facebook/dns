@@ -70,6 +70,8 @@ github.com/dgryski/go-spooky v0.0.0-20170606183049-ed3d087f40e2 h1:lx1ZQgST/imDh
 github.com/dgryski/go-spooky v0.0.0-20170606183049-ed3d087f40e2/go.mod h1:hgHYKsoIw7S/hlWtP7wD1wZ7SX1jPTtKko5X9jrOgPQ=
 github.com/dnstap/golang-dnstap v0.4.0 h1:KRHBoURygdGtBjDI2w4HifJfMAhhOqDuktAokaSa234=
 github.com/dnstap/golang-dnstap v0.4.0/go.mod h1:FqsSdH58NAmkAvKcpyxht7i4FoBjKu8E4JUPt8ipSUs=
+github.com/eclesh/welford v0.0.0-20150116075914-eec62615b1f0 h1:kQ0PoUSzoqBCdOXbrrZtBGHZOs46U8Aj0BG1Xa+tq7w=
+github.com/eclesh/welford v0.0.0-20150116075914-eec62615b1f0/go.mod h1:Lt9Nv8E2/1kmk2nD0nTZTae7qFRCXPJV6q7Debf1An8=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
