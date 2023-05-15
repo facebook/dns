@@ -23,7 +23,8 @@ It helps with investigating what DNS queries are made on the host by which proce
 
 
 # Building DNSWatch
-- Make sure your build host has all the build dependencies `apt-get install libbpf1 libbpf-dev libpcap0.8 libpcap0.8-dev make clang gcc-multilib `
+- Make sure your build host has all the build dependencies `apt-get install libbpf1 libbpf-dev libpcap0.8 libpcap0.8-dev make clang gcc-multilib`
+- You also might need to install bpftool. `apt-get install bpftool`
 - run `make`
 
 # Functionality of DNSWatch
@@ -32,12 +33,13 @@ A top-like interface which gives a high level overview of how many DNS queries a
 This is useful to get a quick glance of DNS query activity, and identify processes doing suspicious amount of DNS queries
 The view can be grouped by PID or process name, and sorted by number of A/AAAA/PTR queries, and NOERROR, NXDOMAIN, SERVFAIL responses
 
-[![asciicast](https://asciinema.org/a/A7XI0M624gLBmrzteZribJ8Rh.svg)](https://asciinema.org/a/A7XI0M624gLBmrzteZribJ8Rh)
+![Top](.res/top.gif)
+
 
 ### detailed
 A dig-like display of all dns queries made on the host. This enables to inspect DNS traffic in depth
 
-[![asciicast](https://asciinema.org/a/0h3dfi74uxcYlSHuONgdpcaUj.svg)](https://asciinema.org/a/0h3dfi74uxcYlSHuONgdpcaUj)
+![Detailed](.res/detailed.gif)
 
 ### exporter
 A Prometheus exporter, which reports the number of DNS queries made grouped by query type (A/AAAA/PTR) and response (NOERROR/SERVFAIL/NXDOMAIN)
@@ -84,7 +86,7 @@ servfail_responses{process="python3"} 0
 ### snoop
 A less detailed output than detailed, shows PID/Process name/QTYPE/QNAME and RCODE of all dns queries made on the host
 
-[![asciicast](https://asciinema.org/a/rLY27EmY7D0tjhFuH13g4M1ra.svg)](https://asciinema.org/a/rLY27EmY7D0tjhFuH13g4M1ra)
+![Snoop](.res/snoop.gif)
 
 ### sql
 Transform and display DNS activity using 'where', 'orderby', 'groupby'; Supports printing data to csv
