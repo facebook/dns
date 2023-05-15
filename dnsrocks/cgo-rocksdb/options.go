@@ -191,6 +191,13 @@ func (options *Options) SetCompactOnDeletion(windowSize int, numDelsTrigger int)
 	)
 }
 
+// SetPrefixExtractorSize sets prefix extractor of given prefixSize
+// https://github.com/facebook/rocksdb/wiki/Prefix-Seek
+func (options *Options) SetPrefixExtractorSize(prefixSize int) {
+	p := C.rocksdb_slicetransform_create_fixed_prefix(C.size_t(prefixSize))
+	C.rocksdb_options_set_prefix_extractor(options.cOptions, p)
+}
+
 // some compaction options
 
 // SetNumLevels sets number of compaction levels when level-based compaction is used.
@@ -458,4 +465,18 @@ func (readOptions *ReadOptions) UnsetSnapshot() {
 // FreeReadOptions frees up the memory previously allocated by NewReadOptions
 func (readOptions *ReadOptions) FreeReadOptions() {
 	C.rocksdb_readoptions_destroy(readOptions.cReadOptions)
+}
+
+// SetIterateLowerBound sets lower bound for key seek
+// https://github.com/facebook/rocksdb/wiki/Iterator
+func (readOptions *ReadOptions) SetIterateLowerBound(key []byte) {
+	cKeyPtr, cKeyLen := bytesToPtr(key)
+	C.rocksdb_readoptions_set_iterate_lower_bound(readOptions.cReadOptions, cKeyPtr, cKeyLen)
+}
+
+// SetIterateUpperBound sets upper bound for key seek
+// https://github.com/facebook/rocksdb/wiki/Iterator
+func (readOptions *ReadOptions) SetIterateUpperBound(key []byte) {
+	cKeyPtr, cKeyLen := bytesToPtr(key)
+	C.rocksdb_readoptions_set_iterate_upper_bound(readOptions.cReadOptions, cKeyPtr, cKeyLen)
 }
