@@ -82,7 +82,7 @@ func main() {
 	// DNS Server config
 	cliflags.IntVar(&serverConfig.Port, "port", 8053, "port to run on")
 	cliflags.BoolVar(&serverConfig.TCP, "tcp", true, "Whether or not to also listen on TCP.")
-	cliflags.IntVar(&serverConfig.MaxTCPQueries, "tcp-max-queries", -1, "Maximum number of querioes handled on a single TCP connection before closing the socket. This also applies for TLS. (unlimited if -1).")
+	cliflags.IntVar(&serverConfig.MaxTCPQueries, "tcp-max-queries", -1, "Maximum number of queries handled on a single TCP connection before closing the socket. This also applies for TLS. (unlimited if -1).")
 	// Idle Timeout default is based on miekg/dns original default: https://fburl.com/t0tmjp2c
 	cliflags.DurationVar(&serverConfig.TCPIdleTimeout, "tcp-idle-timeout", 8*time.Second, "TCP/TLS connections idle timeout. A connection TCP connection will be torn down if the TCP connection is idle for that time after first read.")
 	cliflags.DurationVar(&serverConfig.ReadTimeout, "read-timeout", 2*time.Second, "Sets the deadline for future Read calls and any currently-blocked Read call. A zero value means Read will not time out. For TCP, this value only applied to first read.")
