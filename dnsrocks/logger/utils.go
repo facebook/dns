@@ -30,7 +30,7 @@ const (
 	_RD = 1 << 8  // recursion desired
 	_RA = 1 << 7  // recursion available
 	_Z  = 1 << 6  // Z
-	_AD = 1 << 5  // authticated data
+	_AD = 1 << 5  // authenticated data
 	_CD = 1 << 4  // checking disabled
 )
 
