@@ -160,7 +160,7 @@ type Rsrv struct {
 type Rsrv1 struct {
 	rshared
 	srv    []byte // the service
-	pri    uint16 // prioroty, 0-65535
+	pri    uint16 // priority, 0-65535
 	weight uint16 // weight, 0-65535
 	port   uint16 // the service port
 	c      *Codec
