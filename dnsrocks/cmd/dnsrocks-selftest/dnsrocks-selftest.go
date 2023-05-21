@@ -118,7 +118,7 @@ func verifyMaps() error {
 	mapsCommand.StringVar(&dbConfig.Driver, "dbdriver", "rocksdb", "DB driver")
 	mapsCommand.StringVar(&dataPath, "datapath", "", "Path to data in TinyDNS format")
 	mapsCommand.IntVar(&workers, "workers", 100, "Controls parallelism")
-	mapsCommand.IntVar(&batchSize, "batchsize", 10000, "Controls how many records we query from from DB before reopening it, controls mem consumption")
+	mapsCommand.IntVar(&batchSize, "batchsize", 10000, "Controls how many records we query from DB before reopening it, controls mem consumption")
 	mapsCommand.StringVar(&qType, "qtype", "A", "Type of the query")
 	mapsCommand.StringVar(&qName, "qname", "fb.com", "Name to query")
 	mapsCommand.BoolVar(&noProgess, "np", false, "Don't show progress")
