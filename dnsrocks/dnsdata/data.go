@@ -76,7 +76,7 @@ type MapRecord struct {
 type Codec struct {
 	Serial       uint32    // default SOA serial
 	Acc          Accum     // a meta-record which represents an accumulated state over the whole data set
-	NoRnetOutput bool      // if set, disables Rnet ("%"-records) output in the outputi - use with Acc.Ranger.Enable()
+	NoRnetOutput bool      // if set, disables Rnet ("%"-records) output in the output - use with Acc.Ranger.Enable()
 	Features     Rfeatures // a meta-record with features supported by generated DB
 }
 
