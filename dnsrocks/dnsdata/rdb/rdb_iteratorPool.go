@@ -32,7 +32,7 @@ type IteratorPool struct {
 
 type iteratorPoolEntry struct {
 	iterator *rocksdb.Iterator
-	free     bool // if true - iterator is not taken from pool and should be destoyed on release
+	free     bool // if true - iterator is not taken from pool and should be destroyed on release
 }
 
 func newIteratorPool(createIterator func() *rocksdb.Iterator) *IteratorPool {
