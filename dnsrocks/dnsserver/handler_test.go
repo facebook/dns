@@ -2158,7 +2158,7 @@ func TestDNSDBQuerySingle(t *testing.T) {
 }
 
 // This test is meant to exercise the handling of the location field,
-// specifically with characters which, if interpretted incorrectly, could
+// specifically with characters which, if interpreted incorrectly, could
 // cause issues.
 func TestSpecialCharactersInLocationFields(t *testing.T) {
 	testCases := []struct {
