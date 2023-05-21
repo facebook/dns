@@ -405,7 +405,7 @@ type Snapshot struct {
 	cSnapshot *C.rocksdb_snapshot_t
 }
 
-// NewSnapshot creates a napshot for the database
+// NewSnapshot creates a snapshot for the database
 func NewSnapshot(db *RocksDB) *Snapshot {
 	return &Snapshot{
 		db:        db,
