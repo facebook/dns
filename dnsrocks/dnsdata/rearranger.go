@@ -206,7 +206,7 @@ func (r *Rearranger) AddLocation(ipnet *net.IPNet, locID []byte) error {
 
 		// IP+1 does not exist, skip
 		if !veryLastIP.Equal(lastIP) {
-			// and increment by 1, which gets to the the first IP address _after_ the end of this location
+			// and increment by 1, which gets to the first IP address _after_ the end of this location
 			nextRangeStart := ipIncrementByOne(lastIP)
 
 			r.points = append(r.points, &RangePoint{
