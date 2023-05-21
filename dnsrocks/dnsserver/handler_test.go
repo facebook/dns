@@ -1482,7 +1482,7 @@ func TestTypeToStatsKey(t *testing.T) {
 			keyName: "DNS_query.A",
 			qType:   dns.TypeA,
 		},
-		// This is a non-existent type, will default to DNS_query.TYPE%d
+		// This is a nonexistent type, will default to DNS_query.TYPE%d
 		{
 			keyName: "DNS_query.TYPE12345",
 			qType:   12345,

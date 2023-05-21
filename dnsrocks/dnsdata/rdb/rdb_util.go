@@ -90,7 +90,7 @@ func delValue(data []byte, value []byte) ([]byte, error) {
 		}
 		i += chunkLen
 	}
-	log.Printf("Cannot remove non-existent value %v (%s)", value, string(value))
+	log.Printf("Cannot remove nonexistent value %v (%s)", value, string(value))
 	return nil, ErrNXVal // value not found in the multi-value data
 }
 

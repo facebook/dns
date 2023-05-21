@@ -645,7 +645,7 @@ func (rdb *RDB) FindFirst(keys [][]byte) ([]byte, int, error) {
 			return nil, -1, errs[i]
 		}
 		if len(val) == 0 {
-			continue // skip non-existent keys
+			continue // skip nonexistent keys
 		}
 		if len(val) < 4 {
 			return nil, -1, io.ErrUnexpectedEOF // malformed value header

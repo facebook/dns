@@ -47,7 +47,7 @@ func TestCdb(t *testing.T) {
 
 	_, err = c.Data([]byte("does not exist"), context)
 	if err != io.EOF {
-		t.Fatalf("non-existent key should return io.EOF")
+		t.Fatalf("nonexistent key should return io.EOF")
 	}
 
 	for _, rec := range records {
@@ -137,7 +137,7 @@ func TestEmptyFile(t *testing.T) {
 
 	_, err = c.Data([]byte("does not exist"), context)
 	if err != io.EOF {
-		t.Fatalf("non-existent key should return io.EOF")
+		t.Fatalf("nonexistent key should return io.EOF")
 	}
 }
 

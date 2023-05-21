@@ -378,7 +378,7 @@ func TestStrValue(t *testing.T) {
 	if res, err := db.GetStr(readOptions, sKey); err != nil {
 		t.Errorf("Error reading deleted string: %s", err.Error())
 	} else if res != "" {
-		// non-existent string value is ""
+		// nonexistent string value is ""
 		t.Errorf("String mismatch: %s / %s", res, sValue)
 	}
 }
@@ -408,7 +408,7 @@ func TestByteValue(t *testing.T) {
 	if res, err := db.Get(readOptions, bKey); err != nil {
 		t.Errorf("Error reading deleted bytes: %s", err.Error())
 	} else if res != nil {
-		// non-existent bytes value is nil
+		// nonexistent bytes value is nil
 		t.Errorf("Bytes mismatch: %v / %v", res, bValue)
 	}
 }
@@ -628,7 +628,7 @@ func TestIterator(t *testing.T) {
 			}
 		}
 
-		// NOTE: seeking to non-existent key "iterator_key0012340"; expected to position on the previous existing key "iterator_key001235"
+		// NOTE: seeking to nonexistent key "iterator_key0012340"; expected to position on the previous existing key "iterator_key001235"
 		iter.Seek([]byte(fmt.Sprintf(keyFmt+"0", 1234)))
 
 		checkPair(1235)
