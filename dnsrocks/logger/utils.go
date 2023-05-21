@@ -78,7 +78,7 @@ type Config struct {
 	Category      string
 }
 
-// RequestProtocol return a string version of the profocol (UDP, TCP or TLS)
+// RequestProtocol return a string version of the protocol (UDP, TCP or TLS)
 // TLS has its version appended if it is available (which should always be)
 func RequestProtocol(state request.Request) string {
 	proto := state.Proto() // Protocol used
