@@ -31,7 +31,7 @@ func makeTLSConfig(certfile string, sessionticketcfg SessionTicketKeysConfig) *T
 	}
 }
 
-// TestInitTLSConfigLoadsCertAndKey tests that tls implementation successsfully loads
+// TestInitTLSConfigLoadsCertAndKey tests that tls implementation successfully loads
 // and sets Certificates on tls.Config struct based on our TLSConfig struct
 func TestInitTLSConfigLoadsCertAndKey(t *testing.T) {
 	certfile := testaid.MkTestCert(t)
