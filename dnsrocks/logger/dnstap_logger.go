@@ -49,18 +49,18 @@ var (
 	localRand = db.NewRand()
 )
 
-// DNSTapLoggger logs to dnstap output
-type DNSTapLoggger struct {
+// DNSTapLogger logs to dnstap output
+type DNSTapLogger struct {
 	dnsTapOutput anyDNSTapOutPut
 	samplingRate float64
 }
 
-// NewLogger initialize a DNSTapLoggger by setting the right outputs and format
-func NewLogger(config Config) (l *DNSTapLoggger, err error) {
+// NewLogger initialize a DNSTapLogger by setting the right outputs and format
+func NewLogger(config Config) (l *DNSTapLogger, err error) {
 	if config.SamplingRate < 0.0 || config.SamplingRate > 1.0 {
 		return nil, fmt.Errorf("Sampling rate should be >= 0.0 and <= 1.0. Got %f", config.SamplingRate)
 	}
-	l = &DNSTapLoggger{samplingRate: config.SamplingRate}
+	l = &DNSTapLogger{samplingRate: config.SamplingRate}
 	switch config.Target {
 	case "stdout":
 		var formatterFunc dnstap.TextFormatFunc
@@ -114,12 +114,12 @@ func NewLogger(config Config) (l *DNSTapLoggger, err error) {
 }
 
 // StartLoggerOutput starts the dnstap logger output loop
-func (l *DNSTapLoggger) StartLoggerOutput() {
+func (l *DNSTapLogger) StartLoggerOutput() {
 	go l.dnsTapOutput.RunOutputLoop()
 }
 
 // Log is used to log to dnstap.
-func (l *DNSTapLoggger) Log(state request.Request, r *dns.Msg, _ *dns.EDNS0_SUBNET) {
+func (l *DNSTapLogger) Log(state request.Request, r *dns.Msg, _ *dns.EDNS0_SUBNET) {
 	// FIXME: implement Bad_query, EDNS_FORMERR, EDNS_BADVERS
 
 	// We only sample non-sonar names
@@ -160,7 +160,7 @@ func (l *DNSTapLoggger) Log(state request.Request, r *dns.Msg, _ *dns.EDNS0_SUBN
 }
 
 // LogFailed is used to log failures
-func (l *DNSTapLoggger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET) {
+func (l *DNSTapLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET) {
 	m := new(dns.Msg)
 	m.SetRcode(r, dns.RcodeServerFailure)
 	l.Log(state, m, ecs)
