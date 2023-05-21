@@ -230,7 +230,7 @@ Perform one of self-tests on live data.
 Available self-tests:
 	maps: validates that given record is resolvable from all subnets defined in given data file.
 		Needs both compiled database and it's source data file in TinyDNS format.
-	marshal: make sure that parsing record, serializing it back to text and parsing again is idemptotent.
+	marshal: make sure that parsing record, serializing it back to text and parsing again is idempotent.
 		Needs source data file in TinyDNS format.
 `,
 		os.Args[0])
