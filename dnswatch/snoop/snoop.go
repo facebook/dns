@@ -35,7 +35,7 @@ const (
 // PortNr is a type for port number
 type PortNr uint16
 
-// PortNr asociates identifier with port number
+// PortNr associates identifier with port number
 const (
 	dns PortNr = 53
 )
