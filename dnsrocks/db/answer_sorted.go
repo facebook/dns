@@ -284,7 +284,7 @@ func (r *sortedDataReader) TryForEach(key []byte, f func(value []byte) error) (f
 	return foundKey, err
 }
 
-// search for common labels at the begginning of 2 packed names
+// search for common labels at the beginning of 2 packed names
 // returns length of the common part
 func findCommonLongestPrefix(str1 []byte, str2 []byte) int {
 	i := 0
