@@ -365,7 +365,7 @@ func (r *Rearranger) Rearrange() RangePoints {
 		}
 	}
 
-	// Squash IP duplicates: if two consequitive range points have the same IP and MaskLen, then the latter wins.
+	// Squash IP duplicates: if two consecutive range points have the same IP and MaskLen, then the latter wins.
 	// This can happen if there were two locations back-to-back, then the finish of the first location will be the start of the second
 	// If it is the same IP, but the latter MaskLen is shorter (and the former is more exact), then the latter wins.
 	// NOTE: we should not squash points with the same location but different MaskLen, because otherwise we risk capturing matches with shorter masks.
