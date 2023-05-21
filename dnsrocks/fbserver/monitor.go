@@ -25,7 +25,7 @@ type MonitorType string
 
 // These are the transport protocols and extensions that Monitor supports.
 const (
-	monitorTCP        MonitorType = "tcp"     // Unencryped TCP
+	monitorTCP        MonitorType = "tcp"     // Unencrypted TCP
 	monitorTCPWithTLS MonitorType = "tcp-tls" // TLS encrypted TCP.
 	monitorUDP        MonitorType = "udp"     // UDP
 )
