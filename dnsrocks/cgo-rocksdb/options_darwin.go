@@ -326,7 +326,7 @@ func NewDefaultWriteOptions() *WriteOptions {
 
 // NewWriteOptions creates WriteOptions object
 // Parameters:
-// - syncOnWrite forces OS bufer flush on each write (slow!)
+// - syncOnWrite forces OS buffer flush on each write (slow!)
 // - disableWAL disables write-ahead-log (possible data loss in case of a crash)
 // - ignoreMissingColumnFamilies do not fail, and just ignore writes to non-existing
 // column families (if the WriteBatch contains multiple writes - some of them will succeed)
