@@ -106,12 +106,12 @@ func verifyMaps() error {
 		dbConfig dnsserver.DBConfig
 		// handlerConfig dnsserver.HandlerConfig
 		// cacheConfig   dnsserver.CacheConfig
-		dataPath  string
-		qType     string
-		qName     string
-		workers   int
-		batchSize int
-		noProgess bool
+		dataPath   string
+		qType      string
+		qName      string
+		workers    int
+		batchSize  int
+		noProgress bool
 	)
 	mapsCommand := flag.NewFlagSet("maps", flag.ExitOnError)
 	mapsCommand.StringVar(&dbConfig.Path, "dbpath", "", "Path to compiled DB")
@@ -121,7 +121,7 @@ func verifyMaps() error {
 	mapsCommand.IntVar(&batchSize, "batchsize", 10000, "Controls how many records we query from DB before reopening it, controls mem consumption")
 	mapsCommand.StringVar(&qType, "qtype", "A", "Type of the query")
 	mapsCommand.StringVar(&qName, "qname", "fb.com", "Name to query")
-	mapsCommand.BoolVar(&noProgess, "np", false, "Don't show progress")
+	mapsCommand.BoolVar(&noProgress, "np", false, "Don't show progress")
 	err := mapsCommand.Parse(os.Args[2:])
 	if err != nil {
 		return err
