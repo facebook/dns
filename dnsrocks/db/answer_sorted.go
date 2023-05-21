@@ -205,7 +205,7 @@ func (r *sortedDataReader) find(
 		// new key that is equal to what we asked for, or less than it.
 		// This new key can be very different from what we requested, i.e.
 		// for com.example.foo (if exact match is not found) previous key will be returned,
-		// which doesn't guaranteed to even start with com.example, it can be com.examnle.foo for what we know
+		// which doesn't guaranteed to even start with com.example, it can be com.example.foo for what we know
 		var k []byte
 		k, err = r.TryForEach(key, parseResult)
 
