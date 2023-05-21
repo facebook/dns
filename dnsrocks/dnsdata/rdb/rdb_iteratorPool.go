@@ -22,7 +22,7 @@ import (
 // NumberOfIterators is empirically found number of iterators which make sense to keep in pool
 const NumberOfIterators int = 15
 
-// IteratorPool allows RDB interators reuse. Iterator creation is happen to be pretty costly operation
+// IteratorPool allows RDB iterators reuse. Iterator creation is happen to be pretty costly operation
 type IteratorPool struct {
 	iterators      chan iteratorPoolEntry
 	enabled        bool
