@@ -51,7 +51,7 @@ type CompositeRecord interface {
 	DerivedRecords() []Record
 }
 
-// MapMarshaler is the interface used in parsing impelemented by all record types
+// MapMarshaler is the interface used in parsing implemented by all record types
 type MapMarshaler interface {
 	MarshalMap() ([]MapRecord, error)
 }
