@@ -1232,7 +1232,7 @@ func TestDNSDB(t *testing.T) {
 			expectedExtra: []dns.RR{},
 			expectedErr:   nil,
 		},
-		// Dual MX, 1 CNAME, 1 A/AAAA + lcation aware
+		// Dual MX, 1 CNAME, 1 A/AAAA + location aware
 		{
 			qname:        "example.net.",
 			qtype:        dns.TypeMX,
