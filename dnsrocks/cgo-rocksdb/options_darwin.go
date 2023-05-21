@@ -109,8 +109,8 @@ func (options *Options) SetKeepLogFileNum(num uint) {
 	C.rocksdb_options_set_keep_log_file_num(options.cOptions, C.ulong(num))
 }
 
-// EnableErrorIfExists flags that an existing database is not expected and openning it should not succeed.
-// By default, openning an existing database is allowed.
+// EnableErrorIfExists flags that an existing database is not expected and opening it should not succeed.
+// By default, opening an existing database is allowed.
 func (options *Options) EnableErrorIfExists() {
 	// default is False
 	C.rocksdb_options_set_error_if_exists(options.cOptions, C.BOOL_CHAR_TRUE)
