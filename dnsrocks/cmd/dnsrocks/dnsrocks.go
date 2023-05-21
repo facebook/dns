@@ -115,7 +115,7 @@ Currently two types of trigger files are supported:
 	// Cache config
 	cliflags.BoolVar(&serverConfig.CacheConfig.Enabled, "cache", false, "Whether or not we should cache DNS messages")
 	cliflags.IntVar(&serverConfig.CacheConfig.LRUSize, "cache-lru-size", 1024*1024, "LRU cache size")
-	cliflags.Int64Var(&serverConfig.CacheConfig.WRSTimeout, "cache-wrs-timeout", 0, "How long should the weighted ramdom sampled DNS messages should be cached. 0 to not cache them.")
+	cliflags.Int64Var(&serverConfig.CacheConfig.WRSTimeout, "cache-wrs-timeout", 0, "How long should the weighted random sampled DNS messages should be cached. 0 to not cache them.")
 	// TLS Config
 	cliflags.BoolVar(&serverConfig.TLS, "tls", false, "Whether or not to also listen on TCP with TLS.")
 	cliflags.IntVar(&serverConfig.TLSConfig.Port, "tls-port", 8853, "Port to run DNS-over-TLS on.")

@@ -45,7 +45,7 @@ than having to do it themselves.
 */
 var localRand = NewRand()
 
-// Add adds a ResourceRecord to Wrs if its ramdomly computed weight is greater
+// Add adds a ResourceRecord to Wrs if its randomly computed weight is greater
 // then the existing record.
 func (w *Wrs) Add(rec ResourceRecord, data []byte) error {
 	if rec.Qtype != dns.TypeA && rec.Qtype != dns.TypeAAAA {
