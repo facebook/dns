@@ -528,7 +528,7 @@ func (r *Rnet) MarshalMap() ([]MapRecord, error) {
 const (
 	// RangePointKeyMarker is the prefix for the RangePoint keys
 	RangePointKeyMarker = "\000\000\000!"
-	// MlenNoLoc is the special value of the mask legth byte indicating the location is not defined.
+	// MlenNoLoc is the special value of the mask length byte indicating the location is not defined.
 	// As it finds its way into the values of the keys, it must stay zero.
 	MlenNoLoc = 0
 	// FeaturesKey is a special key storing bitmap what format is used for other keys in DB
