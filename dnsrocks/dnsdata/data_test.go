@@ -1687,7 +1687,7 @@ func TestNoEncodeSubnets(t *testing.T) {
 	}
 }
 
-// Benchmarks for vaious string conversion functions. To execute just them, run:
+// Benchmarks for various string conversion functions. To execute just them, run:
 // % buck run //dns/fbdns/dnsdata:dnsdata_test-bench -- -test.bench BenchmarkAtoi
 func BenchmarkAtoiFscan(b *testing.B) {
 	var out uint32
