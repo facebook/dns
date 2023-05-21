@@ -676,7 +676,7 @@ func (s AccumulatorScanner) Scan() bool {
 	return scanResult
 }
 
-// Text returnes current line
+// Text returns current line
 func (s AccumulatorScanner) Text() string {
 	return s.rangerScanner.Text()
 }

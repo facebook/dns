@@ -82,7 +82,7 @@ func (d *Entry) ParseBytes(b []byte) error {
 	return nil
 }
 
-// Arg returs the operation argument (the line without the leading "+" or "-")
+// Arg returns the operation argument (the line without the leading "+" or "-")
 func (d *Entry) Arg() string {
 	return string(d.Bytes)
 }

@@ -192,7 +192,7 @@ func (s *SubnetRangerScanner) Scan() bool {
 	return true
 }
 
-// Text returnes current line
+// Text returns current line
 func (s *SubnetRangerScanner) Text() string {
 	return s.currentLine
 }
