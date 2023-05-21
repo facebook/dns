@@ -110,7 +110,7 @@ The view can be sorted by number of A/AAAA/PTR queries, and NOERROR, NXDOMAIN, S
 ### bpf
     The BPF code used to capture DNS traffic
 ### cmd
-    All entripoints to the functions provided by DNSWatch are defined here
+    All entrypoints to the functions provided by DNSWatch are defined here
 ### snoop
     DNS snooping logic is here
 
