@@ -441,7 +441,7 @@ func detectSep(b []byte) []byte {
 	return SEP
 }
 
-// the line tokinizer
+// the line tokenizer
 func fields(text []byte) [][]byte {
 	b := text[1:]
 	sep := detectSep(b)
