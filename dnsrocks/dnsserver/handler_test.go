@@ -1001,7 +1001,7 @@ func TestDNSDB(t *testing.T) {
 			expectedErr:   nil,
 		},
 		// When querying for example.com/NS, we expect the NS RRset in the Answer
-		// section and optionally the A/AAAA records in Addditional section.
+		// section and optionally the A/AAAA records in Additional section.
 		{
 			qname:        "example.com.",
 			qtype:        dns.TypeNS,
