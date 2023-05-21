@@ -150,7 +150,7 @@ func getEnvVar(key string, defaultValue int) int {
 	return i
 }
 
-// DefaultOptions returns rocksdb Options inialized with DNSROCKS default values, including potential overrides from ENV variables.
+// DefaultOptions returns rocksdb Options initialized with DNSROCKS default values, including potential overrides from ENV variables.
 func DefaultOptions() *rocksdb.Options {
 	options := rocksdb.NewOptions()
 	bloom := getEnvVar("FBDNS_ROCKSDB_FULL_BLOOM_FILTER_BITS", defaultBloomFilterBits)
