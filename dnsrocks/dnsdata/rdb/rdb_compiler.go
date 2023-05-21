@@ -47,7 +47,7 @@ func CleanRDBDir(rdbDir string) error {
 
 // CompilationOptions allows us to provide options to RDB compiler
 type CompilationOptions struct {
-	NumCPU         int  // Parser and builder parallelizm
+	NumCPU         int  // Parser and builder parallelism
 	UseV2KeySyntax bool // specifies whether v2 keys syntax should be used
 	// builder-related settings
 	UseBuilder          bool // if we use RDB builder (mem hungry, fastest) or not
