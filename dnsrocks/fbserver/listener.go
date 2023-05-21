@@ -45,7 +45,7 @@ func listenTCP(addr string, conf net.ListenConfig, stats *metrics.Stats) (*Monit
 func listenTLS(addr string, conf net.ListenConfig, tlsConf *tls.Config, stats *metrics.Stats) (*Monitor, error) {
 	tcpList, err := conf.Listen(context.Background(), "tcp", addr)
 	if err != nil {
-		return nil, fmt.Errorf("could not open tcp listner for tls conn: %w", err)
+		return nil, fmt.Errorf("could not open tcp listener for tls conn: %w", err)
 	}
 	tlsList := tls.NewListener(tcpList, tlsConf)
 	return NewMonitor(tlsList, monitorTCPWithTLS, stats), nil
