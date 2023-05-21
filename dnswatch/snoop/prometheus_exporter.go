@@ -41,7 +41,7 @@ var (
 	},
 		[]string{"process"},
 	)
-	serfvailResps = promauto.NewCounterVec(prometheus.CounterOpts{
+	servfailResps = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "servfail_responses",
 		Help: "The number of SERVFAIL responses",
 	},
@@ -75,14 +75,14 @@ func startPrometheusExporter(refreshChan <-chan *ToplikeData, prometheusBind str
 		aQueries.WithLabelValues("all").Add(float64(t.a))
 		aaaaQueries.WithLabelValues("all").Add(float64(t.aaaa))
 		ptrQueries.WithLabelValues("all").Add(float64(t.ptr))
-		serfvailResps.WithLabelValues("all").Add(float64(t.servf))
+		servfailResps.WithLabelValues("all").Add(float64(t.servf))
 		nxdomainResps.WithLabelValues("all").Add(float64(t.nxdom))
 		noerrorResps.WithLabelValues("all").Add(float64(t.noerr))
 		for _, row := range t.aggregateComm().Rows {
 			aQueries.WithLabelValues(row.Comm).Add(float64(row.A.val))
 			aaaaQueries.WithLabelValues(row.Comm).Add(float64(row.AAAA.val))
 			ptrQueries.WithLabelValues(row.Comm).Add(float64(row.PTR.val))
-			serfvailResps.WithLabelValues(row.Comm).Add(float64(row.SERVF.val))
+			servfailResps.WithLabelValues(row.Comm).Add(float64(row.SERVF.val))
 			nxdomainResps.WithLabelValues(row.Comm).Add(float64(row.NXDOM.val))
 			noerrorResps.WithLabelValues(row.Comm).Add(float64(row.NOERR.val))
 		}

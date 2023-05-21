@@ -30,7 +30,7 @@ const (
 	_RD = 1 << 8  // recursion desired
 	_RA = 1 << 7  // recursion available
 	_Z  = 1 << 6  // Z
-	_AD = 1 << 5  // authticated data
+	_AD = 1 << 5  // authenticated data
 	_CD = 1 << 4  // checking disabled
 )
 
@@ -78,7 +78,7 @@ type Config struct {
 	Category      string
 }
 
-// RequestProtocol return a string version of the profocol (UDP, TCP or TLS)
+// RequestProtocol return a string version of the protocol (UDP, TCP or TLS)
 // TLS has its version appended if it is available (which should always be)
 func RequestProtocol(state request.Request) string {
 	proto := state.Proto() // Protocol used

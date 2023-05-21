@@ -283,7 +283,7 @@ func (h *FBDNSDB) watchControlDirAndReload(watcher *fsnotify.Watcher) (err error
 
 			switch name {
 			case ControlFilePartialReload:
-				glog.Infof("Found patial reload trigger file")
+				glog.Infof("Found partial reload trigger file")
 				h.ReloadChan <- *NewPartialReloadSignal()
 			case ControlFileFullReload:
 				glog.Infof("Found full reload trigger file")

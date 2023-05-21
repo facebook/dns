@@ -73,7 +73,7 @@ func processRecs(recs []dns.RR) map[string][]string {
 	results := map[string][]string{}
 	for _, rr := range recs {
 		// TODO: we can create dnsdata records and use MarshalText,
-		// but now it only ouputs full form which is not the best for human reading
+		// but now it only outputs full form which is not the best for human reading
 		switch v := rr.(type) {
 		case *dns.A:
 			// +fqdn,ip,ttl,timestamp,lo

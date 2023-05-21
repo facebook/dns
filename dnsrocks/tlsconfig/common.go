@@ -40,7 +40,7 @@ type TLSConfig struct {
 	DoTTLSATtl        uint32 // TTL of the TLSA record. Note that a value of 0 will make the record default to defaultTLSATtl
 }
 
-// LoadTLSCertFromFile loads TLS cert from th epath specified in TLSConfig
+// LoadTLSCertFromFile loads TLS cert from the path specified in TLSConfig
 func LoadTLSCertFromFile(tlsConfig *TLSConfig) (cert tls.Certificate, err error) {
 	return tls.LoadX509KeyPair(tlsConfig.CertFile, tlsConfig.KeyFile)
 }

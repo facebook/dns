@@ -33,7 +33,7 @@ func BenchmarkGetNs(b *testing.B) {
 	benchmarks := []string{
 		"example.com.",
 		"nonauth.example.com.",
-		"abc.example.com.", // non-existent name
+		"abc.example.com.", // nonexistent name
 	}
 
 	for _, config := range testaid.TestDBs {

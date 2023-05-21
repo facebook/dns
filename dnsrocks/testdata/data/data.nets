@@ -13,7 +13,7 @@
 %\000\054,6.6.6.0/32,c\000
 %\000\072,6.6.6.1/32,c\000
 %\000\134,6.6.6.2/32,c\000
-# colon is still a valid delimeter in our code base for IPv4 records
+# colon is still a valid delimiter in our code base for IPv4 records
 %\001\072:6.6.6.3/32:c\000
 
 # Defaults

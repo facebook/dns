@@ -15,7 +15,7 @@ package dnsdata
 
 import "net"
 
-// IPv6 is a storage-eefficient replacement for net.IP struct
+// IPv6 is a storage-efficient replacement for net.IP struct
 // net.IP stores IPv6/IPv4 addresses as slices which is really inefficient
 // on 64-bit architecture:
 // * IPv6 takes 40 bytes: 24 bytes slice header + 16 bytes data

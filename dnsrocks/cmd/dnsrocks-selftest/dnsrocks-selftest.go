@@ -106,22 +106,22 @@ func verifyMaps() error {
 		dbConfig dnsserver.DBConfig
 		// handlerConfig dnsserver.HandlerConfig
 		// cacheConfig   dnsserver.CacheConfig
-		dataPath  string
-		qType     string
-		qName     string
-		workers   int
-		batchSize int
-		noProgess bool
+		dataPath   string
+		qType      string
+		qName      string
+		workers    int
+		batchSize  int
+		noProgress bool
 	)
 	mapsCommand := flag.NewFlagSet("maps", flag.ExitOnError)
 	mapsCommand.StringVar(&dbConfig.Path, "dbpath", "", "Path to compiled DB")
 	mapsCommand.StringVar(&dbConfig.Driver, "dbdriver", "rocksdb", "DB driver")
 	mapsCommand.StringVar(&dataPath, "datapath", "", "Path to data in TinyDNS format")
 	mapsCommand.IntVar(&workers, "workers", 100, "Controls parallelism")
-	mapsCommand.IntVar(&batchSize, "batchsize", 10000, "Controls how many records we query from from DB before reopening it, controls mem consumption")
+	mapsCommand.IntVar(&batchSize, "batchsize", 10000, "Controls how many records we query from DB before reopening it, controls mem consumption")
 	mapsCommand.StringVar(&qType, "qtype", "A", "Type of the query")
 	mapsCommand.StringVar(&qName, "qname", "fb.com", "Name to query")
-	mapsCommand.BoolVar(&noProgess, "np", false, "Don't show progress")
+	mapsCommand.BoolVar(&noProgress, "np", false, "Don't show progress")
 	err := mapsCommand.Parse(os.Args[2:])
 	if err != nil {
 		return err
@@ -230,7 +230,7 @@ Perform one of self-tests on live data.
 Available self-tests:
 	maps: validates that given record is resolvable from all subnets defined in given data file.
 		Needs both compiled database and it's source data file in TinyDNS format.
-	marshal: make sure that parsing record, serializing it back to text and parsing again is idemptotent.
+	marshal: make sure that parsing record, serializing it back to text and parsing again is idempotent.
 		Needs source data file in TinyDNS format.
 `,
 		os.Args[0])

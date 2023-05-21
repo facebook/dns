@@ -33,7 +33,7 @@ type BackupEngineInfo struct {
 	cInfo *C.rocksdb_backup_engine_info_t
 }
 
-// GetCount gets the number backsup available.
+// GetCount gets the number backups available.
 func (bi *BackupEngineInfo) GetCount() int {
 	return int(C.rocksdb_backup_engine_info_count(bi.cInfo))
 }

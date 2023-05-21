@@ -63,7 +63,7 @@ type Entry struct {
 	Records []dnsdata.MapRecord // vector of map records
 }
 
-// Parse analises the provided input which must be a single entry
+// Parse analyzes the provided input which must be a single entry
 // (line) of a diff, and populates Op and Bytes fields accordingly.
 // It may return ErrShortInput or ErrBadOp if the input is incomplete
 // or isn't recognised.
@@ -82,7 +82,7 @@ func (d *Entry) ParseBytes(b []byte) error {
 	return nil
 }
 
-// Arg returs the operation argument (the line without the leading "+" or "-")
+// Arg returns the operation argument (the line without the leading "+" or "-")
 func (d *Entry) Arg() string {
 	return string(d.Bytes)
 }

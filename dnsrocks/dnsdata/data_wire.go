@@ -18,7 +18,7 @@ import (
 )
 
 // WireRecord is the interface implemented by all record types which could be
-// transfetted on a wire directly (non-composite or specialized ones)
+// transferred on a wire directly (non-composite or specialized ones)
 type WireRecord interface {
 	WireType() WireType
 	DomainName() string

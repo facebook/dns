@@ -73,14 +73,14 @@ func (i *Iterator) Prev() {
 	C.rocksdb_iter_prev(i.cIter)
 }
 
-// Key returns the key at the current position. To advance position use Next() and Prev(). To ontain the value use Value().
+// Key returns the key at the current position. To advance position use Next() and Prev(). To obtain the value use Value().
 func (i *Iterator) Key() []byte {
 	var klen C.size_t
 	ckey := C.rocksdb_iter_key(i.cIter, &klen)
 	return C.GoBytes(unsafe.Pointer(ckey), C.int(klen))
 }
 
-// Value returns the value at the current position. To ontain the key use Key().
+// Value returns the value at the current position. To obtain the key use Key().
 func (i *Iterator) Value() []byte {
 	var vlen C.size_t
 	cval := C.rocksdb_iter_value(i.cIter, &vlen)

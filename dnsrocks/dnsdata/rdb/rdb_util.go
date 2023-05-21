@@ -52,7 +52,7 @@ func (kv *kvList) Sort() {
 // appendValues will append 'newVals' values to a multi-value 'data', and return the result;
 // used for add operations. It is basically a form of serialization.
 // It does so by prefixing each value with 32-bit length and concatenating the result.
-// The motivation behind choosing 32 bits for the legth is following:
+// The motivation behind choosing 32 bits for the length is following:
 // RFC-1035 RDLENGTH (uint16) + header requires more than 16 bytes; rounding
 // this up to uint32. Potentially that wastes about 1 byte, so there is a room
 // for trading off between space and computation.
@@ -90,7 +90,7 @@ func delValue(data []byte, value []byte) ([]byte, error) {
 		}
 		i += chunkLen
 	}
-	log.Printf("Cannot remove non-existent value %v (%s)", value, string(value))
+	log.Printf("Cannot remove nonexistent value %v (%s)", value, string(value))
 	return nil, ErrNXVal // value not found in the multi-value data
 }
 

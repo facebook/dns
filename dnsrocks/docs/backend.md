@@ -24,7 +24,7 @@ It has disadvantages as well:
 
 ### RocksDB
 
-RocksDB is a full blown modern key-value store, with all the related advantages and disatvantages.
+RocksDB is a full blown modern key-value store, with all the related advantages and disadvantages.
 
 Compared to CDB, it has many advantages, namely:
 * Built-in data compression, compiled DB is significantly smaller

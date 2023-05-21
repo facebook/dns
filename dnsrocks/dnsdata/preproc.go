@@ -25,7 +25,7 @@ import (
 
 const bufferSizeLimit = 512 // bytes.Buffer grows by 512
 
-// PreprocReader is a streaming io.Reader version of proprocessor
+// PreprocReader is a streaming io.Reader version of preprocessor
 type PreprocReader struct {
 	codec       *Codec
 	scanner     *bufio.Scanner

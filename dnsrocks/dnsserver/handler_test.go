@@ -1001,7 +1001,7 @@ func TestDNSDB(t *testing.T) {
 			expectedErr:   nil,
 		},
 		// When querying for example.com/NS, we expect the NS RRset in the Answer
-		// section and optionally the A/AAAA records in Addditional section.
+		// section and optionally the A/AAAA records in Additional section.
 		{
 			qname:        "example.com.",
 			qtype:        dns.TypeNS,
@@ -1232,7 +1232,7 @@ func TestDNSDB(t *testing.T) {
 			expectedExtra: []dns.RR{},
 			expectedErr:   nil,
 		},
-		// Dual MX, 1 CNAME, 1 A/AAAA + lcation aware
+		// Dual MX, 1 CNAME, 1 A/AAAA + location aware
 		{
 			qname:        "example.net.",
 			qtype:        dns.TypeMX,
@@ -1482,7 +1482,7 @@ func TestTypeToStatsKey(t *testing.T) {
 			keyName: "DNS_query.A",
 			qType:   dns.TypeA,
 		},
-		// This is a non-existent type, will default to DNS_query.TYPE%d
+		// This is a nonexistent type, will default to DNS_query.TYPE%d
 		{
 			keyName: "DNS_query.TYPE12345",
 			qType:   12345,
@@ -1522,7 +1522,7 @@ func TestEDNSComplianceUnknownVersion(t *testing.T) {
 
 			// Pack... to force actually setting the extended code. This is lame, but
 			// SetExtendedRcode() gets called upon calling Pack()... which is not called
-			// within the unittests.
+			// within the unit tests.
 			_, err = rec.Msg.Pack()
 			require.NoError(t, err)
 
@@ -2158,7 +2158,7 @@ func TestDNSDBQuerySingle(t *testing.T) {
 }
 
 // This test is meant to exercise the handling of the location field,
-// specifically with characters which, if interpretted incorrectly, could
+// specifically with characters which, if interpreted incorrectly, could
 // cause issues.
 func TestSpecialCharactersInLocationFields(t *testing.T) {
 	testCases := []struct {

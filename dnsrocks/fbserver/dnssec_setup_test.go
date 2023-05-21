@@ -29,8 +29,8 @@ func TestParseKey(t *testing.T) {
 	require.Equalf(t, defaultCap, capacity, "Expected default capacity of %d, got %d", defaultCap, capacity)
 	require.Falsef(t, splitkeys, "Splitkey")
 
-	require.Equalf(t, 1, len(keys), "Number of keys missmatch")
-	require.Equalf(t, uint16(28484), keys[0].K.KeyTag(), "Key tag missmatch")
+	require.Equalf(t, 1, len(keys), "Number of keys mismatch")
+	require.Equalf(t, uint16(28484), keys[0].K.KeyTag(), "Key tag mismatch")
 	// DNSKEY record
 	require.Equalf(t,
 		"example.com.\t3600\tIN\tDNSKEY\t256 3 13 rSNkY7tjAffsDOnbOhGdKD8jzXE1CDEmAjbZnmB+xJ+q4pHO5d0C6/euObtbJpLKZJJPghZP4C3RYrjfloxrRg==",

@@ -51,7 +51,7 @@ type CompositeRecord interface {
 	DerivedRecords() []Record
 }
 
-// MapMarshaler is the interface used in parsing impelemented by all record types
+// MapMarshaler is the interface used in parsing implemented by all record types
 type MapMarshaler interface {
 	MarshalMap() ([]MapRecord, error)
 }
@@ -76,7 +76,7 @@ type MapRecord struct {
 type Codec struct {
 	Serial       uint32    // default SOA serial
 	Acc          Accum     // a meta-record which represents an accumulated state over the whole data set
-	NoRnetOutput bool      // if set, disables Rnet ("%"-records) output in the outputi - use with Acc.Ranger.Enable()
+	NoRnetOutput bool      // if set, disables Rnet ("%"-records) output in the output - use with Acc.Ranger.Enable()
 	Features     Rfeatures // a meta-record with features supported by generated DB
 }
 
@@ -160,7 +160,7 @@ type Rsrv struct {
 type Rsrv1 struct {
 	rshared
 	srv    []byte // the service
-	pri    uint16 // prioroty, 0-65535
+	pri    uint16 // priority, 0-65535
 	weight uint16 // weight, 0-65535
 	port   uint16 // the service port
 	c      *Codec
@@ -441,7 +441,7 @@ func detectSep(b []byte) []byte {
 	return SEP
 }
 
-// the line tokinizer
+// the line tokenizer
 func fields(text []byte) [][]byte {
 	b := text[1:]
 	sep := detectSep(b)
@@ -528,7 +528,7 @@ func (r *Rnet) MarshalMap() ([]MapRecord, error) {
 const (
 	// RangePointKeyMarker is the prefix for the RangePoint keys
 	RangePointKeyMarker = "\000\000\000!"
-	// MlenNoLoc is the special value of the mask legth byte indicating the location is not defined.
+	// MlenNoLoc is the special value of the mask length byte indicating the location is not defined.
 	// As it finds its way into the values of the keys, it must stay zero.
 	MlenNoLoc = 0
 	// FeaturesKey is a special key storing bitmap what format is used for other keys in DB
@@ -676,7 +676,7 @@ func (s AccumulatorScanner) Scan() bool {
 	return scanResult
 }
 
-// Text returnes current line
+// Text returns current line
 func (s AccumulatorScanner) Text() string {
 	return s.rangerScanner.Text()
 }

@@ -35,7 +35,7 @@ const (
 // PortNr is a type for port number
 type PortNr uint16
 
-// PortNr asociates identifier with port number
+// PortNr associates identifier with port number
 const (
 	dns PortNr = 53
 )
@@ -143,7 +143,7 @@ func Run(c *Config) error {
 	wg.Wait()
 	// quick-and-dirty hack to stop dnswatch immediately.
 	// sadly there is some softlock condition with all the queues
-	// when we exit during high DNS packet througput, and fixing it
+	// when we exit during high DNS packet throughput, and fixing it
 	// requires proper refactoring with contexts and stuff.
 	os.Exit(0)
 	return nil

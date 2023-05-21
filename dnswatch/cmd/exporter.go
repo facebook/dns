@@ -21,7 +21,7 @@ import (
 )
 
 func init() {
-	exporterCmd.Flags().StringVarP(&cfg.ExporterListen, "listen", "l", ":9422", "Host/Port the exporter should listen listen on")
+	exporterCmd.Flags().StringVarP(&cfg.ExporterListen, "listen", "l", ":9422", "Host/Port the exporter should listen on")
 	RootCmd.AddCommand(exporterCmd)
 }
 

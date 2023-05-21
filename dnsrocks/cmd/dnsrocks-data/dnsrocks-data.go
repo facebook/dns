@@ -29,7 +29,7 @@ func main() {
 	outputPath := flag.String("o", "", "Output path to write compiled DNS DB")
 	useHardlinks := flag.Bool("h", false, "While using RDB builder allows to move files instead of copying during ingestion phase. It is faster, but doesn't work on filesystems that don't support hardlinks")
 	rmOld := flag.Bool("rm", false, "Remove all files from output path before compiling")
-	numCPU := flag.Int("numcpu", 1, "control parallelizm, 0 means all available CPUs")
+	numCPU := flag.Int("numcpu", 1, "control parallelism, 0 means all available CPUs")
 	batchNum := flag.Int("batchnum", 0, "(RocksDB-only) controls number of parallel RDB batches when not using builder, 0 means unlimited")
 	batchSize := flag.Int("batchsize", rdb.DefaultBatchSize, "(RocksDB-only) controls size of batches, 0 means whatever is default.")
 	useBuilder := flag.Bool("b", true, "(RocksDB-only) Use RDB builder (fast and furious)")

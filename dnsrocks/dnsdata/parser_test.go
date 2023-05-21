@@ -35,7 +35,7 @@ func genRecords(i int) [][]byte {
 }
 
 // genData generates test data along with verification data, using error-safe linear fashion.
-// Used to double-check our prarser for races and data corruption.
+// Used to double-check our parser for races and data corruption.
 func genData(size int) ([]byte, []MapRecord) {
 	records := [][]byte{}
 	mapRecords := []MapRecord{}
