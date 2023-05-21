@@ -825,7 +825,7 @@ func TestDBCorrectEcsAnswer(t *testing.T) {
 }
 
 // TestDBECSResolverFindMap tests that we can properly find a map ID for a given name.
-// It test exact match as well as widlcard.
+// It test exact match as well as wildcard.
 func TestDBECSResolverFindMap(t *testing.T) {
 	var db *DB
 	var packedQName = make([]byte, 255)
