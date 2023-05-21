@@ -1522,7 +1522,7 @@ func TestEDNSComplianceUnknownVersion(t *testing.T) {
 
 			// Pack... to force actually setting the extended code. This is lame, but
 			// SetExtendedRcode() gets called upon calling Pack()... which is not called
-			// within the unittests.
+			// within the unit tests.
 			_, err = rec.Msg.Pack()
 			require.NoError(t, err)
 
