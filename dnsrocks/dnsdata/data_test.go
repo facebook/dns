@@ -1251,10 +1251,10 @@ var codectests = []codecTest{
 	{
 		// HTTPS record in ServiceMode, with all the SvcParams
 		in: []byte(
-			"Hstar-mini.c10r.facebook.com,.,300,\\000\\000,1,ipv4hint=\"1.2.3.4|2.3.4.5\";mandatory=\"ipv4hint|alpn|ipv6hint\";alpn=h2|h3;ipv6hint=face:b00c::;echconfig=\"dHJhZmZpYw==\";no-default-alpn=;port=8080",
+			"Hstar-mini.c10r.facebook.com,.,300,\\000\\000,1,ipv4hint=\"1.2.3.4|2.3.4.5\";mandatory=\"ipv4hint|alpn|ipv6hint\";alpn=h2|h3;ipv6hint=face:b00c::;ech=\"dHJhZmZpYw==\";no-default-alpn=;port=8080",
 		),
 		outText: []byte(
-			"Hstar-mini.c10r.facebook.com,.,300,\\000\\000,1,mandatory=\"alpn|ipv4hint|ipv6hint\";alpn=\"h2|h3\";no-default-alpn=\"\";port=\"8080\";ipv4hint=\"1.2.3.4|2.3.4.5\";echconfig=\"dHJhZmZpYw==\";ipv6hint=\"face:b00c::\"",
+			"Hstar-mini.c10r.facebook.com,.,300,\\000\\000,1,mandatory=\"alpn|ipv4hint|ipv6hint\";alpn=\"h2|h3\";no-default-alpn=\"\";port=\"8080\";ipv4hint=\"1.2.3.4|2.3.4.5\";ech=\"dHJhZmZpYw==\";ipv6hint=\"face:b00c::\"",
 		),
 		out: []MapRecord{
 			{

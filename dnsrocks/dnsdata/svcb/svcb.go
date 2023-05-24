@@ -28,7 +28,7 @@ const (
 	nodefaultalpn paramNum = 2
 	port          paramNum = 3
 	ipv4hint      paramNum = 4
-	echconfig     paramNum = 5
+	ech           paramNum = 5
 	ipv6hint      paramNum = 6
 )
 
@@ -39,7 +39,7 @@ var (
 		nodefaultalpn: "no-default-alpn",
 		port:          "port",
 		ipv4hint:      "ipv4hint",
-		echconfig:     "echconfig",
+		ech:           "ech",
 		ipv6hint:      "ipv6hint",
 	}
 	strToParamNum = reverseParamNumToStr()
@@ -68,7 +68,7 @@ var (
 		alpn:          alpnMarshaller,
 		ipv4hint:      ipv4hintMarshaller,
 		ipv6hint:      ipv6hintMarshaller,
-		echconfig:     echMarshaller,
+		ech:           echMarshaller,
 		port:          portMarshaller,
 		nodefaultalpn: nodefaultalpnMarshaller,
 	}
@@ -80,7 +80,7 @@ var (
 		alpn:          alpnUnmarshaller,
 		ipv4hint:      ipv4hintUnmarshaller,
 		ipv6hint:      ipv6hintUnmarshaller,
-		echconfig:     echUnmarshaller,
+		ech:           echUnmarshaller,
 		port:          portUnmarshaller,
 		nodefaultalpn: nodefaultalpnUnmarshaller,
 	}

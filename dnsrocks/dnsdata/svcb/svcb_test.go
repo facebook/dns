@@ -100,10 +100,10 @@ var paramTestCases = []testCase{
 	{
 		// this test case is not from RFC
 		// note that the ech base64 includes two "="s for padding
-		input: []byte("echconfig=\"dHJhZmZpYw==\""),
-		text:  []byte("echconfig=\"dHJhZmZpYw==\""),
+		input: []byte("ech=\"dHJhZmZpYw==\""),
+		text:  []byte("ech=\"dHJhZmZpYw==\""),
 		wire: []byte{
-			0, 5, // key type echconfig
+			0, 5, // key type ech
 			0, 7, // length = 7
 			't', 'r', 'a', 'f', 'f', 'i', 'c', // the ech public key is "traffic"
 		},
@@ -149,7 +149,7 @@ var badStrParams = [][]byte{
 	[]byte("mandatory="),
 	[]byte("alpn="),
 	[]byte("ipv4hint="),
-	[]byte("echconfig="),
+	[]byte("ech="),
 	[]byte("ipv6hint="),
 	[]byte("port="),
 	[]byte("no-default-alpn=h2"),       // no-default-alpn should have no value
@@ -159,7 +159,7 @@ var badStrParams = [][]byte{
 	[]byte("ipv4hint=ab.cd.ef.fg"),     // not a valid IPv4 address
 	[]byte("IPv4Hint=1.2.3.4"),         // key has to be in lower case
 	[]byte("ipv4hint=face:b00c::"),     // use IPv6 address in ipv4hint
-	[]byte("echconfig=***bad***"),      // not a valid base64 encoded str
+	[]byte("ech=***bad***"),            // not a valid base64 encoded str
 	[]byte("mandatory=foo|bar"),        // invalid keys in mandatory
 	[]byte("mandatory=alpn|alpn"),      // values in mandatory have to be unique
 	[]byte("mandatory=ALPN|IPv4Hint"),  // values in mandatory have to be lowercased (just like the param keys)
@@ -170,8 +170,8 @@ var badStrParams = [][]byte{
 
 var badTinyDNSRecords = [][]byte{
 	[]byte("no-default-alpn=h2;port=53;ipv4hint=1.2.3.4"),
-	[]byte("no-default-alpn=;echconfig=\"dHJhZmZpYw==\";port=x"),
-	[]byte("mandatory=echconfig;ipv4hint=facebook"),
+	[]byte("no-default-alpn=;ech=\"dHJhZmZpYw==\";port=x"),
+	[]byte("mandatory=ech;ipv4hint=facebook"),
 	[]byte("ipv4hint=1.2.3.4;ipv4hint=2.3.4.5"), // keys are not unique (should aggregate)
 	[]byte("mandatory=ipv4hint|alpn;alpn=h2"),   // a mandatory key is missing
 	[]byte("port=8080,no-default-alpn="),        // didn't use ; to split svcparams
