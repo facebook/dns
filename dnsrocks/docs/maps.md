@@ -20,7 +20,7 @@ M*.foo.com,rs
 A resolver IP map is a map that will apply based on the IP making the query to our DNS server.
 
 An ECS map is a map that will apply based on the EDNS Client subnet. This information is typically provided by some public DNS resolvers such as Google DNS and OpenDNS and allows to have a better granularity as to what answer to return.
-For privacy reasons only up to /24 for ipv4 and /64 for ipv6 are injected by most resolvers.
+For privacy reasons only up to /24 for ipv4 and /56 for ipv6 are injected by most resolvers.
 
 Once a map ID is found, the code will try to find a matching location ID by looking for the subnet with the longest prefix that matches the client subnet/resolver ip in the query. This gives the resulting location ID.
 
