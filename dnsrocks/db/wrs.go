@@ -116,15 +116,12 @@ func (w *Wrs) record(name string, class uint16, qtype uint16) (rrs []dns.RR, err
 		items[i], items[j] = items[j], items[i]
 	})
 
-	for _, item := range items {
-		if item.Key > 0.0 {
-			hdr := dns.RR_Header{Name: name, Rrtype: qtype, Class: class, Ttl: item.TTL, Rdlength: uint16(len(item.Addr))}
-			var rr dns.RR
-			rr, _, err = dns.UnpackRRWithHeader(hdr, item.Addr, 0)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert from tinydns format %d, %d: %w", hdr.Rdlength, len(item.Addr), err)
-			}
-			rrs = append(rrs, rr)
+	rrs = make([]dns.RR, len(items))
+	for i, item := range items {
+		hdr := dns.RR_Header{Name: name, Rrtype: qtype, Class: class, Ttl: item.TTL, Rdlength: uint16(len(item.Addr))}
+		rrs[i], _, err = dns.UnpackRRWithHeader(hdr, item.Addr, 0)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert from tinydns format %d, %d: %w", hdr.Rdlength, len(item.Addr), err)
 		}
 	}
 
