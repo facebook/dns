@@ -138,7 +138,7 @@ func (w *Wrs) AAAARecord(name string, class uint16) (rrs []dns.RR, err error) {
 	return w.record(name, class, dns.TypeAAAA)
 }
 
-// WeightedAnswer returns true if the answer selected 1 out of many results.
+// WeightedAnswer returns true if the answer selected a subset of possible results.
 func (w *Wrs) WeightedAnswer() bool {
-	return w.V4Count > 1 || w.V6Count > 1
+	return int(w.V4Count) > len(w.V4) || int(w.V6Count) > len(w.V6)
 }
