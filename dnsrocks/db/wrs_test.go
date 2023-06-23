@@ -5,38 +5,38 @@ import (
 	"testing"
 
 	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWeightedAnswer1(t *testing.T) {
 	wrs := Wrs{MaxAnswers: 1}
 	err := wrs.Add(ResourceRecord{Weight: 1, Qtype: dns.TypeA}, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// One answer in, one answer out: not weighted.
-	assert.False(t, wrs.WeightedAnswer())
+	require.False(t, wrs.WeightedAnswer())
 	// Add a second answer.
 	err = wrs.Add(ResourceRecord{Weight: 1, Qtype: dns.TypeA}, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// The answer is now marked as weighted.
-	assert.True(t, wrs.WeightedAnswer())
+	require.True(t, wrs.WeightedAnswer())
 }
 
 func TestWeightedAnswer2(t *testing.T) {
 	wrs := Wrs{MaxAnswers: 2}
 	err := wrs.Add(ResourceRecord{Weight: 1, Qtype: dns.TypeA}, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// One answer in, one answer out: not weighted.
-	assert.False(t, wrs.WeightedAnswer())
+	require.False(t, wrs.WeightedAnswer())
 	// Add a second answer
 	err = wrs.Add(ResourceRecord{Weight: 1, Qtype: dns.TypeA}, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// Two answers in, two answers out: not weighted.
-	assert.False(t, wrs.WeightedAnswer())
+	require.False(t, wrs.WeightedAnswer())
 	// Add a third answer
 	err = wrs.Add(ResourceRecord{Weight: 1, Qtype: dns.TypeA}, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// The answer is now marked as weighted.
-	assert.True(t, wrs.WeightedAnswer())
+	require.True(t, wrs.WeightedAnswer())
 }
 
 func BenchmarkAdd(b *testing.B) {
@@ -73,7 +73,8 @@ func BenchmarkAdd(b *testing.B) {
 							if weighted {
 								weight = 10 // Bypass the special case for weight=1
 							}
-							w.Add(ResourceRecord{Weight: weight, Qtype: dns.TypeA}, nil)
+							err := w.Add(ResourceRecord{Weight: weight, Qtype: dns.TypeA}, nil)
+							require.NoError(b, err)
 						}
 					}
 				})
