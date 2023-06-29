@@ -89,6 +89,7 @@ func main() {
 
 	cliflags.IntVar(&serverConfig.ReusePort, "reuse-port", 0, "Whether or not to use SO_REUSEPORT when opening listeners. X = 0 to disable and start only 1 listener without SO_REUSEPORT, X > 0 to start X listeners with SO_REUSEPORT.")
 	cliflags.StringVar(&serverConfig.WhoamiDomain, "whoami-domain", "", "Domain name to answer debug queries. If empty, the functionality is disabled (default disabled)")
+	cliflags.BoolVar(&serverConfig.NSID, "nsid", false, "Flag to enable NSID responses with debug info (default: disabled)")
 	cliflags.BoolVar(&serverConfig.RefuseANY, "refuse-any", false, "Whether or not to refuse ANY queries.")
 	// the default setup should be backward compatible with current spec: 1 IP address and maxanswer not specified
 	cliflags.Var(&serverConfig.IPAns, "ip", "IPs to bind to. Usage: -ip=::1 -ip=127.0.0.1 (default is wildcard)")

@@ -34,6 +34,7 @@ import (
 	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
 	"github.com/facebookincubator/dns/dnsrocks/dnsserver/stats"
 	"github.com/facebookincubator/dns/dnsrocks/metrics"
+	"github.com/facebookincubator/dns/dnsrocks/nsid"
 	"github.com/facebookincubator/dns/dnsrocks/tlsconfig"
 	"github.com/facebookincubator/dns/dnsrocks/whoami"
 )
@@ -207,6 +208,7 @@ func (srv *Server) Start() (err error) {
 		whoamiHandler    *whoami.Handler
 		dotTLSAHandler   *dotTLSAHandler
 		anyHandler       *anyHandler
+		nsidHandler      *nsid.Handler
 		numListeners     = srv.conf.ReusePort
 	)
 
@@ -260,6 +262,18 @@ func (srv *Server) Start() (err error) {
 		defaultHandler = anyHandler
 	} else {
 		glog.Infof("refuse-any flag was not specified, not initializing anyHandler")
+	}
+
+	// Only add nsidHandler to the plugin chain if it is enabled.
+	if srv.conf.NSID {
+		glog.Infof("Enabling NSID")
+		if nsidHandler, err = nsid.NewHandler(); err != nil {
+			return fmt.Errorf("failed to initialize NSID handler: %w", err)
+		}
+		nsidHandler.Next = defaultHandler
+		defaultHandler = nsidHandler
+	} else {
+		glog.Info("-nsid was not specified, disabling NSID responses")
 	}
 
 	// For each configured IP, we may start a number of DNS servers for each

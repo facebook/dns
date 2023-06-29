@@ -15,10 +15,10 @@ package whoami
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
-	"github.com/facebookincubator/dns/dnsrocks/db"
-	"github.com/facebookincubator/dns/dnsrocks/logger"
+	"github.com/facebookincubator/dns/dnsrocks/debuginfo"
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/request"
@@ -28,9 +28,17 @@ import (
 // Handler is the base struct
 // representing the Handler
 type Handler struct {
-	cluster      string
 	whoamiDomain string
+	getInfo      debuginfo.InfoSrc
 	Next         plugin.Handler
+}
+
+// NewWhoami initializes a new whoami Handler.
+func NewWhoami(d string) (*Handler, error) {
+	wh := new(Handler)
+	wh.getInfo = debuginfo.GetInfo
+	wh.whoamiDomain = strings.ToLower(dns.Fqdn(d))
+	return wh, nil
 }
 
 // ServeDNS serves whoami queries
@@ -45,23 +53,14 @@ func (wh *Handler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	m.Compress = true
 	m.Authoritative = true
 	if state.QType() == dns.TypeTXT {
-		mkTxt := func(txt string) dns.RR {
+		mkTxt := func(key, value string) dns.RR {
 			var rr dns.RR = new(dns.TXT)
 			rr.(*dns.TXT).Hdr = dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeTXT, Class: state.QClass()}
-			rr.(*dns.TXT).Txt = []string{txt}
+			rr.(*dns.TXT).Txt = []string{fmt.Sprintf("%s %s", key, value)}
 			return rr
 		}
-		m.Answer = []dns.RR{
-			mkTxt("cluster " + wh.cluster),
-			mkTxt("protocol " + logger.RequestProtocol(state)),
-			mkTxt("source " + state.RemoteAddr()),
-		}
-		// don't include destination ip address in the answer if it is unspecified
-		if state.LocalIP() != "::" {
-			m.Answer = append(m.Answer, mkTxt("destination "+state.LocalAddr()))
-		}
-		if ecs := db.FindECS(r); ecs != nil {
-			m.Answer = append(m.Answer, mkTxt("ecs "+ecs.String()))
+		for _, pair := range wh.getInfo(state) {
+			m.Answer = append(m.Answer, mkTxt(pair.Key, pair.Val))
 		}
 	}
 

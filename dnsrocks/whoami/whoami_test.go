@@ -15,15 +15,15 @@ package whoami
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
+	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
+	"github.com/facebookincubator/dns/dnsrocks/debuginfo"
 	"github.com/facebookincubator/dns/dnsrocks/dnsserver/test"
 )
 
@@ -48,74 +48,42 @@ func TestHandlerBadType(t *testing.T) {
 	require.Equal(t, len(rec.Msg.Answer), expectedCount, "Number of answers should be %d", expectedCount)
 }
 
-// TestHandlerValidRequestNoECS checks that we return 1 record per message
-// and that we format the client IP and server IP properly.
-func TestHandlerValidRequestNoECS(t *testing.T) {
-	expectedCount := 4
+// TestHandlerValidRequest check that we return the info in TXT records.
+func TestHandlerValidRequest(t *testing.T) {
+	expectedAnswers := []debuginfo.Pair{
+		{"foo1", "bar1"},
+		{"foo2", "bar2"},
+	}
 
 	w := &test.ResponseWriter{}
 	req := new(dns.Msg)
 	req.SetQuestion(dns.Fqdn("example.com."), dns.TypeTXT)
 	rec := dnstest.NewRecorder(w)
 	wh := &Handler{whoamiDomain: makeWhoamiDomain("example.com")}
+	wh.getInfo = func(state request.Request) []debuginfo.Pair {
+		return expectedAnswers
+	}
+
 	rcode, err := wh.ServeDNS(context.TODO(), rec, req)
 	require.NoError(t, err)
 	require.Equal(t, rcode, dns.RcodeSuccess)
 	require.Equal(t, rec.Rcode, dns.RcodeSuccess, "RcodeSuccess was expected to be returned.")
-	require.Equal(t, len(rec.Msg.Answer), expectedCount, "Number of answers should be %d", expectedCount)
+	require.Equal(t, len(rec.Msg.Answer), len(expectedAnswers), "Number of answers should be %d", len(expectedAnswers))
 	require.Equal(t, w.GetWriteMsgCallCount(), uint64(1), "WriteMsg was called")
 
-	remotePort := ":40212"
-	cluster := "foo1c01"
-	testCases := []struct {
-		remoteIP     string
-		remoteIPResp string
-	}{
-		{
-			remoteIP:     "198.51.100.10",
-			remoteIPResp: "198.51.100.10" + remotePort,
-		},
-		{
-			remoteIP:     "2001:db8::1",
-			remoteIPResp: "[2001:db8::1]" + remotePort,
-		},
-		{
-			remoteIP:     "2001:db8:0:0::1",
-			remoteIPResp: "[2001:db8::1]" + remotePort,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
-			w := &test.ResponseWriterCustomRemote{RemoteIP: tc.remoteIP}
-			req := new(dns.Msg)
-			req.SetQuestion(dns.Fqdn("example.com."), dns.TypeTXT)
-			rec := dnstest.NewRecorder(w)
-			wh := &Handler{cluster: cluster, whoamiDomain: makeWhoamiDomain("example.com")}
-			rc, err := wh.ServeDNS(context.TODO(), rec, req)
-
-			require.Equal(t, dns.RcodeSuccess, rc)
-			require.Nil(t, err)
-			require.Equal(t, rec.Rcode, dns.RcodeSuccess, "RcodeSuccess was expected to be returned.")
-			require.Equal(t, len(rec.Msg.Answer), expectedCount, "Number of answers should be %d", expectedCount)
-			require.Equal(t, rec.Msg.Answer[0].(*dns.TXT).Txt, []string{"cluster " + cluster}, "Cluster mismatch")
-			require.Equal(t, rec.Msg.Answer[1].(*dns.TXT).Txt, []string{"protocol UDP"}, "Protocol mismatch")
-			require.Equal(t, rec.Msg.Answer[2].(*dns.TXT).Txt, []string{"source " + tc.remoteIPResp}, "Client IP mismatch")
-			require.Equal(t, rec.Msg.Answer[3].(*dns.TXT).Txt, []string{"destination " + w.LocalAddr().String()}, "Destination mismatch")
-		})
-	}
+	require.Equal(t, rec.Msg.Answer[0].(*dns.TXT).Txt, []string{"foo1 bar1"}, "first message is wrong")
+	require.Equal(t, rec.Msg.Answer[1].(*dns.TXT).Txt, []string{"foo2 bar2"}, "second message is wrong")
 }
 
 // TestHandlerValidRequestNonTxt checks that we return a noerror/nodata
 // reply if the user queries for whoami without setting type of TXT.
 func TestHandlerValidRequestNonTxt(t *testing.T) {
 	remoteIP := "198.51.100.10"
-	cluster := "foo1c01"
 	w := &test.ResponseWriterCustomRemote{RemoteIP: remoteIP}
 	req := new(dns.Msg)
 	req.SetQuestion(dns.Fqdn("example.com."), dns.TypeAAAA)
 	rec := dnstest.NewRecorder(w)
-	wh := &Handler{cluster: cluster, whoamiDomain: makeWhoamiDomain("example.com")}
+	wh := &Handler{whoamiDomain: makeWhoamiDomain("example.com")}
 	rc, err := wh.ServeDNS(context.TODO(), rec, req)
 
 	require.Equal(t, dns.RcodeSuccess, rc)
@@ -123,67 +91,4 @@ func TestHandlerValidRequestNonTxt(t *testing.T) {
 	require.Equal(t, rec.Rcode, dns.RcodeSuccess, "RcodeSuccess was expected to be returned.")
 	require.Equal(t, len(rec.Msg.Answer), 0, "No answers in the answer section.")
 	require.Equal(t, req.MsgHdr.Id, rec.Msg.MsgHdr.Id, "Request and response IDs should match.")
-}
-
-// TestHandlerValidRequestWithECS checks that we return 1 record per
-// message, that we include ECS and that we format the client IP and server IP properly.
-func TestHandlerValidRequestWithECS(t *testing.T) {
-	remotePort := ":40212"
-	cluster := "foo1c01"
-	expectedCount := 5
-
-	testCases := []struct {
-		ecs          string
-		remoteIP     string
-		ecsResp      string
-		remoteIPResp string
-	}{
-		{
-			ecs:          "192.0.2.0/24",
-			ecsResp:      "192.0.2.0/24/0",
-			remoteIP:     "198.51.100.10",
-			remoteIPResp: "198.51.100.10" + remotePort,
-		},
-		{
-			ecs:          "192.0.2.0/24",
-			ecsResp:      "192.0.2.0/24/0",
-			remoteIP:     "2001:db8::1",
-			remoteIPResp: "[2001:db8::1]" + remotePort,
-		},
-		{
-			ecs:          "2001:db8:c::/64",
-			ecsResp:      "[2001:db8:c::]/64/0",
-			remoteIP:     "198.51.100.10",
-			remoteIPResp: "198.51.100.10" + remotePort,
-		},
-		{
-			ecs:          "2001:db8:c::/64",
-			ecsResp:      "[2001:db8:c::]/64/0",
-			remoteIP:     "2001:db8::1",
-			remoteIPResp: "[2001:db8::1]" + remotePort,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
-			w := &test.ResponseWriterCustomRemote{RemoteIP: tc.remoteIP}
-			req := new(dns.Msg)
-			req.SetQuestion(dns.Fqdn("example.com."), dns.TypeTXT)
-			o, _ := dnsserver.MakeOPTWithECS(tc.ecs)
-			req.Extra = []dns.RR{o}
-			rec := dnstest.NewRecorder(w)
-			wh := &Handler{cluster: cluster, whoamiDomain: makeWhoamiDomain("example.com")}
-			rc, err := wh.ServeDNS(context.TODO(), rec, req)
-
-			require.Equal(t, dns.RcodeSuccess, rc)
-			require.Nil(t, err)
-			require.Equal(t, rec.Rcode, dns.RcodeSuccess, "RcodeSuccess was expected to be returned.")
-			require.Equalf(t, len(rec.Msg.Answer), expectedCount, "Number of answers should be %d", expectedCount)
-			require.Equal(t, rec.Msg.Answer[0].(*dns.TXT).Txt, []string{"cluster " + cluster}, "Cluster mismatch")
-			require.Equal(t, rec.Msg.Answer[1].(*dns.TXT).Txt, []string{"protocol UDP"}, "Protocol mismatch")
-			require.Equal(t, rec.Msg.Answer[2].(*dns.TXT).Txt, []string{"source " + tc.remoteIPResp}, "Client IP mismatch")
-			require.Equal(t, rec.Msg.Answer[3].(*dns.TXT).Txt, []string{"destination " + w.LocalAddr().String()}, "Destination mismatch")
-			require.Equal(t, rec.Msg.Answer[4].(*dns.TXT).Txt, []string{"ecs " + tc.ecsResp}, "ECS subnet mismatch")
-		})
-	}
 }

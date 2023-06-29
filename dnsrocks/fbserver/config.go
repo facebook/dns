@@ -43,6 +43,7 @@ type ServerConfig struct {
 	WhoamiDomain   string
 	RefuseANY      bool
 	DNSSECConfig   DNSSECConfig
+	NSID           bool
 }
 
 type ipAns map[string]int

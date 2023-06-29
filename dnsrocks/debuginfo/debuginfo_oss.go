@@ -11,19 +11,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package whoami
+package debuginfo
 
 import (
-	"strings"
-
-	"github.com/miekg/dns"
+	"github.com/coredns/coredns/request"
 )
 
-// NewWhoami initialize a new whoami Handler.
-// Currently only source the cluster name on initialization.
-func NewWhoami(d string) (*Handler, error) {
-	wh := new(Handler)
-	wh.whoamiDomain = strings.ToLower(dns.Fqdn(d))
-	wh.cluster = "notavailable"
-	return wh, nil
+// GetInfo returns the debug info related to this request.
+func GetInfo(state request.Request) []Pair {
+	return makeInfo(state)
 }
