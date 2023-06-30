@@ -41,8 +41,8 @@ func TestNSID(t *testing.T) {
 	require.NoError(t, err)
 	h.getInfo = func(state request.Request) []debuginfo.Pair {
 		return []debuginfo.Pair{
-			{"foo1", "bar1"},
-			{"foo2", "bar2"},
+			{Key: "foo1", Val: "bar1"},
+			{Key: "foo2", Val: "bar2"},
 		}
 	}
 	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {

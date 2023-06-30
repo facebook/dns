@@ -51,8 +51,8 @@ func TestHandlerBadType(t *testing.T) {
 // TestHandlerValidRequest check that we return the info in TXT records.
 func TestHandlerValidRequest(t *testing.T) {
 	expectedAnswers := []debuginfo.Pair{
-		{"foo1", "bar1"},
-		{"foo2", "bar2"},
+		{Key: "foo1", Val: "bar1"},
+		{Key: "foo2", Val: "bar2"},
 	}
 
 	w := &test.ResponseWriter{}

@@ -15,6 +15,7 @@ package debuginfo
 
 import (
 	"github.com/coredns/coredns/request"
+
 	"github.com/facebookincubator/dns/dnsrocks/db"
 	"github.com/facebookincubator/dns/dnsrocks/logger"
 )
@@ -32,15 +33,15 @@ type InfoSrc func(request.Request) []Pair
 
 func makeInfo(state request.Request) []Pair {
 	info := []Pair{
-		{"protocol", logger.RequestProtocol(state)},
-		{"source", state.RemoteAddr()},
+		{Key: "protocol", Val: logger.RequestProtocol(state)},
+		{Key: "source", Val: state.RemoteAddr()},
 	}
 	// don't include destination ip address in the answer if it is unspecified
 	if state.LocalIP() != "::" {
-		info = append(info, Pair{"destination", state.LocalAddr()})
+		info = append(info, Pair{Key: "destination", Val: state.LocalAddr()})
 	}
 	if ecs := db.FindECS(state.Req); ecs != nil {
-		info = append(info, Pair{"ecs", ecs.String()})
+		info = append(info, Pair{Key: "ecs", Val: ecs.String()})
 	}
 	return info
 }
