@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/hex"
 	"testing"
+	"time"
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/plugin/test"
@@ -27,6 +28,12 @@ import (
 
 	"github.com/facebookincubator/dns/dnsrocks/debuginfo"
 )
+
+type mockInfo []debuginfo.Pair
+
+func (i mockInfo) GetInfo(_ request.Request) []debuginfo.Pair {
+	return i
+}
 
 func TestNSID(t *testing.T) {
 	w := &test.ResponseWriter{}
@@ -39,13 +46,17 @@ func TestNSID(t *testing.T) {
 	rec := dnstest.NewRecorder(w)
 	h, err := NewHandler()
 	require.NoError(t, err)
-	h.getInfo = func(state request.Request) []debuginfo.Pair {
-		return []debuginfo.Pair{
+	var infoTime time.Time
+	h.infoGen = func() debuginfo.InfoSrc {
+		infoTime = time.Now()
+		return mockInfo([]debuginfo.Pair{
 			{Key: "foo1", Val: "bar1"},
 			{Key: "foo2", Val: "bar2"},
-		}
+		})
 	}
+	var responseTime time.Time
 	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+		responseTime = time.Now()
 		m := new(dns.Msg)
 		m.SetReply(r)
 		m.Authoritative = true
@@ -63,7 +74,8 @@ func TestNSID(t *testing.T) {
 	nsid, ok := rec.Msg.IsEdns0().Option[0].(*dns.EDNS0_NSID)
 	require.True(t, ok, "Didn't find NSID in the expected place")
 	data, err := hex.DecodeString(nsid.Nsid)
-	require.NoError(t, err, "Decryption failed")
+	require.NoError(t, err, "hex decode failed")
+	assert.False(t, infoTime.After(responseTime), "info time should be set before the response is created")
 	assert.Equal(t, "foo1=bar1 foo2=bar2", string(data))
 }
 

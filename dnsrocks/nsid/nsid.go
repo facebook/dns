@@ -29,14 +29,14 @@ import (
 
 // Handler is a [plugin.Handler] that implements the NSID extension.
 type Handler struct {
-	getInfo debuginfo.InfoSrc
+	infoGen func() debuginfo.InfoSrc
 	Next    plugin.Handler
 }
 
 // NewHandler produces a new NSID insertion handler.
 func NewHandler() (*Handler, error) {
 	h := new(Handler)
-	h.getInfo = debuginfo.GetInfo
+	h.infoGen = debuginfo.MakeInfoSrc
 	return h, nil
 }
 
@@ -45,7 +45,7 @@ func (h Handler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg)
 	if opt := r.IsEdns0(); opt != nil {
 		for _, option := range opt.Option {
 			if option.Option() == dns.EDNS0NSID {
-				w = nsidResponseWriter{ResponseWriter: w, getInfo: h.getInfo, request: r}
+				w = nsidResponseWriter{ResponseWriter: w, infoSrc: h.infoGen(), request: r}
 				break
 			}
 		}
@@ -58,7 +58,7 @@ func (h Handler) Name() string { return "nsid" }
 
 type nsidResponseWriter struct {
 	dns.ResponseWriter
-	getInfo debuginfo.InfoSrc
+	infoSrc debuginfo.InfoSrc
 	request *dns.Msg
 }
 
@@ -70,7 +70,7 @@ func (w nsidResponseWriter) WriteMsg(response *dns.Msg) error {
 	} else {
 		state := request.Request{W: w, Req: w.request}
 		var components []string
-		for _, pair := range w.getInfo(state) {
+		for _, pair := range w.infoSrc.GetInfo(state) {
 			components = append(components, fmt.Sprintf("%s=%s", pair.Key, pair.Val))
 		}
 		nsid := strings.Join(components, " ")

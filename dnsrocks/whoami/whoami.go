@@ -29,14 +29,14 @@ import (
 // representing the Handler
 type Handler struct {
 	whoamiDomain string
-	getInfo      debuginfo.InfoSrc
+	infoGen      func() debuginfo.InfoSrc
 	Next         plugin.Handler
 }
 
 // NewWhoami initializes a new whoami Handler.
 func NewWhoami(d string) (*Handler, error) {
 	wh := new(Handler)
-	wh.getInfo = debuginfo.GetInfo
+	wh.infoGen = debuginfo.MakeInfoSrc
 	wh.whoamiDomain = strings.ToLower(dns.Fqdn(d))
 	return wh, nil
 }
@@ -59,7 +59,7 @@ func (wh *Handler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 			rr.(*dns.TXT).Txt = []string{fmt.Sprintf("%s %s", key, value)}
 			return rr
 		}
-		for _, pair := range wh.getInfo(state) {
+		for _, pair := range wh.infoGen().GetInfo(state) {
 			m.Answer = append(m.Answer, mkTxt(pair.Key, pair.Val))
 		}
 	}
