@@ -18,6 +18,6 @@ import (
 )
 
 // GetInfo returns the debug info related to this request.
-func GetInfo(state request.Request) []Pair {
-	return makeInfo(state)
+func (i infoSrc) GetInfo(state request.Request) []Pair {
+	return i.baseInfo(state)
 }

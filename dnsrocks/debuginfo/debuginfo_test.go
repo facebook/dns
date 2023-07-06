@@ -15,7 +15,9 @@ package debuginfo
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
@@ -54,8 +56,22 @@ func TestWithoutECS(t *testing.T) {
 			req.SetQuestion(dns.Fqdn("example.com."), dns.TypeTXT)
 			state := request.Request{W: w, Req: req}
 
-			info := GetInfo(state)
+			before := time.Now().UnixMilli()
+			time.Sleep(2 * time.Millisecond) // Ensure that times are different after rounding
+			infoSrc := MakeInfoSrc()
+			time.Sleep(2 * time.Millisecond)
+			after := time.Now().UnixMilli()
+			info := infoSrc.GetInfo(state)
 
+			// Check timestamp
+			require.Equal(t, info[0].Key, "time", "missing time key")
+			created, err := strconv.ParseFloat(info[0].Val, 64)
+			require.NoError(t, err, "time is not a valid float")
+			createdMillis := int64(created * 1000)
+			require.Less(t, before, createdMillis, "creation time is too early")
+			require.Less(t, createdMillis, after, "creation time is too late")
+			// Check other info
+			info = info[1:]
 			expected := []Pair{
 				{"protocol", "UDP"},
 				{"source", tc.remoteIPResp},
@@ -112,8 +128,10 @@ func TestWithECS(t *testing.T) {
 			req.Extra = []dns.RR{o}
 			state := request.Request{W: w, Req: req}
 
-			info := GetInfo(state)
+			info := MakeInfoSrc().GetInfo(state)
 
+			require.Equal(t, info[0].Key, "time", "missing time key")
+			info = info[1:]
 			expected := []Pair{
 				{"protocol", "UDP"},
 				{"source", tc.remoteIPResp},

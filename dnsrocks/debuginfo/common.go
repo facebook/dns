@@ -14,6 +14,9 @@ limitations under the License.
 package debuginfo
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/coredns/coredns/request"
 
 	"github.com/facebookincubator/dns/dnsrocks/db"
@@ -29,10 +32,22 @@ type Pair struct {
 }
 
 // InfoSrc is defined to enable mocking of [GetInfo].
-type InfoSrc func(request.Request) []Pair
+type InfoSrc interface {
+	GetInfo(request.Request) []Pair
+}
 
-func makeInfo(state request.Request) []Pair {
+type infoSrc struct {
+	created time.Time
+}
+
+// MakeInfoSrc creates an InfoSrc that captures the current creation time.
+func MakeInfoSrc() InfoSrc {
+	return infoSrc{created: time.Now()}
+}
+
+func (i infoSrc) baseInfo(state request.Request) []Pair {
 	info := []Pair{
+		{Key: "time", Val: fmt.Sprintf("%.3f", float64(i.created.UnixMilli())/1000.)},
 		{Key: "protocol", Val: logger.RequestProtocol(state)},
 		{Key: "source", Val: state.RemoteAddr()},
 	}

@@ -17,6 +17,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/request"
@@ -29,6 +30,12 @@ import (
 
 func makeWhoamiDomain(s string) string {
 	return strings.ToLower(dns.Fqdn(s))
+}
+
+type mockInfo []debuginfo.Pair
+
+func (i mockInfo) GetInfo(_ request.Request) []debuginfo.Pair {
+	return i
 }
 
 // TestHandlerBadType tests that we return noerror/nodata
@@ -60,10 +67,14 @@ func TestHandlerValidRequest(t *testing.T) {
 	req.SetQuestion(dns.Fqdn("example.com."), dns.TypeTXT)
 	rec := dnstest.NewRecorder(w)
 	wh := &Handler{whoamiDomain: makeWhoamiDomain("example.com")}
-	wh.getInfo = func(state request.Request) []debuginfo.Pair {
-		return expectedAnswers
+
+	var creationTime time.Time
+	wh.infoGen = func() debuginfo.InfoSrc {
+		creationTime = time.Now()
+		return mockInfo(expectedAnswers)
 	}
 
+	before := time.Now()
 	rcode, err := wh.ServeDNS(context.TODO(), rec, req)
 	require.NoError(t, err)
 	require.Equal(t, rcode, dns.RcodeSuccess)
@@ -71,6 +82,7 @@ func TestHandlerValidRequest(t *testing.T) {
 	require.Equal(t, len(rec.Msg.Answer), len(expectedAnswers), "Number of answers should be %d", len(expectedAnswers))
 	require.Equal(t, w.GetWriteMsgCallCount(), uint64(1), "WriteMsg was called")
 
+	require.False(t, before.After(creationTime), "unexpected creation time")
 	require.Equal(t, rec.Msg.Answer[0].(*dns.TXT).Txt, []string{"foo1 bar1"}, "first message is wrong")
 	require.Equal(t, rec.Msg.Answer[1].(*dns.TXT).Txt, []string{"foo2 bar2"}, "second message is wrong")
 }
