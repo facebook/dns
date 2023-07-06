@@ -188,6 +188,7 @@ func (options *Options) SetCompactOnDeletion(windowSize int, numDelsTrigger int)
 		options.cOptions,
 		C.size_t(windowSize),
 		C.size_t(numDelsTrigger),
+		C.double(0.0),
 	)
 }
 
