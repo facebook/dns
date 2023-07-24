@@ -10,5 +10,7 @@ deb http://archive.ubuntu.com/ubuntu/ kinetic-updates multiverse
 
 apt-get update -qq
 
-apt-get install -qq librocksdb7.3
-apt-get install -qq librocksdb-dev
+apt-get install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev libzstd-dev liblz4-dev
+git clone https://github.com/facebook/rocksdb.git
+cd rocksdb || exit
+PREFIX=/usr make install-shared
