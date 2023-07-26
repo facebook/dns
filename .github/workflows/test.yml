@@ -6,14 +6,15 @@ jobs:
     env:
       CGO_LDFLAGS_ALLOW: .*
       CGO_CFLAGS_ALLOW: .*
-
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - uses: actions/setup-go@v2
         with:
           go-version: 1.18
       - name: install rocksdb
-        run: sudo bash .github/scripts/install_rocks_7.sh
+        run: sudo bash .github/scripts/install_rocks_head.sh
       - name : Compile
         run: cd dnsrocks; go build -v ./...
       - name: Test
