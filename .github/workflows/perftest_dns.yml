@@ -1,0 +1,19 @@
+name: perftest_fbdns
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    env:
+      CGO_LDFLAGS_ALLOW: .*
+      CGO_CFLAGS_ALLOW: .*
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name: install rocksdb
+        run: sudo bash .github/scripts/install_rocks_head.sh
+      - name : Perform perftest
+        run: sudo bash .github/scripts/perftest_fbdns.sh

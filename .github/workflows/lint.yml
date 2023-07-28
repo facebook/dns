@@ -11,7 +11,7 @@ jobs:
         with:
           go-version: 1.18
       - name: "Install Rocks"
-        run: sudo bash .github/scripts/install_rocks_head.sh
+        run: sudo bash .github/scripts/install_rocks_stable.sh
       - uses: golangci/golangci-lint-action@v3
         with:
           working-directory: dnsrocks
