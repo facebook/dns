@@ -143,63 +143,52 @@ sendmsg_solver(struct pt_regs* ctx, char fn_id, u16 dport, u16 sport) {
   return 0;
 }
 
-SEC("kprobe/udpv6_sendmsg")
-int BPF_KPROBE(
+SEC("fentry/udpv6_sendmsg")
+int BPF_PROG(
     dnswatch_kprobe_udpv6_sendmsg,
     struct sock* sk,
     struct msghdr* msg) {
-  struct inet_sock* inet = (struct inet_sock*)sk;
+  struct sock_common* sk_common = (struct sock_common*)sk;
   struct sockaddr_in6* sin6;
   u16 dport, sport;
 
-  bpf_probe_read_kernel(&sin6, sizeof(void*), &msg->msg_name);
-
+  sin6 = (struct sockaddr_in6*)msg->msg_name;
   // handle connectionless udp ipv6 sockets. If the process did not call
   // connect(udp_fc,...) the dport is set to 0 in struct sock, so we need to get
   // the dport from (struct msghdr*)msg->(struct
   // sockaddr_in6*)msg_name->sin6_port.
+  dport = sk_common->skc_dport;
   if (sin6) {
-    bpf_probe_read_kernel(&dport, sizeof(dport), &sin6->sin6_port);
-  } else {
-    bpf_probe_read_kernel(&dport, sizeof(dport), &sk->__sk_common.skc_dport);
+    bpf_probe_read_kernel(&dport, sizeof(u16), &sin6->sin6_port);
   }
-  bpf_probe_read_kernel(&sport, sizeof(sport), &sk->__sk_common.skc_num);
+  sport = sk_common->skc_num;
 
   return sendmsg_solver(ctx, 0, dport, sport);
 }
 
-SEC("kprobe/udp_sendmsg")
-int BPF_KPROBE(
-    dnswatch_kprobe_udp_sendmsg,
-    struct sock* sk,
-    struct msghdr* msg) {
-  struct inet_sock* inet = (struct inet_sock*)sk;
-  struct sockaddr_in* sin;
+SEC("fentry/udp_sendmsg")
+int BPF_PROG(dnswatch_kprobe_udp_sendmsg, struct sock* sk, struct msghdr* msg) {
+  struct sock_common* sk_common = (struct sock_common*)sk;
+  struct sockaddr_in* sin = msg->msg_name;
   u16 dport, sport;
-
-  bpf_probe_read_kernel(&sin, sizeof(void*), &msg->msg_name);
 
   // handle connectionless udp ipv4 sockets. Same as udp ipv6, but different
   // structs and fields.
+  dport = sk_common->skc_dport;
   if (sin) {
-    bpf_probe_read_kernel(&dport, sizeof(dport), &sin->sin_port);
-  } else {
-    bpf_probe_read_kernel(&dport, sizeof(dport), &sk->__sk_common.skc_dport);
+    bpf_probe_read_kernel(&dport, sizeof(u16), &sin->sin_port);
   }
-  bpf_probe_read_kernel(&sport, sizeof(sport), &sk->__sk_common.skc_num);
+  sport = sk_common->skc_num;
 
   return sendmsg_solver(ctx, 1, dport, sport);
 }
 
-SEC("kprobe/tcp_sendmsg")
-int BPF_KPROBE(
-    dnswatch_kprobe_tcp_sendmsg,
-    struct sock* sk,
-    struct msghdr* msg) {
+SEC("fentry/tcp_sendmsg")
+int BPF_PROG(dnswatch_kprobe_tcp_sendmsg, struct sock* sk, struct msghdr* msg) {
   u16 dport, sport;
 
-  bpf_probe_read_kernel(&dport, sizeof(dport), &sk->__sk_common.skc_dport);
-  bpf_probe_read_kernel(&sport, sizeof(sport), &sk->__sk_common.skc_num);
+  dport = sk->__sk_common.skc_dport;
+  sport = sk->__sk_common.skc_num;
 
   return sendmsg_solver(ctx, 2, dport, dport);
 }

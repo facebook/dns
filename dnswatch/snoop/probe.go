@@ -167,11 +167,11 @@ func (p *Probe) loadAndAttachProbes() (*libbpfgo.Module, error) {
 		probeFnName := "dnswatch_kprobe_" + kernelFnName
 		kprobe, err := bpfModule.GetProgram(probeFnName)
 		if err != nil {
-			return nil, fmt.Errorf("unable to load kprobe/"+kernelFnName+": %w", err)
+			return nil, fmt.Errorf("unable to load fentry/"+kernelFnName+": %w", err)
 		}
 		kprobelink, err := kprobe.AttachGeneric()
 		if err != nil {
-			return nil, fmt.Errorf("unable attaching kprobe/"+kernelFnName+": %w", err)
+			return nil, fmt.Errorf("unable attaching fentry/"+kernelFnName+": %w", err)
 		}
 		if kprobelink.FileDescriptor() == 0 {
 			return nil, fmt.Errorf("kprobe/" + kernelFnName + "not running.")
