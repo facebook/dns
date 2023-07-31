@@ -83,7 +83,11 @@ type Config struct {
 func RequestProtocol(state request.Request) string {
 	proto := state.Proto() // Protocol used
 	if proto == "tcp" {
-		if tls := state.W.(dns.ConnectionStater).ConnectionState(); tls != nil {
+		var tls *tls.ConnectionState
+		if stater, ok := state.W.(dns.ConnectionStater); ok {
+			tls = stater.ConnectionState()
+		}
+		if tls != nil {
 			if p, ok := TLSVersionStrings[tls.Version]; ok {
 				proto = p
 			} else {

@@ -16,8 +16,6 @@ package nsid
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
-	"strings"
 
 	"github.com/facebookincubator/dns/dnsrocks/debuginfo"
 
@@ -36,7 +34,7 @@ type Handler struct {
 // NewHandler produces a new NSID insertion handler.
 func NewHandler() (*Handler, error) {
 	h := new(Handler)
-	h.infoGen = debuginfo.MakeInfoSrc
+	h.infoGen = debuginfo.Generator()
 	return h, nil
 }
 
@@ -69,11 +67,7 @@ func (w nsidResponseWriter) WriteMsg(response *dns.Msg) error {
 		glog.Errorf("no EDNS for NSID")
 	} else {
 		state := request.Request{W: w, Req: w.request}
-		var components []string
-		for _, pair := range w.infoSrc.GetInfo(state) {
-			components = append(components, fmt.Sprintf("%s=%s", pair.Key, pair.Val))
-		}
-		nsid := strings.Join(components, " ")
+		nsid := debuginfo.Print(w.infoSrc.GetInfo(state))
 		opt.Option = append(opt.Option, &dns.EDNS0_NSID{
 			Code: dns.EDNS0NSID,
 			Nsid: hex.EncodeToString([]byte(nsid)),

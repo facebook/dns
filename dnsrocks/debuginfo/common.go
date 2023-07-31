@@ -15,6 +15,7 @@ package debuginfo
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/coredns/coredns/request"
@@ -31,6 +32,17 @@ type Pair struct {
 	Val string
 }
 
+// Print renders a list of pairs in key=value format.
+func Print(pairs []Pair) string {
+	var components []string
+	for _, pair := range pairs {
+		if pair.Val != "" {
+			components = append(components, fmt.Sprintf("%s=%s", pair.Key, pair.Val))
+		}
+	}
+	return strings.Join(components, " ")
+}
+
 // InfoSrc is defined to enable mocking of [GetInfo].
 type InfoSrc interface {
 	GetInfo(request.Request) []Pair
@@ -40,12 +52,13 @@ type infoSrc struct {
 	created time.Time
 }
 
-// MakeInfoSrc creates an InfoSrc that captures the current creation time.
-func MakeInfoSrc() InfoSrc {
+// makeInfoSrc creates an InfoSrc that captures the current creation time.
+func makeInfoSrc() InfoSrc {
 	return infoSrc{created: time.Now()}
 }
 
-func (i infoSrc) baseInfo(state request.Request) []Pair {
+// GetInfo returns the debug info related to this request.
+func (i infoSrc) GetInfo(state request.Request) []Pair {
 	info := []Pair{
 		{Key: "time", Val: fmt.Sprintf("%.3f", float64(i.created.UnixMilli())/1000.)},
 		{Key: "protocol", Val: logger.RequestProtocol(state)},

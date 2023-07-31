@@ -36,7 +36,7 @@ type Handler struct {
 // NewWhoami initializes a new whoami Handler.
 func NewWhoami(d string) (*Handler, error) {
 	wh := new(Handler)
-	wh.infoGen = debuginfo.MakeInfoSrc
+	wh.infoGen = debuginfo.Generator()
 	wh.whoamiDomain = strings.ToLower(dns.Fqdn(d))
 	return wh, nil
 }
