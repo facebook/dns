@@ -1,0 +1,7 @@
+test.com A
+test.com AAAA
+666.test.com CNAME
+6666.test.com CNAME
+66666.test.com CNAME
+666666.test.com CNAME
+6942.test.com CNAME
