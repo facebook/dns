@@ -13,11 +13,7 @@ limitations under the License.
 
 package debuginfo
 
-import (
-	"github.com/coredns/coredns/request"
-)
-
-// GetInfo returns the debug info related to this request.
-func (i infoSrc) GetInfo(state request.Request) []Pair {
-	return i.baseInfo(state)
+// Generator returns the InfoSrc generating function.
+func Generator() func() InfoSrc {
+	return makeInfoSrc
 }
