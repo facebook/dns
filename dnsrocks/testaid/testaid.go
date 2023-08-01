@@ -29,9 +29,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/cdb"
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/rdb"
-	"github.com/facebookincubator/dns/dnsrocks/testutils"
+	"github.com/facebook/dns/dnsrocks/dnsdata/cdb"
+	"github.com/facebook/dns/dnsrocks/dnsdata/rdb"
+	"github.com/facebook/dns/dnsrocks/testutils"
 
 	"github.com/stretchr/testify/require"
 )

@@ -19,7 +19,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/rdb"
+	"github.com/facebook/dns/dnsrocks/dnsdata/rdb"
 
 	"github.com/golang/glog"
 )

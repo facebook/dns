@@ -16,7 +16,7 @@ package dbdiff
 import (
 	"errors"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 )
 
 // Op represents one of the available diff operations, "+" and "-".

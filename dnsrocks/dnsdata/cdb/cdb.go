@@ -18,7 +18,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 
 	"github.com/pkg/errors"
 	cdb "github.com/repustate/go-cdb"

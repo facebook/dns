@@ -22,7 +22,7 @@ import (
 	"sort"
 	"time"
 
-	rocksdb "github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb"
+	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
 
 	"golang.org/x/sync/errgroup"
 )

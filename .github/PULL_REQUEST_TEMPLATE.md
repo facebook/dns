@@ -1,9 +1,9 @@
 <!--
 Thank you for your interest in this project. Bugs filed and PRs submitted are appreciated!
 
-Please make sure that you are familiar with and follow the Code of Conduct of this project which can be found at https://github.com/facebookincubator/dns/blob/main/CODE_OF_CONDUCT.md
+Please make sure that you are familiar with and follow the Code of Conduct of this project which can be found at https://github.com/facebook/dns/blob/main/CODE_OF_CONDUCT.md
 
-Also, please make sure you're familiar with and follow the instructions in the contributing guidelines which can  be found at https://github.com/facebookincubator/dns/blob/main/CONTRIBUTING.md
+Also, please make sure you're familiar with and follow the instructions in the contributing guidelines which can  be found at https://github.com/facebook/dns/blob/main/CONTRIBUTING.md
 
 -->
 

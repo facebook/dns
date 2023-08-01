@@ -22,9 +22,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/test"
-	"github.com/facebookincubator/dns/dnsrocks/testaid"
-	tlsc "github.com/facebookincubator/dns/dnsrocks/tlsconfig"
+	"github.com/facebook/dns/dnsrocks/dnsserver/test"
+	"github.com/facebook/dns/dnsrocks/testaid"
+	tlsc "github.com/facebook/dns/dnsrocks/tlsconfig"
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/miekg/dns"

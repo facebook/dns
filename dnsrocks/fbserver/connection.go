@@ -19,7 +19,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/metrics"
 )
 
 // ConnectionMonitor is a wrapper around `net.Conn` which serves to log per connection metrics.

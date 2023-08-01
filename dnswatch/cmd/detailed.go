@@ -14,7 +14,7 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/facebookincubator/dns/dnswatch/snoop"
+	"github.com/facebook/dns/dnswatch/snoop"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

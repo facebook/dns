@@ -21,8 +21,8 @@ import (
 
 	"github.com/miekg/dns"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/stats"
+	"github.com/facebook/dns/dnsrocks/dnsserver"
+	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 )
 
 func main() {

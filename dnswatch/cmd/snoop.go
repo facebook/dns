@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/facebookincubator/dns/dnswatch/snoop"
+	"github.com/facebook/dns/dnswatch/snoop"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

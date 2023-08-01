@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/facebookincubator/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/metrics"
 )
 
 // listenUDP configures a socket with SO_REUSEPORT and returns a UDP

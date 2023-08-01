@@ -23,7 +23,7 @@ import (
 	"sync"
 	"testing"
 
-	rocksdb "github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb"
+	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
 
 	"github.com/stretchr/testify/require"
 )

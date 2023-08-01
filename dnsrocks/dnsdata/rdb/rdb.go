@@ -26,8 +26,8 @@ import (
 	"sync"
 	"time"
 
-	rocksdb "github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb"
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
+	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 )
 
 // DefaultBatchSize is the default allocation for Batch

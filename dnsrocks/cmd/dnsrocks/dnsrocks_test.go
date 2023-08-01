@@ -19,11 +19,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/stats"
-	"github.com/facebookincubator/dns/dnsrocks/fbserver"
-	"github.com/facebookincubator/dns/dnsrocks/metrics"
-	"github.com/facebookincubator/dns/dnsrocks/testaid"
+	"github.com/facebook/dns/dnsrocks/dnsserver"
+	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
+	"github.com/facebook/dns/dnsrocks/fbserver"
+	"github.com/facebook/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/testaid"
 
 	"github.com/stretchr/testify/require"
 )

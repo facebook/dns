@@ -27,10 +27,10 @@ import (
 	newCopy "github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 
-	"github.com/facebookincubator/dns/dnsrocks/db"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/stats"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/test"
-	"github.com/facebookincubator/dns/dnsrocks/testaid"
+	"github.com/facebook/dns/dnsrocks/db"
+	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
+	"github.com/facebook/dns/dnsrocks/dnsserver/test"
+	"github.com/facebook/dns/dnsrocks/testaid"
 )
 
 func TestMain(m *testing.M) {

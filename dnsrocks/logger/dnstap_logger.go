@@ -20,7 +20,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/db"
+	"github.com/facebook/dns/dnsrocks/db"
 
 	msg "github.com/coredns/coredns/plugin/dnstap/msg"
 	"github.com/coredns/coredns/request"

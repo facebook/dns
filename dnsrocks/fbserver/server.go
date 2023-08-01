@@ -30,13 +30,13 @@ import (
 	"github.com/miekg/dns"
 	"golang.org/x/sys/unix"
 
-	"github.com/facebookincubator/dns/dnsrocks/db"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/stats"
-	"github.com/facebookincubator/dns/dnsrocks/metrics"
-	"github.com/facebookincubator/dns/dnsrocks/nsid"
-	"github.com/facebookincubator/dns/dnsrocks/tlsconfig"
-	"github.com/facebookincubator/dns/dnsrocks/whoami"
+	"github.com/facebook/dns/dnsrocks/db"
+	"github.com/facebook/dns/dnsrocks/dnsserver"
+	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
+	"github.com/facebook/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/nsid"
+	"github.com/facebook/dns/dnsrocks/tlsconfig"
+	"github.com/facebook/dns/dnsrocks/whoami"
 )
 
 // Server collects all of the running servers and the server configurations.

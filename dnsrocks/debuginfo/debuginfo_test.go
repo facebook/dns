@@ -23,8 +23,8 @@ import (
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/test"
+	"github.com/facebook/dns/dnsrocks/dnsserver"
+	"github.com/facebook/dns/dnsrocks/dnsserver/test"
 )
 
 // TestWithoutECS checks that we extract the expected info

@@ -1,4 +1,4 @@
-module github.com/facebookincubator/dns/dnswatch
+module github.com/facebook/dns/dnswatch
 
 go 1.19
 

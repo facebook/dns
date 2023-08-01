@@ -20,8 +20,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/rdb/dbdiff"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
+	"github.com/facebook/dns/dnsrocks/dnsdata/rdb/dbdiff"
 )
 
 func (batch *Batch) ApplyDiff(d *dbdiff.Entry) {

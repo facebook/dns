@@ -20,7 +20,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
 
-	"github.com/facebookincubator/dns/dnsrocks/testaid"
+	"github.com/facebook/dns/dnsrocks/testaid"
 )
 
 type isAuthTestCase struct {

@@ -17,7 +17,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/facebookincubator/dns/dnsrocks/testaid"
+	"github.com/facebook/dns/dnsrocks/testaid"
 
 	"github.com/stretchr/testify/require"
 )

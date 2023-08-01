@@ -27,9 +27,9 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/term"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/stats"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
+	"github.com/facebook/dns/dnsrocks/dnsserver"
+	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 )
 
 func progressLine(format string, args ...interface{}) {

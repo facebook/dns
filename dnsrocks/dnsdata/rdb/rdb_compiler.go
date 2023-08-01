@@ -22,7 +22,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 )
 
 // CleanRDBDir removes all files from the directory - for instance, to clean up output directory before compilation

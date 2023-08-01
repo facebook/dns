@@ -25,8 +25,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/quote"
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/svcb"
+	"github.com/facebook/dns/dnsrocks/dnsdata/quote"
+	"github.com/facebook/dns/dnsrocks/dnsdata/svcb"
 
 	"github.com/golang/glog"
 )

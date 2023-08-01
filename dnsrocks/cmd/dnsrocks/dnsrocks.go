@@ -27,10 +27,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/quote"
-	"github.com/facebookincubator/dns/dnsrocks/fbserver"
-	"github.com/facebookincubator/dns/dnsrocks/logger"
-	"github.com/facebookincubator/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/dnsdata/quote"
+	"github.com/facebook/dns/dnsrocks/fbserver"
+	"github.com/facebook/dns/dnsrocks/logger"
+	"github.com/facebook/dns/dnsrocks/metrics"
 
 	"github.com/golang/glog"
 

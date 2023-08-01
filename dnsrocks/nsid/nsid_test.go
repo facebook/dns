@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/facebookincubator/dns/dnsrocks/debuginfo"
+	"github.com/facebook/dns/dnsrocks/debuginfo"
 )
 
 type mockInfo []debuginfo.Pair

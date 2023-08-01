@@ -17,7 +17,7 @@ import (
 	"context"
 	"encoding/hex"
 
-	"github.com/facebookincubator/dns/dnsrocks/debuginfo"
+	"github.com/facebook/dns/dnsrocks/debuginfo"
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/request"

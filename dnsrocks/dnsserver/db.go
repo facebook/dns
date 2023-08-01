@@ -28,8 +28,8 @@ import (
 	"github.com/golang/glog"
 	lru "github.com/hashicorp/golang-lru"
 
-	"github.com/facebookincubator/dns/dnsrocks/db"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/stats"
+	"github.com/facebook/dns/dnsrocks/db"
+	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 )
 
 // CacheConfig has knobs to modify caching behaviour.

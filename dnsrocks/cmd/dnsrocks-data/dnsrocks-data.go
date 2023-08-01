@@ -20,8 +20,8 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/cdb"
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/rdb"
+	"github.com/facebook/dns/dnsrocks/dnsdata/cdb"
+	"github.com/facebook/dns/dnsrocks/dnsdata/rdb"
 )
 
 func main() {

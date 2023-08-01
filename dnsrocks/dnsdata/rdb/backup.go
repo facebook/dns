@@ -16,7 +16,7 @@ package rdb
 import (
 	"fmt"
 
-	rocksdb "github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb"
+	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
 )
 
 // Backup creates new backup

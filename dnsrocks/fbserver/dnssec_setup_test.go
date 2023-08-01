@@ -14,7 +14,7 @@ limitations under the License.
 package fbserver
 
 import (
-	"github.com/facebookincubator/dns/dnsrocks/testutils"
+	"github.com/facebook/dns/dnsrocks/testutils"
 
 	"github.com/stretchr/testify/require"
 

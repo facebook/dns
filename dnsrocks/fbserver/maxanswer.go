@@ -17,7 +17,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
+	"github.com/facebook/dns/dnsrocks/dnsserver"
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/miekg/dns"

@@ -17,7 +17,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/test"
+	"github.com/facebook/dns/dnsrocks/dnsserver/test"
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/miekg/dns"

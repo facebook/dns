@@ -18,7 +18,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/facebookincubator/dns/dnsrocks/testutils"
+	"github.com/facebook/dns/dnsrocks/testutils"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"

@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/facebookincubator/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/metrics"
 )
 
 // MonitorType is a transport protocol string (e.g., "tcp").

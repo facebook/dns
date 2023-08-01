@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver"
-	"github.com/facebookincubator/dns/dnsrocks/tlsconfig"
+	"github.com/facebook/dns/dnsrocks/dnsserver"
+	"github.com/facebook/dns/dnsrocks/tlsconfig"
 
 	"github.com/golang/glog"
 )

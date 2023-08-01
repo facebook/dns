@@ -16,7 +16,7 @@ package dbdiff
 import (
 	"testing"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 )
 
 func TestConv(t *testing.T) {

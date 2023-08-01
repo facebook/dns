@@ -24,8 +24,8 @@ import (
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
 
-	"github.com/facebookincubator/dns/dnsrocks/debuginfo"
-	"github.com/facebookincubator/dns/dnsrocks/dnsserver/test"
+	"github.com/facebook/dns/dnsrocks/debuginfo"
+	"github.com/facebook/dns/dnsrocks/dnsserver/test"
 )
 
 func makeWhoamiDomain(s string) string {

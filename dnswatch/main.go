@@ -14,7 +14,7 @@ limitations under the License.
 package main
 
 import (
-	"github.com/facebookincubator/dns/dnswatch/cmd"
+	"github.com/facebook/dns/dnswatch/cmd"
 )
 
 func main() {

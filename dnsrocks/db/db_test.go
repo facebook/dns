@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/testaid"
+	"github.com/facebook/dns/dnsrocks/testaid"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

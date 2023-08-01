@@ -16,7 +16,7 @@ package rdb
 import (
 	"sync"
 
-	rocksdb "github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb"
+	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
 )
 
 // NumberOfIterators is empirically found number of iterators which make sense to keep in pool

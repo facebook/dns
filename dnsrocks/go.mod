@@ -1,4 +1,4 @@
-module github.com/facebookincubator/dns/dnsrocks
+module github.com/facebook/dns/dnsrocks
 
 go 1.18
 

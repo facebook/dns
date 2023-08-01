@@ -18,7 +18,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 )
 
 func main() {

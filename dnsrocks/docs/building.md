@@ -2,7 +2,7 @@
 
 ## Prerequisites
 - [Rocksdb](https://github.com/facebook/rocksdb/releases) 7.3 or newer
-- [Go 1.18](https://github.com/facebookincubator/dns/blob/main/dnsrocks/go.mod#L3)
+- [Go 1.18](https://github.com/facebook/dns/blob/main/dnsrocks/go.mod#L3)
 
 
 ## Verifying every dependency is installed correctly
@@ -23,27 +23,27 @@ go version go1.18.7 linux/amd64
 ## Building DNSRocks
 ```
 ~/work/dns/dnsrocks/cmd/dnsrocks$ CGO_LDFLAGS_ALLOW=".*" CGO_CFLAGS_ALLOW=".*" go build .
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
-# github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb
+# github.com/facebook/dns/dnsrocks/cgo-rocksdb
 cc1: warning: command-line option ‘-std=c++11’ is valid for C++/ObjC++ but not for C
 ```
 produces the dnsrocks binary

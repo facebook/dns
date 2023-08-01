@@ -20,8 +20,8 @@ import (
 	"os"
 	"time"
 
-	rocksdb "github.com/facebookincubator/dns/dnsrocks/cgo-rocksdb"
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata/rdb"
+	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
+	"github.com/facebook/dns/dnsrocks/dnsdata/rdb"
 )
 
 const (

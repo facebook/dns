@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	tlsc "github.com/facebookincubator/dns/dnsrocks/tlsconfig"
+	tlsc "github.com/facebook/dns/dnsrocks/tlsconfig"
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/request"

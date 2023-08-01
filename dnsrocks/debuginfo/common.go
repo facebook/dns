@@ -20,8 +20,8 @@ import (
 
 	"github.com/coredns/coredns/request"
 
-	"github.com/facebookincubator/dns/dnsrocks/db"
-	"github.com/facebookincubator/dns/dnsrocks/logger"
+	"github.com/facebook/dns/dnsrocks/db"
+	"github.com/facebook/dns/dnsrocks/logger"
 )
 
 // Pair represents a key-value pair of debug info.

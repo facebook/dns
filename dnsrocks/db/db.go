@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/facebookincubator/dns/dnsrocks/dnsdata"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 
 	"github.com/golang/glog"
 	"github.com/miekg/dns"

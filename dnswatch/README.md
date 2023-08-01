@@ -1,7 +1,7 @@
 # DNSWatch
-[![lint_dnswatch](https://github.com/facebookincubator/dns/actions/workflows/lint_dnswatch.yml/badge.svg)](https://github.com/facebookincubator/dns/actions/workflows/lint_dnswatch.yml)
-[![test_dnswatch](https://github.com/facebookincubator/dns/actions/workflows/test_dnswatch.yml/badge.svg)](https://github.com/facebookincubator/dns/actions/workflows/test_dnswatch.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/facebookincubator/dns/dnswatch)](https://goreportcard.com/report/github.com/facebookincubator/dns/dnswatch)
+[![lint_dnswatch](https://github.com/facebook/dns/actions/workflows/lint_dnswatch.yml/badge.svg)](https://github.com/facebook/dns/actions/workflows/lint_dnswatch.yml)
+[![test_dnswatch](https://github.com/facebook/dns/actions/workflows/test_dnswatch.yml/badge.svg)](https://github.com/facebook/dns/actions/workflows/test_dnswatch.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/facebook/dns/dnswatch)](https://goreportcard.com/report/github.com/facebook/dns/dnswatch)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Documentation
