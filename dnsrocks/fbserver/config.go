@@ -44,6 +44,7 @@ type ServerConfig struct {
 	RefuseANY      bool
 	DNSSECConfig   DNSSECConfig
 	NSID           bool
+	PrivateInfo    bool
 }
 
 type ipAns map[string]int

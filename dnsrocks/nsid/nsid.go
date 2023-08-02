@@ -32,9 +32,9 @@ type Handler struct {
 }
 
 // NewHandler produces a new NSID insertion handler.
-func NewHandler() (*Handler, error) {
+func NewHandler(privateInfo bool) (*Handler, error) {
 	h := new(Handler)
-	h.infoGen = debuginfo.Generator()
+	h.infoGen = debuginfo.Generator(privateInfo)
 	return h, nil
 }
 

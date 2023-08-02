@@ -44,7 +44,7 @@ func TestNSID(t *testing.T) {
 	req.IsEdns0().Option = append(req.IsEdns0().Option, &dns.EDNS0_NSID{Code: dns.EDNS0NSID})
 
 	rec := dnstest.NewRecorder(w)
-	h, err := NewHandler()
+	h, err := NewHandler(false)
 	require.NoError(t, err)
 	var infoTime time.Time
 	h.infoGen = func() debuginfo.InfoSrc {
@@ -89,7 +89,7 @@ func TestNoNSIDRequested(t *testing.T) {
 	// Request does not include NSID.
 
 	rec := dnstest.NewRecorder(w)
-	h, err := NewHandler()
+	h, err := NewHandler(false)
 	require.NoError(t, err)
 	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 		m := new(dns.Msg)
@@ -120,7 +120,7 @@ func TestNoEDNSInQuery(t *testing.T) {
 	// Request does not include EDNS.
 
 	rec := dnstest.NewRecorder(w)
-	h, err := NewHandler()
+	h, err := NewHandler(false)
 	require.NoError(t, err)
 	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 		m := new(dns.Msg)
@@ -151,7 +151,7 @@ func TestEDNSIsDisabled(t *testing.T) {
 	req.IsEdns0().Option = append(req.IsEdns0().Option, &dns.EDNS0_NSID{Code: dns.EDNS0NSID})
 
 	rec := dnstest.NewRecorder(w)
-	h, err := NewHandler()
+	h, err := NewHandler(false)
 	require.NoError(t, err)
 	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 		m := new(dns.Msg)

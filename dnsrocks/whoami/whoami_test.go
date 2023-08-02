@@ -45,7 +45,7 @@ func TestHandlerBadType(t *testing.T) {
 	req := new(dns.Msg)
 	req.SetQuestion(dns.Fqdn("example.com."), dns.TypeA)
 	rec := dnstest.NewRecorder(w)
-	wh, err := NewWhoami("example.com")
+	wh, err := NewWhoami("example.com", false)
 	require.Nil(t, err)
 	rc, err := wh.ServeDNS(context.TODO(), rec, req)
 

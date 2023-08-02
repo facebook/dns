@@ -56,7 +56,7 @@ func TestWithoutECS(t *testing.T) {
 			req.SetQuestion(dns.Fqdn("example.com."), dns.TypeTXT)
 			state := request.Request{W: w, Req: req}
 
-			makeInfoSrc := Generator()
+			makeInfoSrc := Generator(false)
 			time.Sleep(2 * time.Millisecond) // Ensure that times are different after rounding
 			before := time.Now().UnixMilli()
 			time.Sleep(2 * time.Millisecond)
@@ -130,7 +130,7 @@ func TestWithECS(t *testing.T) {
 			req.Extra = []dns.RR{o}
 			state := request.Request{W: w, Req: req}
 
-			info := Generator()().GetInfo(state)
+			info := Generator(false)().GetInfo(state)
 
 			require.Equal(t, info[0].Key, "time", "missing time key")
 			info = info[1:]

@@ -243,8 +243,8 @@ func (srv *Server) Start() (err error) {
 	// Only add whoamiHandler to the plugin chain if it is enabled.
 	if srv.conf.WhoamiDomain != "" {
 		domain := strings.ToLower(dns.Fqdn(srv.conf.WhoamiDomain))
-		glog.Infof("Enabling WhoAmI handler for domain %s", domain)
-		if whoamiHandler, err = whoami.NewWhoami(domain); err != nil {
+		glog.Infof("Enabling WhoAmI handler for domain %s with privateInfo=%v", domain, srv.conf.PrivateInfo)
+		if whoamiHandler, err = whoami.NewWhoami(domain, srv.conf.PrivateInfo); err != nil {
 			return fmt.Errorf("failed to initialize whoamiHandler: %w", err)
 		}
 		whoamiHandler.Next = defaultHandler
@@ -266,8 +266,8 @@ func (srv *Server) Start() (err error) {
 
 	// Only add nsidHandler to the plugin chain if it is enabled.
 	if srv.conf.NSID {
-		glog.Infof("Enabling NSID")
-		if nsidHandler, err = nsid.NewHandler(); err != nil {
+		glog.Infof("Enabling NSID with privateInfo=%v", srv.conf.PrivateInfo)
+		if nsidHandler, err = nsid.NewHandler(srv.conf.PrivateInfo); err != nil {
 			return fmt.Errorf("failed to initialize NSID handler: %w", err)
 		}
 		nsidHandler.Next = defaultHandler
