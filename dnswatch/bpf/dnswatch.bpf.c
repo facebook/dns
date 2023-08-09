@@ -28,12 +28,20 @@ limitations under the License.
 #define HASHMAP_SIZE 100003
 #define DNS_PROBE_PORT 53
 
+// define address families
+#define AF_INET 2
+#define AF_INET6 10
+
 struct dnswatch_kprobe_event_data {
   u32 tgid;
   u32 pid;
   char comm[80];
   char cmdline[120];
   int sock_port_nr;
+  union {
+    struct sockaddr_in in;
+    struct sockaddr_in6 in6;
+  };
   char fn_id;
 };
 
@@ -104,7 +112,7 @@ int tp_syscall_execve(struct execve_args* ctx) {
 // sendmsg_solver populates the dnswatch_kprobe_event_data struct for each
 // callback.
 static int
-sendmsg_solver(struct pt_regs* ctx, char fn_id, u16 dport, u16 sport) {
+sendmsg_solver(void* daddr, char fn_id, u16 dport, u16 sport, u16 family) {
   if (dport != bpf_htons(DNS_PROBE_PORT)) {
     return 0;
   }
@@ -129,6 +137,16 @@ sendmsg_solver(struct pt_regs* ctx, char fn_id, u16 dport, u16 sport) {
   data->sock_port_nr = (int)sport;
   data->fn_id = fn_id;
 
+  // fill the dst address based on the family type
+  data->in.sin_family = family;
+  if (family == AF_INET) {
+    bpf_probe_read_kernel(&data->in.sin_addr, sizeof(data->in.sin_addr), daddr);
+  }
+  if (family == AF_INET6) {
+    bpf_probe_read_kernel(
+        &data->in6.sin6_addr, sizeof(data->in6.sin6_addr), daddr);
+  }
+
   u32 __tgid_hash = __tgid % HASHMAP_SIZE;
   // struct tgid_info* __tgid_info = tgid_cmdline.lookup(&__tgid_hash);
   struct tgid_info* __tgid_info =
@@ -150,6 +168,7 @@ int BPF_PROG(
     struct msghdr* msg) {
   struct sock_common* sk_common = (struct sock_common*)sk;
   struct sockaddr_in6* sin6;
+  struct in6_addr* daddr;
   u16 dport, sport;
 
   sin6 = (struct sockaddr_in6*)msg->msg_name;
@@ -158,39 +177,49 @@ int BPF_PROG(
   // the dport from (struct msghdr*)msg->(struct
   // sockaddr_in6*)msg_name->sin6_port.
   dport = sk_common->skc_dport;
+  daddr = &sk_common->skc_v6_daddr;
   if (sin6) {
     bpf_probe_read_kernel(&dport, sizeof(u16), &sin6->sin6_port);
+    daddr = &sin6->sin6_addr;
   }
   sport = sk_common->skc_num;
 
-  return sendmsg_solver(ctx, 0, dport, sport);
+  return sendmsg_solver(&daddr, 0, dport, sport, AF_INET6);
 }
 
 SEC("fentry/udp_sendmsg")
 int BPF_PROG(dnswatch_kprobe_udp_sendmsg, struct sock* sk, struct msghdr* msg) {
   struct sock_common* sk_common = (struct sock_common*)sk;
   struct sockaddr_in* sin = msg->msg_name;
+  void* daddr;
   u16 dport, sport;
 
   // handle connectionless udp ipv4 sockets. Same as udp ipv6, but different
   // structs and fields.
   dport = sk_common->skc_dport;
+  daddr = &sk_common->skc_daddr;
   if (sin) {
     bpf_probe_read_kernel(&dport, sizeof(u16), &sin->sin_port);
+    daddr = &sin->sin_addr;
   }
   sport = sk_common->skc_num;
 
-  return sendmsg_solver(ctx, 1, dport, sport);
+  return sendmsg_solver(daddr, 1, dport, sport, AF_INET);
 }
 
 SEC("fentry/tcp_sendmsg")
 int BPF_PROG(dnswatch_kprobe_tcp_sendmsg, struct sock* sk, struct msghdr* msg) {
   u16 dport, sport;
+  void* daddr;
 
   dport = sk->__sk_common.skc_dport;
   sport = sk->__sk_common.skc_num;
 
-  return sendmsg_solver(ctx, 2, dport, dport);
+  daddr = &sk->__sk_common.skc_daddr;
+  if (sk->__sk_common.skc_family == AF_INET6) {
+    daddr = &sk->__sk_common.skc_v6_daddr;
+  }
+  return sendmsg_solver(daddr, 2, dport, dport, sk->__sk_common.skc_family);
 }
 
 char LICENSE[] SEC("license") = "GPL";
