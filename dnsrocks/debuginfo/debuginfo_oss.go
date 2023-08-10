@@ -14,6 +14,6 @@ limitations under the License.
 package debuginfo
 
 // Generator returns the InfoSrc generating function.
-func Generator(privateInfo bool) func() InfoSrc {
+func Generator(_ bool) func() InfoSrc {
 	return makeInfoSrc
 }
