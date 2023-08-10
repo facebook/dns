@@ -193,6 +193,7 @@ func (d *DisplayInfo) DetailedString() string {
 	s += ";; opcode: " + dnsPkt.OpCode.String()
 	s += ", status: " + dnsPkt.ResponseCode.String()
 	s += ", id: " + strconv.Itoa(int(dnsPkt.ID)) + "\n"
+	s += ";; resolver ip: " + d.responseAddr.String() + "\n"
 
 	s += ";; flags:"
 	if dnsPkt.QR {
