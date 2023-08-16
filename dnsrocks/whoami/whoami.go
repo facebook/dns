@@ -59,8 +59,11 @@ func (wh *Handler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 			rr.(*dns.TXT).Txt = []string{fmt.Sprintf("%s %s", key, value)}
 			return rr
 		}
-		for _, pair := range wh.infoGen().GetInfo(state) {
-			m.Answer = append(m.Answer, mkTxt(pair.Key, pair.Val))
+		info := wh.infoGen().GetInfo(state)
+		for _, pair := range *info {
+			if len(pair.Val) > 0 {
+				m.Answer = append(m.Answer, mkTxt(pair.Key, pair.Val))
+			}
 		}
 	}
 

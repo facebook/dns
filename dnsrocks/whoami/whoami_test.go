@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
-	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
 
@@ -30,12 +29,6 @@ import (
 
 func makeWhoamiDomain(s string) string {
 	return strings.ToLower(dns.Fqdn(s))
-}
-
-type mockInfo []debuginfo.Pair
-
-func (i mockInfo) GetInfo(_ request.Request) []debuginfo.Pair {
-	return i
 }
 
 // TestHandlerBadType tests that we return noerror/nodata
@@ -71,7 +64,8 @@ func TestHandlerValidRequest(t *testing.T) {
 	var creationTime time.Time
 	wh.infoGen = func() debuginfo.InfoSrc {
 		creationTime = time.Now()
-		return mockInfo(expectedAnswers)
+		src := debuginfo.MockInfoSrc(expectedAnswers)
+		return &src
 	}
 
 	before := time.Now()

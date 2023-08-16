@@ -15,7 +15,6 @@ package debuginfo
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/coredns/coredns/request"
@@ -24,28 +23,9 @@ import (
 	"github.com/facebook/dns/dnsrocks/logger"
 )
 
-// Pair represents a key-value pair of debug info.
-// It is used instead of a map in order to provide a
-// stable output order for metadata.
-type Pair struct {
-	Key string
-	Val string
-}
-
-// Print renders a list of pairs in key=value format.
-func Print(pairs []Pair) string {
-	var components []string
-	for _, pair := range pairs {
-		if pair.Val != "" {
-			components = append(components, fmt.Sprintf("%s=%s", pair.Key, pair.Val))
-		}
-	}
-	return strings.Join(components, " ")
-}
-
 // InfoSrc is defined to enable mocking of [GetInfo].
 type InfoSrc interface {
-	GetInfo(request.Request) []Pair
+	GetInfo(request.Request) *Values
 }
 
 type infoSrc struct {
@@ -58,18 +38,17 @@ func makeInfoSrc() InfoSrc {
 }
 
 // GetInfo returns the debug info related to this request.
-func (i infoSrc) GetInfo(state request.Request) []Pair {
-	info := []Pair{
-		{Key: "time", Val: fmt.Sprintf("%.3f", float64(i.created.UnixMilli())/1000.)},
-		{Key: "protocol", Val: logger.RequestProtocol(state)},
-		{Key: "source", Val: state.RemoteAddr()},
-	}
+func (i infoSrc) GetInfo(state request.Request) *Values {
+	info := new(Values)
+	info.Add("time", fmt.Sprintf("%.3f", float64(i.created.UnixMilli())/1000.))
+	info.Add("protocol", logger.RequestProtocol(state))
+	info.Add("source", state.RemoteAddr())
 	// don't include destination ip address in the answer if it is unspecified
 	if state.LocalIP() != "::" {
-		info = append(info, Pair{Key: "destination", Val: state.LocalAddr()})
+		info.Add("destination", state.LocalAddr())
 	}
 	if ecs := db.FindECS(state.Req); ecs != nil {
-		info = append(info, Pair{Key: "ecs", Val: ecs.String()})
+		info.Add("ecs", ecs.String())
 	}
 	return info
 }
