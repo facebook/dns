@@ -66,20 +66,16 @@ func TestWithoutECS(t *testing.T) {
 			info := infoSrc.GetInfo(state)
 
 			// Check timestamp
-			require.Equal(t, info[0].Key, "time", "missing time key")
-			created, err := strconv.ParseFloat(info[0].Val, 64)
+			require.True(t, info.Has("time"), "missing time key")
+			created, err := strconv.ParseFloat(info.Get("time"), 64)
 			require.NoError(t, err, "time is not a valid float")
 			createdMillis := int64(created * 1000)
 			require.Less(t, before, createdMillis, "creation time is too early")
 			require.Less(t, createdMillis, after, "creation time is too late")
 			// Check other info
-			info = info[1:]
-			expected := []Pair{
-				{"protocol", "UDP"},
-				{"source", tc.remoteIPResp},
-				{"destination", w.LocalAddr().String()},
-			}
-			require.Equal(t, info[:len(expected)], expected, "wrong info output")
+			require.Equal(t, "UDP", info.Get("protocol"))
+			require.Equal(t, tc.remoteIPResp, info.Get("source"))
+			require.Equal(t, w.LocalAddr().String(), info.Get("destination"))
 		})
 	}
 }
@@ -132,15 +128,11 @@ func TestWithECS(t *testing.T) {
 
 			info := Generator(false)().GetInfo(state)
 
-			require.Equal(t, info[0].Key, "time", "missing time key")
-			info = info[1:]
-			expected := []Pair{
-				{"protocol", "UDP"},
-				{"source", tc.remoteIPResp},
-				{"destination", w.LocalAddr().String()},
-				{"ecs", tc.ecsResp},
-			}
-			require.Equal(t, info[:len(expected)], expected, "wrong info output")
+			require.True(t, info.Has("time"), "missing time key")
+			require.Equal(t, "UDP", info.Get("protocol"), "wrong protocol")
+			require.Equal(t, tc.remoteIPResp, info.Get("source"), "wrong source IP")
+			require.Equal(t, w.LocalAddr().String(), info.Get("destination"), "wrong destination IP")
+			require.Equal(t, tc.ecsResp, info.Get("ecs"), "wrong ECS tag")
 		})
 	}
 }

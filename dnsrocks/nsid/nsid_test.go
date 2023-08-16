@@ -21,19 +21,12 @@ import (
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/plugin/test"
-	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/facebook/dns/dnsrocks/debuginfo"
 )
-
-type mockInfo []debuginfo.Pair
-
-func (i mockInfo) GetInfo(_ request.Request) []debuginfo.Pair {
-	return i
-}
 
 func TestNSID(t *testing.T) {
 	w := &test.ResponseWriter{}
@@ -49,10 +42,11 @@ func TestNSID(t *testing.T) {
 	var infoTime time.Time
 	h.infoGen = func() debuginfo.InfoSrc {
 		infoTime = time.Now()
-		return mockInfo([]debuginfo.Pair{
+		src := debuginfo.MockInfoSrc([]debuginfo.Pair{
 			{Key: "foo1", Val: "bar1"},
 			{Key: "foo2", Val: "bar2"},
 		})
+		return &src
 	}
 	var responseTime time.Time
 	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {

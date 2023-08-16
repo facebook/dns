@@ -67,7 +67,7 @@ func (w nsidResponseWriter) WriteMsg(response *dns.Msg) error {
 		glog.Errorf("no EDNS for NSID")
 	} else {
 		state := request.Request{W: w, Req: w.request}
-		nsid := debuginfo.Print(w.infoSrc.GetInfo(state))
+		nsid := w.infoSrc.GetInfo(state).Encode()
 		opt.Option = append(opt.Option, &dns.EDNS0_NSID{
 			Code: dns.EDNS0NSID,
 			Nsid: hex.EncodeToString([]byte(nsid)),
