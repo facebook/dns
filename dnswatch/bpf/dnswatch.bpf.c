@@ -31,8 +31,6 @@ limitations under the License.
 struct dnswatch_kprobe_event_data {
   u32 tgid;
   u32 pid;
-  char comm[80];
-  char cmdline[120];
   int sock_port_nr;
   char fn_id;
 };
@@ -43,63 +41,6 @@ struct {
   __uint(type, BPF_MAP_TYPE_RINGBUF);
   __uint(max_entries, 1 << 24);
 } dnswatch_kprobe_output_events SEC(".maps");
-
-// tgid_info value for hash map tgid_cmdline, used to map tgid to cmdline
-struct tgid_info {
-  // original_tgid is used to check for hash collisions
-  u32 original_tgid;
-  char cmdline[120];
-};
-
-// tgid_cmdline used to map tgid hashes to the cmdline of the process
-// BPF_HASH(tgid_cmdline, u32, struct tgid_info, HASHMAP_SIZE);
-struct {
-  __uint(type, BPF_MAP_TYPE_HASH);
-  __uint(max_entries, HASHMAP_SIZE);
-  __type(key, u32);
-  __type(value, struct tgid_info);
-} tgid_cmdline SEC(".maps");
-
-// Based on /sys/kernel/debug/tracing/events/syscalls/sys_enter_execve/format
-struct execve_args {
-  unsigned short common_type;
-  unsigned char common_flags;
-  unsigned char common_preempt_count;
-  int common_pid;
-  int __syscall_nr;
-  const char* filename;
-  const char* const* argv;
-  const char* const* envp;
-};
-
-// syscall__execve maps tgids to cmdlines and populates tgid_filename
-SEC("tracepoint/syscalls/sys_enter_execve")
-int tp_syscall_execve(struct execve_args* ctx) {
-  u32 __tgid = bpf_get_current_pid_tgid() >> 32;
-  u32 __tgid_hash = __tgid % HASHMAP_SIZE;
-  const char* arg;
-
-  struct tgid_info __tgid_info = {0};
-
-  __tgid_info.original_tgid = __tgid;
-
-  __tgid_info.cmdline[0] = 0;
-
-  for (int i = 0; i < 4; i++) {
-    bpf_probe_read_kernel(&arg, sizeof(void*), &ctx->argv[i]);
-    if (!arg)
-      break;
-    char* startByte = __tgid_info.cmdline + i * 30;
-    u32 bytesToCopy = 30;
-    char* lastByte = startByte + bytesToCopy - 1;
-
-    bpf_probe_read_user(startByte, bytesToCopy, arg);
-    *lastByte = 0;
-  }
-
-  bpf_map_update_elem(&tgid_cmdline, &__tgid_hash, &__tgid_info, 0);
-  return 0;
-}
 
 // sendmsg_solver populates the dnswatch_kprobe_event_data struct for each
 // callback.
@@ -125,19 +66,8 @@ sendmsg_solver(struct pt_regs* ctx, char fn_id, u16 dport, u16 sport) {
     return 0;
   data->tgid = __tgid;
   data->pid = __pid;
-  bpf_get_current_comm(&data->comm, sizeof(data->comm));
   data->sock_port_nr = (int)sport;
   data->fn_id = fn_id;
-
-  u32 __tgid_hash = __tgid % HASHMAP_SIZE;
-  // struct tgid_info* __tgid_info = tgid_cmdline.lookup(&__tgid_hash);
-  struct tgid_info* __tgid_info =
-      bpf_map_lookup_elem(&tgid_cmdline, &__tgid_hash);
-  if (__tgid_info == 0 || __tgid_info->original_tgid != __tgid) {
-    data->cmdline[0] = 0;
-  } else {
-    memcpy(data->cmdline, __tgid_info->cmdline, sizeof(data->cmdline));
-  }
 
   bpf_ringbuf_submit(data, 0);
   return 0;

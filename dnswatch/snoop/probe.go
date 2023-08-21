@@ -20,6 +20,7 @@ import (
 	"encoding/binary"
 
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -41,6 +42,12 @@ const (
 	udpID
 	tcpID
 )
+
+// used to cache pid to Comm translation
+var pidToCommCache map[uint32][commLength]byte
+
+// used to cache pid to CmdLine translation
+var pidToCmdLineCache map[uint32][cmdlineLength]byte
 
 // fnIDToFnName maps FnID to kernel function name
 var fnIDToFnName = map[FnID]string{
@@ -76,9 +83,22 @@ type ProbeEventData struct {
 	Tgid uint32
 	// Pid is the process id
 	Pid uint32
-	// Comm is the task comm
+	// SockPortNr is the socket number used to send_msg
+	SockPortNr int32
+	// FnID is the identifier of the function
+	FnID uint8
+}
+
+// EnhancedProbeData is an extended version of the ProbeEventData struct populated with data from kernel
+// which is then later enhanced by comm and cmdline by the userspace code
+type EnhancedProbeData struct {
+	// Tgid is the thread group id
+	Tgid uint32
+	// Pid is the process id
+	Pid uint32
+	// // Comm is the task comm
 	Comm [commLength]byte
-	// Cmdline is the process cmdline
+	// // Cmdline is the process cmdline
 	Cmdline [cmdlineLength]byte
 	// SockPortNr is the socket number used to send_msg
 	SockPortNr int32
@@ -151,18 +171,6 @@ func (p *Probe) loadAndAttachProbes() (*libbpfgo.Module, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-
-	kprobe, err := bpfModule.GetProgram("tp_syscall_execve")
-	if err != nil {
-		return nil, fmt.Errorf("unable to load probe for execve: %w", err)
-	}
-	kprobelink, err := kprobe.AttachGeneric()
-	if err != nil {
-		return nil, fmt.Errorf("unable attaching kprobe/ %w", err)
-	}
-	if kprobelink.FileDescriptor() == 0 {
-		return nil, fmt.Errorf("kprobe/tp_syscall_execve not running")
-	}
 	for _, kernelFnName := range fnIDToFnName {
 		probeFnName := "dnswatch_kprobe_" + kernelFnName
 		kprobe, err := bpfModule.GetProgram(probeFnName)
@@ -184,6 +192,9 @@ func (p *Probe) loadAndAttachProbes() (*libbpfgo.Module, error) {
 // To avoid kernel memory leaks, the Run method will setup
 // the bpfModule, and defer the Close method
 func (p *Probe) Run(ch chan<- *ProbeDTO) error {
+	pidToCommCache = make(map[uint32][commLength]byte)
+	pidToCmdLineCache = make(map[uint32][cmdlineLength]byte)
+
 	bpfModule, err := p.loadAndAttachProbes()
 	if err != nil {
 		return fmt.Errorf("unable to loadAndAttachProbes: %w", err)
@@ -211,23 +222,41 @@ func (p *Probe) Run(ch chan<- *ProbeDTO) error {
 			data := <-channel
 
 			var event ProbeEventData
+			var enhanchedEvent EnhancedProbeData
 			err := binary.Read(bytes.NewBuffer(data), determineHostByteOrder(), &event)
 			if err != nil {
 				if p.Debug {
-					log.Printf("unable to run BPF probe: %v", err)
+					log.Printf("unable to read BPF data: %v", err)
 				}
 				continue
 			}
+			enhanchedEvent.Pid = event.Pid
+			enhanchedEvent.Tgid = event.Tgid
+			enhanchedEvent.FnID = event.FnID
+			enhanchedEvent.SockPortNr = event.SockPortNr
+			enhanchedEvent.Comm, err = getProcComm(event.Pid)
+
+			if err != nil {
+				if p.Debug {
+					log.Printf("unable to read event cmd: %v", err)
+				}
+			}
+			cmdLine, err := getProcCmdLine(event.Pid)
+			if err != nil {
+				if p.Debug {
+					log.Printf("unable to read event cmd: %v", err)
+				}
+			}
+			enhanchedEvent.Cmdline = cleanCmdline(cmdLine)
 
 			if p.Debug {
-				log.Printf("%10v %10v %10v   %s   -(call)->   %s %s", event.Pid, event.Tgid,
-					event.SockPortNr, event.Comm[:15], fnIDToFnName[FnID(event.FnID)], event.Cmdline)
+				log.Printf("%10v %10v %10v   %s   -(call)->   %s %s", enhanchedEvent.Pid, enhanchedEvent.Tgid,
+					enhanchedEvent.SockPortNr, enhanchedEvent.Comm[:15], fnIDToFnName[FnID(enhanchedEvent.FnID)], enhanchedEvent.Cmdline)
 				continue
 			}
 
-			event.Cmdline = cleanCmdline(event.Cmdline)
 			ch <- &ProbeDTO{
-				ProbeData: event,
+				ProbeData: enhanchedEvent,
 			}
 		}
 	}()
@@ -240,4 +269,56 @@ func (p *Probe) Run(ch chan<- *ProbeDTO) error {
 	perfMap.Close()
 
 	return nil
+}
+
+func getProcComm(pid uint32) ([commLength]byte, error) {
+	cachedComm, found := pidToCommCache[pid]
+	// If the key exists
+	if found {
+		return cachedComm, nil
+	}
+	path := fmt.Sprintf("/proc/%d/comm", pid)
+	var retbuf [commLength]byte
+
+	f, err := os.Open(path)
+	if err != nil {
+		return retbuf, err
+	}
+	defer f.Close()
+
+	reader := io.LimitReader(f, commLength)
+	buf, err := io.ReadAll(reader)
+	if err != nil {
+		return retbuf, err
+	}
+	copy(retbuf[:], buf)
+	pidToCommCache[pid] = retbuf
+
+	return retbuf, nil
+}
+
+func getProcCmdLine(pid uint32) ([cmdlineLength]byte, error) {
+	cachedCmdLine, found := pidToCmdLineCache[pid]
+	// If the key exists
+	if found {
+		return cachedCmdLine, nil
+	}
+	path := fmt.Sprintf("/proc/%d/cmdline", pid)
+	var retbuf [cmdlineLength]byte
+
+	f, err := os.Open(path)
+	if err != nil {
+		return retbuf, err
+	}
+	defer f.Close()
+
+	reader := io.LimitReader(f, cmdlineLength)
+	buf, err := io.ReadAll(reader)
+	if err != nil {
+		return retbuf, err
+	}
+	copy(retbuf[:], buf)
+	pidToCmdLineCache[pid] = retbuf
+
+	return retbuf, nil
 }

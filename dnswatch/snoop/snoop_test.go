@@ -43,7 +43,7 @@ func TestWatch(t *testing.T) {
 	}
 	for i := 0; i < 10; i++ {
 		c.probeQueue <- &ProbeDTO{
-			ProbeData: ProbeEventData{
+			ProbeData: EnhancedProbeData{
 				Tgid:       uint32(3 * i),
 				SockPortNr: int32(2 * i),
 			},
@@ -86,7 +86,7 @@ func TestDisplayMapToToplike(t *testing.T) {
 	}
 	for i := 0; i < 10; i++ {
 		c.probeQueue <- &ProbeDTO{
-			ProbeData: ProbeEventData{
+			ProbeData: EnhancedProbeData{
 				Pid:        0,
 				SockPortNr: int32(2 * i),
 			},

@@ -161,7 +161,7 @@ type FilterDTO struct {
 
 // ProbeDTO is a data transfer object used to communicate between probe and consumer
 type ProbeDTO struct {
-	ProbeData ProbeEventData
+	ProbeData EnhancedProbeData
 }
 
 // ProcInfo stores data about a process
