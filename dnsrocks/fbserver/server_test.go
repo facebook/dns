@@ -15,6 +15,7 @@ package fbserver
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -376,5 +377,98 @@ func TestMultipleQueryoverTCP(t *testing.T) {
 		r := exchange(t, co, c, m)
 		require.Equal(t, m.Question[0].Name, r.Question[0].Name, "Mismatching question name")
 		require.Equal(t, m.Question[0].Qtype, r.Question[0].Qtype, "Mismatching question type")
+	}
+}
+
+func TestMaxUDPSize(t *testing.T) {
+	testCases := []struct {
+		clientMax uint16
+		serverMax int
+		truncated bool
+	}{
+		// No EDNS0 (clientMax is unset)
+		{
+			truncated: true,
+		},
+		{
+			serverMax: 2048,
+			truncated: true,
+		},
+		// One or both is too small.
+		{
+			clientMax: 512,
+			// serverMax is unset
+			truncated: true,
+		},
+		{
+			clientMax: 512,
+			serverMax: 512,
+			truncated: true,
+		},
+		{
+			clientMax: 2048,
+			serverMax: 512,
+			truncated: true,
+		},
+		{
+			clientMax: 512,
+			serverMax: 2048,
+			truncated: true,
+		},
+		// Both are big enough.
+		{
+			clientMax: 2048,
+			serverMax: 2048,
+			truncated: false,
+		},
+		{
+			clientMax: 2048,
+			serverMax: 8192,
+			truncated: false,
+		},
+		// Invalid server max sizes
+		{
+			clientMax: 2048,
+			serverMax: 511, // Too small, ignored.
+			truncated: false,
+		},
+		{
+			clientMax: 2048,
+			serverMax: 65536, // Too large, ignored.
+			truncated: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%d/%d", tc.clientMax, tc.serverMax), func(t *testing.T) {
+			config := makeTestServerConfig(true, false)
+			config.MaxUDPSize = tc.serverMax
+			portMap, srv := makeTestServer(t, config)
+			defer srv.Shutdown()
+
+			c := new(dns.Client)
+			query := new(dns.Msg)
+			qname := "lotofns.example.org."
+			query.SetQuestion(qname, dns.TypeNS)
+			if tc.clientMax > 0 {
+				query.SetEdns0(tc.clientMax, false)
+			}
+			udpResponse, _, err := c.Exchange(query, portMap["udp"])
+			require.Nil(t, err)
+
+			if tc.clientMax > 0 {
+				require.NotNil(t, udpResponse.IsEdns0())
+			} else {
+				require.Nil(t, udpResponse.IsEdns0())
+			}
+
+			require.Equal(t, tc.truncated, udpResponse.Truncated)
+
+			c.Net = "tcp"
+			tcpResponse, _, err := c.Exchange(query, portMap["tcp"])
+			require.Nil(t, err)
+			require.NotNil(t, tcpResponse)
+			require.False(t, tcpResponse.Truncated)
+		})
 	}
 }

@@ -81,6 +81,7 @@ func main() {
 
 	// DNS Server config
 	cliflags.IntVar(&serverConfig.Port, "port", 8053, "port to run on")
+	cliflags.IntVar(&serverConfig.MaxUDPSize, "max-udp-size", 0, "Maximum UDP response size (default: none)")
 	cliflags.BoolVar(&serverConfig.TCP, "tcp", true, "Whether or not to also listen on TCP.")
 	cliflags.IntVar(&serverConfig.MaxTCPQueries, "tcp-max-queries", -1, "Maximum number of queries handled on a single TCP connection before closing the socket. This also applies for TLS. (unlimited if -1).")
 	// Idle Timeout default is based on miekg/dns original default: https://fburl.com/t0tmjp2c

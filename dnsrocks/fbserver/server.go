@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/coredns/coredns/plugin"
+	"github.com/coredns/coredns/plugin/bufsize"
 	"github.com/golang/glog"
 	"github.com/miekg/dns"
 	"golang.org/x/sys/unix"
@@ -303,6 +304,18 @@ func (srv *Server) Start() (err error) {
 				"Not enabling DNSSEC Handler, either DNSSEC zones or keys are not specified. Zones: '%s', Keys: '%s'",
 				srv.conf.DNSSECConfig.Zones,
 				srv.conf.DNSSECConfig.Keys)
+		}
+
+		if srv.conf.MaxUDPSize >= dns.MinMsgSize && srv.conf.MaxUDPSize <= dns.MaxMsgSize {
+			glog.Infof("Limiting UDP response size to %d", srv.conf.MaxUDPSize)
+			handler.defaultHandler = bufsize.Bufsize{
+				Size: srv.conf.MaxUDPSize,
+				Next: handler.defaultHandler,
+			}
+		} else if srv.conf.MaxUDPSize > 0 {
+			glog.Warningf("Ignoring non-compliant -max-udp-size: %d", srv.conf.MaxUDPSize)
+		} else {
+			glog.Infof("Max UDP size not set")
 		}
 
 		addr := joinAddress(ip, srv.conf.Port)

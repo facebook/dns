@@ -30,6 +30,7 @@ import (
 type ServerConfig struct {
 	IPAns          ipAns
 	Port           int
+	MaxUDPSize     int
 	TCP            bool
 	TLS            bool
 	ReusePort      int
