@@ -272,6 +272,13 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		h.stats.IncrementCounter("DNS_response.refused")
 		m := new(dns.Msg)
 		m.SetRcode(r, dns.RcodeRefused)
+		// We can use Extended DNS Errors to indicate that the server is not authoritative for certain Query
+		// instead of just returning a REFUSED
+		if r.IsEdns0() != nil {
+			m.SetEdns0(4096, true)
+			ede := dns.EDNS0_EDE{InfoCode: dns.ExtendedErrorCodeNotAuthoritative}
+			m.IsEdns0().Option = append(m.IsEdns0().Option, &ede)
+		}
 		// does not matter if this write fails
 		return h.writeAndLog(state, m, ecs)
 	}
@@ -296,6 +303,13 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	if !auth {
 		// q is in child zone
 		a.Authoritative = false
+		// We can use Extended DNS Errors to indicate that the server is not authoritative for certain Query
+		// instead of just returning a REFUSED
+		if r.IsEdns0() != nil {
+			a.SetEdns0(4096, true)
+			ede := dns.EDNS0_EDE{InfoCode: dns.ExtendedErrorCodeNotAuthoritative}
+			a.IsEdns0().Option = append(a.IsEdns0().Option, &ede)
+		}
 		h.stats.IncrementCounter("DNS_response.not_authoritative")
 	} else {
 		// For NXDOMAIN
@@ -385,7 +399,7 @@ func rrTypeToUnit(qType string) (uint16, error) {
 	if val, ok := dns.StringToType[strings.ToUpper(qType)]; ok {
 		return val, nil
 	}
-	return 0, fmt.Errorf("Unknown QTYPE %s", qType)
+	return 0, fmt.Errorf("unknown QTYPE %s", qType)
 }
 
 // QuerySingle queries dns server for a query, returning single answer if possible
@@ -399,7 +413,7 @@ func (h *FBDNSDB) QuerySingle(rtype, record, remoteIP, subnet string, maxAns int
 	if subnet != "" {
 		o, err := MakeOPTWithECS(subnet)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to generate ECS option for %s %w", subnet, err)
+			return nil, fmt.Errorf("failed to generate ECS option for %s %w", subnet, err)
 		}
 		req.Extra = []dns.RR{o}
 	}
