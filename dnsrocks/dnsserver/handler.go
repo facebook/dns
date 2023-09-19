@@ -303,13 +303,6 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	if !auth {
 		// q is in child zone
 		a.Authoritative = false
-		// We can use Extended DNS Errors to indicate that the server is not authoritative for certain Query
-		// instead of just returning a REFUSED
-		if r.IsEdns0() != nil {
-			a.SetEdns0(4096, true)
-			ede := dns.EDNS0_EDE{InfoCode: dns.ExtendedErrorCodeNotAuthoritative}
-			a.IsEdns0().Option = append(a.IsEdns0().Option, &ede)
-		}
 		h.stats.IncrementCounter("DNS_response.not_authoritative")
 	} else {
 		// For NXDOMAIN
