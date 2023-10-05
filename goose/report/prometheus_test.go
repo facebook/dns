@@ -13,16 +13,19 @@ import (
 )
 
 func TestReportMetrics(t *testing.T) {
-	exportedMetrics := &stats.ExportedMetrics{Elapsed: 100 * time.Second, Processed: 1, Errors: 0, Latencies: []float64{1, 2, 3}}
+	exportedMetrics := &stats.ExportedMetrics{Elapsed: 100 * time.Second, Processed: 1, Errors: 0, Latencies: []float64{1000, 2000, 3000}}
 	r := &PrometheusMetricsReporter{Addr: ":0"}
-	go r.Initialize()
+	go func() {
+		_ = r.Initialize()
+	}()
 	time.Sleep(1 * time.Millisecond)
-	r.ReportMetrics(exportedMetrics)
-	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_success", 1)
-	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_failed", 0)
-	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_latency_max", 3)
-	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_latency_min", 1)
-	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_latency_avg", 2)
+	err := r.ReportMetrics(exportedMetrics)
+	require.NoError(t, err)
+	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_response_success", 1)
+	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_response_error", 0)
+	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_latency_max_us", 3)
+	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_latency_min_us", 1)
+	requireMetricRegisteredAndHasExpectedValue(t, r.registry, "dns_goose_latency_avg_us", 2)
 }
 
 func requireMetricRegisteredAndHasExpectedValue(t *testing.T, registry *prometheus.Registry, metricKey string, expectedValue float64) {

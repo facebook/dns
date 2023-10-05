@@ -2,6 +2,7 @@ package report
 
 import (
 	"github.com/facebook/dns/goose/stats"
+
 	log "github.com/sirupsen/logrus"
 )
 

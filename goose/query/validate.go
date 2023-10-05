@@ -2,6 +2,7 @@ package query
 
 import (
 	"fmt"
+
 	"github.com/miekg/dns"
 )
 

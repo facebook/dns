@@ -11,6 +11,7 @@ var (
 	latencyMean   = "latency.mean.us"
 	latencyMedian = "latency.median.us"
 	latencyMin    = "latency.min.us"
+	latencyAvg    = "latency.avg.us"
 	successes     = "response.success"
 )
 

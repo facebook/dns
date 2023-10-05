@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/facebook/dns/goose/stats"
+
 	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 	"go.uber.org/ratelimit"

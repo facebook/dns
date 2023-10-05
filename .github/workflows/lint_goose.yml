@@ -1,0 +1,19 @@
+name: lint_goose
+on: [push, pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: goose
+      - run: |
+          cd goose
+          go get -v -u github.com/hedhyw/go-import-lint/cmd/go-import-lint
+          go run github.com/hedhyw/go-import-lint/cmd/go-import-lint
