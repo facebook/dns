@@ -39,7 +39,7 @@ func NewMetricsServer(addr string) (server *PrometheusMetricsServer, err error) 
 	}
 	server.registry.MustRegister(collectors.NewBuildInfoCollector())
 	server.registry.MustRegister(collectors.NewGoCollector(
-		collectors.WithGoCollections(collectors.GoRuntimeMemStatsCollection | collectors.GoRuntimeMetricsCollection),
+		collectors.WithGoCollectorRuntimeMetrics(),
 	))
 
 	return server, nil

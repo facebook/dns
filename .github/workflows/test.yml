@@ -20,6 +20,8 @@ jobs:
       - name: Test
         run: cd dnsrocks; go test -v ./...
       - name: Run coverage
-        run: cd dnsrocks; go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+        run: cd dnsrocks; go test -v -race -coverprofile=coverage.txt -covermode=atomic ./... 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
+        with:
+          working-directory: dnsrocks

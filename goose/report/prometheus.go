@@ -15,12 +15,12 @@ package report
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/facebook/dns/goose/stats"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -42,38 +42,38 @@ func (r *PrometheusMetricsReporter) Initialize() error {
 	r.registry = prometheus.NewRegistry()
 	r.successGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dns_goose",
-		Name:      "success",
+		Name:      flattenKey(successes),
 		Help:      "Number of successful queries sent",
 	})
 	r.failedGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dns_goose",
-		Name:      "failed",
+		Name:      flattenKey(errors),
 		Help:      "Number of failed queries sent",
 	})
 	r.maxLatancyGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dns_goose",
-		Name:      "latency_max",
-		Help:      "Max query latency in milliseconds",
+		Name:      flattenKey(latencyMax),
+		Help:      "Max query latency in microseconds",
 	})
 	r.meanLatencyGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dns_goose",
-		Name:      "latency_mean",
-		Help:      "Mean query latency in milliseconds",
+		Name:      flattenKey(latencyMean),
+		Help:      "Mean query latency in microseconds",
 	})
 	r.medianLatencyGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dns_goose",
-		Name:      "latency_median",
-		Help:      "Median query latency in milliseconds",
+		Name:      flattenKey(latencyMedian),
+		Help:      "Median query latency in microseconds",
 	})
 	r.minLatencyGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dns_goose",
-		Name:      "latency_min",
-		Help:      "Min query latency in milliseconds",
+		Name:      flattenKey(latencyMin),
+		Help:      "Min query latency in microseconds",
 	})
 	r.avgLatencyGauge = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "dns_goose",
-		Name:      "latency_avg",
-		Help:      "Average query latency in milliseconds",
+		Name:      flattenKey(latencyAvg),
+		Help:      "Average query latency in microseconds",
 	})
 
 	r.registry.MustRegister(r.successGauge)
@@ -100,10 +100,18 @@ func (r *PrometheusMetricsReporter) ReportMetrics(exportedMetrics *stats.Exporte
 	aggregatedLatencyStats := exportedMetrics.AggregateLatencies()
 	r.successGauge.Set(float64(exportedMetrics.Processed))
 	r.failedGauge.Set(float64(exportedMetrics.Errors))
-	r.avgLatencyGauge.Set(aggregatedLatencyStats.Average)
-	r.maxLatancyGauge.Set(aggregatedLatencyStats.Max)
-	r.meanLatencyGauge.Set(aggregatedLatencyStats.Mean)
-	r.medianLatencyGauge.Set(aggregatedLatencyStats.Median)
-	r.minLatencyGauge.Set(aggregatedLatencyStats.Min)
+	r.avgLatencyGauge.Set(float64(toMicro(aggregatedLatencyStats.Average)))
+	r.maxLatancyGauge.Set(float64(toMicro(aggregatedLatencyStats.Max)))
+	r.meanLatencyGauge.Set(float64(toMicro(aggregatedLatencyStats.Mean)))
+	r.medianLatencyGauge.Set(float64(toMicro(aggregatedLatencyStats.Median)))
+	r.minLatencyGauge.Set(float64(toMicro(aggregatedLatencyStats.Min)))
 	return nil
+}
+func flattenKey(key string) string {
+	key = strings.ReplaceAll(key, " ", "_")
+	key = strings.ReplaceAll(key, ".", "_")
+	key = strings.ReplaceAll(key, "-", "_")
+	key = strings.ReplaceAll(key, "=", "_")
+	key = strings.ReplaceAll(key, "/", "_")
+	return key
 }

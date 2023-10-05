@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/facebook/dns/goose/stats"
+
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/ratelimit"
@@ -22,7 +23,7 @@ func Test_MakeReq(t *testing.T) {
 
 	require.Regexp(
 		t,
-		regexp.MustCompile("goose.1577836800.\\d+.somedomain.com."),
+		regexp.MustCompile(`goose.1577836800.\d+.somedomain.com.`),
 		req.Question[0].Name,
 		"FQDN requested does not match what is expected",
 	)
@@ -70,7 +71,7 @@ func Test_RunQuery(t *testing.T) {
 	exportedMetrics = runState.ExportResults()
 	require.Equal(t, expected, exportedMetrics)
 
-	RunQuery(reqMsg, doSendMsgFailure, tf, runState)
+	RunQuery(reqMsg, doSendMsgNil, tf, runState)
 
 	expected.Errors = 2
 	expected.Latencies = append(expected.Latencies, 10000000)

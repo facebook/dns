@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/facebook/dns/goose/query"
 	"github.com/facebook/dns/goose/report"
 	"github.com/facebook/dns/goose/stats"
+
 	"github.com/miekg/dns"
-
-	"go.uber.org/ratelimit"
-
 	log "github.com/sirupsen/logrus"
+	"go.uber.org/ratelimit"
 )
 
 const pprofHTTP = "localhost:6060"

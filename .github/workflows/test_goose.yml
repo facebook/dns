@@ -1,0 +1,20 @@
+name: test_goose
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
+      - name : Compile
+        run: cd goose; go build -v ./...
+      - name: Test and coverage
+        run: cd goose; go test -v ./... -coverprofile=coverage.txt -covermode=atomic ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          working-directory: goose
