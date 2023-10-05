@@ -1,5 +1,5 @@
 #!/bin/bash
-apt-get install -qq dnsperf
+apt-get install -qq jq
 cd dnsrocks || exit
 mkdir testdata/perftest
 echo "Generating test data"
@@ -19,9 +19,12 @@ echo "DONE Generating test data"
 CGO_LDFLAGS_ALLOW=".*" CGO_CFLAGS_ALLOW=".*" go run cmd/dnsrocks-data/dnsrocks-data.go -i testdata/data/perftest.in -o testdata/perftest
 CGO_LDFLAGS_ALLOW=".*" CGO_CFLAGS_ALLOW=".*" go build cmd/dnsrocks/dnsrocks.go
 ./dnsrocks  -ip ::1 -port 8053 -dbdriver rocksdb -dbpath testdata/perftest -refuse-any -dnstap-target stdout &
-INITIAL_LOST=$(dnsperf -d testdata/data/dnsperf.txt -p 8053 -s ::1  -c 80 -T 10 -l 60 | grep lost)
+cd ../goose || exit 1
+INITIAL_LOST=$(go run  . -input-file ../dnsrocks/testdata/data/dnsperf.txt -port 8053 -host ::1  -parallel-connections 10 -max-duration 60s -report-json | jq .Errors)
+cd ../dnsrocks || exit 1
 CGO_LDFLAGS_ALLOW=".*" CGO_CFLAGS_ALLOW=".*" go run cmd/dnsrocks-applyrdb/dnsrocks-applyrdb.go -i testdata/data/perftest.diff -o testdata/perftest
-AFTER_LOST=$(dnsperf -d testdata/data/dnsperf.txt -p 8053 -s ::1  -c 80 -T 10 -l 60 | grep lost)
+cd ../goose || exit 1
+AFTER_LOST=$(go run  . -input-file ../dnsrocks/testdata/data/dnsperf.txt -port 8053 -host ::1  -parallel-connections 10 -max-duration 60s -report-json | jq .Errors)
 if [ "$INITIAL_LOST" != "$AFTER_LOST" ]
 then
     echo "Queries lost after applying change does not equal the amount before applying the change"
