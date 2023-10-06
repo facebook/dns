@@ -2,6 +2,7 @@ package query
 
 import (
 	"errors"
+	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -13,6 +14,65 @@ import (
 	"go.uber.org/ratelimit"
 )
 
+func Test_QTypeStrToDNSQtype(t *testing.T) {
+	qType, err := QTypeStrToDNSQtype("A")
+	require.Equal(t, dns.Type(dns.TypeA), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("AAAA")
+	require.Equal(t, dns.Type(dns.TypeAAAA), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("CNAME")
+	require.Equal(t, dns.Type(dns.TypeCNAME), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("NS")
+	require.Equal(t, dns.Type(dns.TypeNS), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("TXT")
+	require.Equal(t, dns.Type(dns.TypeTXT), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("SRV")
+	require.Equal(t, dns.Type(dns.TypeSRV), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("PTR")
+	require.Equal(t, dns.Type(dns.TypePTR), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("MX")
+	require.Equal(t, dns.Type(dns.TypeMX), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("SOA")
+	require.Equal(t, dns.Type(dns.TypeSOA), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("CAA")
+	require.Equal(t, dns.Type(dns.TypeCAA), qType)
+	require.NoError(t, err)
+	qType, err = QTypeStrToDNSQtype("derp")
+	require.Equal(t, dns.Type(dns.TypeNone), qType)
+	require.Error(t, err)
+}
+
+func Test_ProcessQueryInputFile(t *testing.T) {
+	tf, err := os.CreateTemp("", "*")
+	require.NoError(t, err)
+	defer os.Remove(tf.Name())
+	rows := []byte("facebook.com\tAAAA\ntest.com\tCNAME")
+	err = os.WriteFile(tf.Name(), rows, 0644)
+	require.NoError(t, err)
+	qnames, qtypes, err := ProcessQueryInputFile(tf.Name())
+	require.Equal(t, []string{"facebook.com", "test.com"}, qnames)
+	require.Equal(t, []dns.Type{dns.Type(dns.TypeAAAA), dns.Type(dns.TypeCNAME)}, qtypes)
+	require.NoError(t, err)
+	rows = []byte("facebook.com\tDERP")
+	err = tf.Truncate(0)
+	require.NoError(t, err)
+	err = os.WriteFile(tf.Name(), rows, 0644)
+	require.NoError(t, err)
+	err = tf.Sync()
+	require.NoError(t, err)
+	qnames, qtypes, err = ProcessQueryInputFile(tf.Name())
+	require.Equal(t, []string{"facebook.com"}, qnames)
+	require.Equal(t, []dns.Type{}, qtypes)
+	require.Error(t, err)
+}
 func Test_MakeReq(t *testing.T) {
 	//  return a time.Time that is used to generate the name being requested
 	timeFn := func() time.Time {
