@@ -857,15 +857,15 @@ func TestRDBBatchIntegrate(t *testing.T) {
 			added: kvList{
 				keyValues{
 					key:    []byte{0, 47},
-					values: [][]byte{{1}},
+					values: []byte{1},
 				},
 				keyValues{
 					key:    []byte{0, 52},
-					values: [][]byte{{2, 3}},
+					values: []byte{2, 3},
 				},
 				keyValues{
 					key:    []byte{0, 52},
-					values: [][]byte{{4, 5, 6}},
+					values: []byte{4, 5, 6},
 				},
 			},
 			deleted: kvList{},
@@ -888,11 +888,11 @@ func TestRDBBatchIntegrate(t *testing.T) {
 			deleted: kvList{
 				keyValues{
 					key:    []byte{0, 47},
-					values: [][]byte{{1}},
+					values: []byte{1},
 				},
 				keyValues{
 					key:    []byte{0, 52},
-					values: [][]byte{{2, 3}},
+					values: []byte{2, 3},
 				},
 			},
 			uniqueKeys: [][]byte{
@@ -915,29 +915,29 @@ func TestRDBBatchIntegrate(t *testing.T) {
 			added: kvList{
 				keyValues{
 					key:    []byte{0, 46},
-					values: [][]byte{{3, 2, 1}},
+					values: []byte{3, 2, 1},
 				},
 				keyValues{
 					key:    []byte{0, 47},
-					values: [][]byte{{9, 10}},
+					values: []byte{9, 10},
 				},
 				keyValues{
 					key:    []byte{0, 53},
-					values: [][]byte{{2, 3}},
+					values: []byte{2, 3},
 				},
 				keyValues{
 					key:    []byte{0, 53},
-					values: [][]byte{{4, 5, 6}},
+					values: []byte{4, 5, 6},
 				},
 			},
 			deleted: kvList{
 				keyValues{
 					key:    []byte{0, 47},
-					values: [][]byte{{2, 3}},
+					values: []byte{2, 3},
 				},
 				keyValues{
 					key:    []byte{0, 52},
-					values: [][]byte{{9, 3}},
+					values: []byte{9, 3},
 				},
 			},
 			uniqueKeys: [][]byte{
@@ -962,29 +962,29 @@ func TestRDBBatchIntegrate(t *testing.T) {
 			added: kvList{
 				keyValues{
 					key:    []byte{0, 46},
-					values: [][]byte{{3, 2, 1}},
+					values: []byte{3, 2, 1},
 				},
 				keyValues{
 					key:    []byte{0, 47},
-					values: [][]byte{{9, 10}},
+					values: []byte{9, 10},
 				},
 				keyValues{
 					key:    []byte{0, 53},
-					values: [][]byte{{2, 3}},
+					values: []byte{2, 3},
 				},
 				keyValues{
 					key:    []byte{0, 53},
-					values: [][]byte{{4, 5, 6}},
+					values: []byte{4, 5, 6},
 				},
 			},
 			deleted: kvList{
 				keyValues{
 					key:    []byte{0, 47},
-					values: [][]byte{{2, 3}},
+					values: []byte{2, 3},
 				},
 				keyValues{
 					key:    []byte{0, 52},
-					values: [][]byte{{9, 3}},
+					values: []byte{9, 3},
 				},
 			},
 			uniqueKeys: [][]byte{
@@ -1035,10 +1035,7 @@ func TestBatchAdd(t *testing.T) {
 	if !bytes.Equal(key, targ.key) {
 		t.Errorf("expected key %v, got %v", targ.key, key)
 	}
-	if len(b.addedPairs[0].values) != 1 {
-		t.Fatalf("expected 1 value, got %d", len(b.addedPairs[0].values))
-	}
-	val := b.addedPairs[0].values[0]
+	val := b.addedPairs[0].values
 	if !bytes.Equal(val, targ.val) {
 		t.Errorf("expected value %v, got %v", targ.val, val)
 	}
@@ -1072,10 +1069,7 @@ func TestBatchDel(t *testing.T) {
 	if !bytes.Equal(key, targ.key) {
 		t.Errorf("expected key %v, got %v", targ.key, key)
 	}
-	if len(b.deletedPairs[0].values) != 1 {
-		t.Fatalf("expected 1 value, got %d", len(b.deletedPairs[0].values))
-	}
-	val := b.deletedPairs[0].values[0]
+	val := b.deletedPairs[0].values
 	if !bytes.Equal(val, targ.val) {
 		t.Errorf("expected value %v, got %v", targ.val, val)
 	}

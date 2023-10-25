@@ -34,7 +34,7 @@ var (
 
 type keyValues struct {
 	key    []byte
-	values [][]byte
+	values []byte
 }
 
 type kvList []keyValues
@@ -56,15 +56,13 @@ func (kv *kvList) Sort() {
 // RFC-1035 RDLENGTH (uint16) + header requires more than 16 bytes; rounding
 // this up to uint32. Potentially that wastes about 1 byte, so there is a room
 // for trading off between space and computation.
-func appendValues(data []byte, newVals [][]byte) []byte {
+func appendValues(data []byte, newVals []byte) []byte {
 	var b [4]byte
 
-	for _, v := range newVals {
-		vlen := len(v)
-		binary.LittleEndian.PutUint32(b[:], uint32(vlen))
-		data = append(data, b[:]...)
-		data = append(data, v...)
-	}
+	vlen := len(newVals)
+	binary.LittleEndian.PutUint32(b[:], uint32(vlen))
+	data = append(data, b[:]...)
+	data = append(data, newVals...)
 	return data
 }
 

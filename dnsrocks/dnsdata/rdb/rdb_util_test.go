@@ -85,10 +85,14 @@ func TestRDBappendValues(t *testing.T) {
 	}
 	for i := 0; i < len(testCases); i++ {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			data := appendValues(testCases[i].dataBefore, testCases[i].newVals[0])
+			for _, nv := range testCases[i].newVals[1:] {
+				data = appendValues(data, nv)
+			}
 			require.Equal(
 				t,
 				testCases[i].dataAfter,
-				appendValues(testCases[i].dataBefore, testCases[i].newVals),
+				data,
 			)
 		})
 	}

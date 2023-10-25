@@ -295,7 +295,7 @@ func (rdb *RDB) Add(key, value []byte) error {
 		return err
 	}
 
-	return rdb.db.Put(rdb.writeOptions, key, appendValues(oldData, [][]byte{value}))
+	return rdb.db.Put(rdb.writeOptions, key, appendValues(oldData, value))
 }
 
 // GetStats reports main memory stats from RocksDB.
@@ -472,7 +472,7 @@ func (batch *Batch) Add(key, value []byte) {
 		batch.addedPairs,
 		keyValues{
 			key:    copyBytes(key),
-			values: [][]byte{copyBytes(value)},
+			values: copyBytes(value),
 		},
 	)
 	batch.sorted = false
@@ -486,7 +486,7 @@ func (batch *Batch) Del(key, value []byte) {
 		batch.deletedPairs,
 		keyValues{
 			key:    copyBytes(key),
-			values: [][]byte{copyBytes(value)},
+			values: copyBytes(value),
 		},
 	)
 	batch.sorted = false
@@ -570,7 +570,7 @@ func (batch *Batch) integrate(uniqueKeys [][]byte, dbValues *[][]byte) error {
 		}
 		for ; dOffset < len(batch.deletedPairs) && bytes.Equal(batch.deletedPairs[dOffset].key, key); dOffset++ {
 			var err error
-			(*dbValues)[i], err = delValue((*dbValues)[i], batch.deletedPairs[dOffset].values[0])
+			(*dbValues)[i], err = delValue((*dbValues)[i], batch.deletedPairs[dOffset].values)
 			if err != nil {
 				return err
 			}

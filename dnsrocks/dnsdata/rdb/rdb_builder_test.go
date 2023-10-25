@@ -156,10 +156,7 @@ func TestScheduleAdd(t *testing.T) {
 	if !bytes.Equal(key, targ.key) {
 		t.Errorf("expected key %v, got %v", targ.key, key)
 	}
-	if len(b.values[0].values) != 1 {
-		t.Fatalf("expected 1 value, got %d", len(b.values[0].values))
-	}
-	val := b.values[0].values[0]
+	val := b.values[0].values
 	if !bytes.Equal(val, targ.val) {
 		t.Errorf("expected value %v, got %v", targ.val, val)
 	}

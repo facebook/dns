@@ -102,7 +102,7 @@ func (b *Builder) ScheduleAdd(key, value []byte) {
 		b.values,
 		keyValues{
 			key:    copyBytes(key),
-			values: [][]byte{copyBytes(value)},
+			values: copyBytes(value),
 		},
 	)
 }
