@@ -1,6 +1,3 @@
-//go:build !darwin
-// +build !darwin
-
 /*
 Copyright (c) Meta Platforms, Inc. and affiliates.
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -115,12 +112,12 @@ func (options *Options) EnableCreateIfMissing() {
 // process will still get automatically delete on every compaction,
 // regardless of this setting
 func (options *Options) SetDeleteObsoleteFilesPeriodMicros(micros uint) {
-	C.rocksdb_options_set_delete_obsolete_files_period_micros(options.cOptions, C.ulong(micros))
+	C.rocksdb_options_set_delete_obsolete_files_period_micros(options.cOptions, C.uint64_t(micros))
 }
 
 // SetKeepLogFileNum sets maximal info log files to be kept.
 func (options *Options) SetKeepLogFileNum(num uint) {
-	C.rocksdb_options_set_keep_log_file_num(options.cOptions, C.ulong(num))
+	C.rocksdb_options_set_keep_log_file_num(options.cOptions, C.size_t(num))
 }
 
 // EnableErrorIfExists flags that an existing database is not expected and opening it should not succeed.
@@ -264,7 +261,7 @@ func (options *Options) SetMaxWriteBufferNumber(num int) {
 func (options *Options) SetWriteBufferSize(size int) {
 	C.rocksdb_options_set_write_buffer_size(
 		options.cOptions,
-		C.ulong(size),
+		C.size_t(size),
 	)
 }
 
@@ -276,7 +273,7 @@ func (options *Options) SetWriteBufferSize(size int) {
 func (options *Options) SetTargetFileSizeBase(size int) {
 	C.rocksdb_options_set_target_file_size_base(
 		options.cOptions,
-		C.ulong(size),
+		C.uint64_t(size),
 	)
 }
 
@@ -286,7 +283,7 @@ func (options *Options) SetTargetFileSizeBase(size int) {
 func (options *Options) SetMaxBytesForLevelBase(size int) {
 	C.rocksdb_options_set_max_bytes_for_level_base(
 		options.cOptions,
-		C.ulong(size),
+		C.uint64_t(size),
 	)
 }
 
@@ -432,11 +429,8 @@ func NewDefaultReadOptions() *ReadOptions {
 
 // NewReadOptions creates ReadOptions object
 // Parameters:
-//   - verifyChecksum: all data read from underlying storage will be
-//     verified against corresponding checksums
-//   - fillCache: Should the "data block"/"index block"" read for this
-//
-// iteration be placed in block cache?
+//   - verifyChecksum: all data read from underlying storage will be verified against corresponding checksums
+//   - fillCache: Should the "data block"/"index block"" read for this iteration be placed in block cache?
 func NewReadOptions(verifyChecksum, fillCache bool) *ReadOptions {
 	readOptions := NewDefaultReadOptions()
 	cReadOptions := readOptions.cReadOptions
