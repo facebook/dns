@@ -86,6 +86,10 @@ func (mock *mockedDB) GetProperty(string) string {
 	return ""
 }
 
+func (mock *mockedDB) WaitForCompact(*rocksdb.WaitForCompactOptions) error {
+	return nil
+}
+
 func TestRDBAddErrorGettingValue(t *testing.T) {
 	// check that returns error
 	errorMsg := "I CAN'T GET NO VALUE"
