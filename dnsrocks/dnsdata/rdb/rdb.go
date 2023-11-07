@@ -24,7 +24,6 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
-	"time"
 
 	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
 	"github.com/facebook/dns/dnsrocks/dnsdata"
@@ -67,6 +66,7 @@ type DBI interface {
 	GetProperty(string) string
 	GetOptions() *rocksdb.Options
 	CompactRangeAll()
+	WaitForCompact(options *rocksdb.WaitForCompactOptions) error
 }
 
 // RDB is RocksDB-backed DNS database
@@ -417,24 +417,11 @@ func (rdb *RDB) Close() error {
 	var err error
 	// flush is not implemented when open as secondary
 	if !rdb.secondary {
-		err = rdb.db.Flush()
-		if err != nil {
-			log.Printf("failed flushing DB before closing it: %v", err)
-		}
+		waitOpts := rocksdb.NewWaitForCompactOptions()
+		waitOpts.SetFlush(true)
 		log.Printf("waiting for potential compactions to finish")
-		for {
-			stats := rdb.GetStats()
-			numComp, ok := stats["rocksdb.num-running-compactions"]
-			if !ok {
-				log.Printf("cannot find \"rocksdb.num-running-compactions\" key in RocksDB stats, unable to wait for potential compactions to finish")
-				break
-			}
-			log.Printf("currently running compactions: %d", numComp)
-			if numComp == 0 {
-				break
-			}
-			time.Sleep(time.Second)
-		}
+		err = rdb.db.WaitForCompact(waitOpts)
+		log.Printf("done waiting for compactions")
 	}
 
 	if rdb.iteratorPool != nil {
@@ -449,9 +436,8 @@ func (rdb *RDB) Close() error {
 
 	// log cleanup from tmp
 	if rdb.secondary {
-		err = os.RemoveAll(rdb.logDir)
-		if err != nil {
-			return err
+		if rmErr := os.RemoveAll(rdb.logDir); rmErr != nil {
+			return rmErr
 		}
 	}
 	return err
