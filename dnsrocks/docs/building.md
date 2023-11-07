@@ -1,7 +1,7 @@
 # Building DNSRocks
 
 ## Prerequisites
-- [Rocksdb](https://github.com/facebook/rocksdb/releases) 7.3 or newer
+- [Rocksdb](https://github.com/facebook/rocksdb/releases) 8.7 or newer
 - [Go 1.18](https://github.com/facebook/dns/blob/main/dnsrocks/go.mod#L3)
 
 

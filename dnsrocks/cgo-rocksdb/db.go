@@ -341,6 +341,17 @@ func (db *RocksDB) CompactRangeAll() {
 	)
 }
 
+// WaitForCompact waits for all currently running compactions to finish, optionally closing the DB afterwards
+func (db *RocksDB) WaitForCompact(options *WaitForCompactOptions) error {
+	var cError *C.char
+	C.rocksdb_wait_for_compact(db.cDB, options.cOptions, &cError)
+	if cError != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cError))
+		return errors.New(C.GoString(cError))
+	}
+	return nil
+}
+
 // GetProperty returns value of db property
 func (db *RocksDB) GetProperty(prop string) string {
 	cprop := C.CString(prop)
