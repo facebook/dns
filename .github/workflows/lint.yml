@@ -3,6 +3,9 @@ on: [push, pull_request]
 jobs:
   lint:
     runs-on: ubuntu-22.04
+    env:
+      CGO_LDFLAGS_ALLOW: .*
+      CGO_CFLAGS_ALLOW: .*
     steps:
       - uses: actions/checkout@v2
         with:
@@ -10,8 +13,8 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: 1.18
-      - name: "Install Rocks"
-        run: sudo bash .github/scripts/install_rocks_stable.sh
+      - name: "Install RocksDB"
+        run: sudo bash .github/scripts/install_rocks_head.sh
       - uses: golangci/golangci-lint-action@v3
         with:
           working-directory: dnsrocks

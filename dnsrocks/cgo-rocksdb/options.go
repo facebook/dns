@@ -27,7 +27,10 @@ const int BOOL_INT_TRUE = 1;
 import (
 	"C"
 )
-import "unsafe"
+import (
+	"time"
+	"unsafe"
+)
 
 // BoolToChar is a helper to convert boolean value to C.uchar
 func BoolToChar(b bool) C.uchar {
@@ -35,6 +38,11 @@ func BoolToChar(b bool) C.uchar {
 		return C.BOOL_CHAR_TRUE
 	}
 	return C.BOOL_CHAR_FALSE
+}
+
+// CharToBool converts C.uchar to boolean
+func CharToBool(cChar C.uchar) bool {
+	return cChar != C.BOOL_CHAR_FALSE
 }
 
 // DefaultCompactionMemtableMemoryBudget is the default for compaction
@@ -473,4 +481,62 @@ func (readOptions *ReadOptions) SetIterateLowerBound(key []byte) {
 func (readOptions *ReadOptions) SetIterateUpperBound(key []byte) {
 	cKeyPtr, cKeyLen := bytesToPtr(key)
 	C.rocksdb_readoptions_set_iterate_upper_bound(readOptions.cReadOptions, cKeyPtr, cKeyLen)
+}
+
+// WaitForCompactOptions is a set of options for WaitForCompact call
+type WaitForCompactOptions struct {
+	cOptions *C.rocksdb_wait_for_compact_options_t
+}
+
+// NewWaitForCompactOptions creates new WaitForCompactOptions
+func NewWaitForCompactOptions() *WaitForCompactOptions {
+	return &WaitForCompactOptions{
+		cOptions: C.rocksdb_wait_for_compact_options_create(),
+	}
+}
+
+// SetAbortOnPause sets option to abort waiting in case of a pause (PauseBackgroundWork() called, see
+// https://github.com/facebook/rocksdb/blob/2648e0a747303e63796315049b9005c7320356c0/include/rocksdb/options.h#L2165
+func (options *WaitForCompactOptions) SetAbortOnPause(v bool) {
+	C.rocksdb_wait_for_compact_options_set_abort_on_pause(options.cOptions, BoolToChar(v))
+}
+
+// GetAbortOnPause returns value of AbortOnPause option
+func (options *WaitForCompactOptions) GetAbortOnPause() bool {
+	return CharToBool(C.rocksdb_wait_for_compact_options_get_abort_on_pause(options.cOptions))
+}
+
+// SetFlush sets option to flush all column families before starting to wait, see
+// https://github.com/facebook/rocksdb/blob/2648e0a747303e63796315049b9005c7320356c0/include/rocksdb/options.h#L2165
+func (options *WaitForCompactOptions) SetFlush(v bool) {
+	C.rocksdb_wait_for_compact_options_set_flush(options.cOptions, BoolToChar(v))
+}
+
+// GetFlush returns value of Flush option
+func (options *WaitForCompactOptions) GetFlush() bool {
+	return CharToBool(C.rocksdb_wait_for_compact_options_get_flush(options.cOptions))
+}
+
+// SetCloseDB sets option to call Close() after waiting is done, see
+// https://github.com/facebook/rocksdb/blob/2648e0a747303e63796315049b9005c7320356c0/include/rocksdb/options.h#L2165
+func (options *WaitForCompactOptions) SetCloseDB(v bool) {
+	C.rocksdb_wait_for_compact_options_set_close_db(options.cOptions, BoolToChar(v))
+}
+
+// GetCloseDB returns value of CloseDB option
+func (options *WaitForCompactOptions) GetCloseDB() bool {
+	return CharToBool(C.rocksdb_wait_for_compact_options_get_close_db(options.cOptions))
+}
+
+// SetTimeout sets timeout for waiting for compaction to complete.
+// When timeout == 0, WaitForCompact() will wait as long as there's background work to finish.
+// See https://github.com/facebook/rocksdb/blob/2648e0a747303e63796315049b9005c7320356c0/include/rocksdb/options.h#L2165
+func (options *WaitForCompactOptions) SetTimeout(d time.Duration) {
+	C.rocksdb_wait_for_compact_options_set_timeout(options.cOptions, C.uint64_t(d.Microseconds()))
+}
+
+// GetTimeout returns value of Timeout option
+func (options *WaitForCompactOptions) GetTimeout() time.Duration {
+	t := C.rocksdb_wait_for_compact_options_get_timeout(options.cOptions)
+	return time.Duration(t) * time.Microsecond
 }
