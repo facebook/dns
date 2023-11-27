@@ -120,7 +120,7 @@ int BPF_PROG(dnswatch_kprobe_tcp_sendmsg, struct sock* sk, struct msghdr* msg) {
   dport = sk->__sk_common.skc_dport;
   sport = sk->__sk_common.skc_num;
 
-  return sendmsg_solver(ctx, 2, dport, dport);
+  return sendmsg_solver(ctx, 2, dport, sport);
 }
 
 char LICENSE[] SEC("license") = "GPL";
