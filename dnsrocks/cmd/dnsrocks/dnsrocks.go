@@ -95,7 +95,7 @@ func main() {
 	cliflags.BoolVar(&serverConfig.RefuseANY, "refuse-any", false, "Whether or not to refuse ANY queries.")
 	// the default setup should be backward compatible with current spec: 1 IP address and maxanswer not specified
 	cliflags.Var(&serverConfig.IPAns, "ip", "IPs to bind to. Usage: -ip=::1 -ip=127.0.0.1 (default is wildcard)")
-	cliflags.Var(&serverConfig.IPAns, "ipwithmaxans", "Max number of answers returned by query for each ip, separated by comma. Usage: -ipwithmaxans 69.171.239.12,1  -ipwithmaxans 66.111.48.12,8")
+	cliflags.Var(&serverConfig.IPAns, "ipwithmaxans", "Max number of answers returned by query for each ip, separated by comma. Usage: -ipwithmaxans 192.0.2.53,1  -ipwithmaxans 192.0.2.35,8")
 
 	// DNSSEC
 	cliflags.StringVar(&serverConfig.DNSSECConfig.Zones, "dnssec-zones", "", "Comma separated list of zones for which DNSSEC is enabled.")
