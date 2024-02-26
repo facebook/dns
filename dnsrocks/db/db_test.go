@@ -154,7 +154,7 @@ func TestDbReload(t *testing.T) {
 	// DB is closed, and there is no error
 	mockDbiValid := getBaseMockDBI(ctrl)
 	// simulates a key hit by returning a value on first call to FindNext, followed by an EOF
-	foreachCallback := func(key []byte, f func(value []byte) error, context Context) error {
+	foreachCallback := func(_ []byte, f func(value []byte) error, _ Context) error {
 		err := f([]byte("{}"))
 		return err
 	}

@@ -95,10 +95,10 @@ func TestRDBAddErrorGettingValue(t *testing.T) {
 	errorMsg := "I CAN'T GET NO VALUE"
 	rdb := &RDB{
 		db: &mockedDB{
-			get: func(key []byte) ([]byte, error) {
+			get: func(_ []byte) ([]byte, error) {
 				return nil, errors.New(errorMsg)
 			},
-			put: func(key, value []byte) error {
+			put: func(_, _ []byte) error {
 				return nil
 			},
 		},
@@ -116,7 +116,7 @@ func TestRDBAddToNewKey(t *testing.T) {
 	newValue := []byte{1, 2, 255, 3, 0}
 	rdb := &RDB{
 		db: &mockedDB{
-			get: func(key []byte) ([]byte, error) {
+			get: func(_ []byte) ([]byte, error) {
 				return nil, nil
 			},
 			put: func(key, value []byte) error {
@@ -137,7 +137,7 @@ func TestRDBAddErrorAddToExistingKey(t *testing.T) {
 	newValue := []byte{8, 2, 255, 3, 9, 8, 9}
 	rdb := &RDB{
 		db: &mockedDB{
-			get: func(key []byte) ([]byte, error) {
+			get: func(_ []byte) ([]byte, error) {
 				return oldValue, nil
 			},
 			put: func(key, value []byte) error {
@@ -165,7 +165,7 @@ func TestRDBDelErrorGettingKey(t *testing.T) {
 	errorMsg := "I CAN'T GET NO VALUE"
 	rdb := &RDB{
 		db: &mockedDB{
-			get: func(key []byte) ([]byte, error) {
+			get: func(_ []byte) ([]byte, error) {
 				return nil, errors.New(errorMsg)
 			},
 		},
@@ -181,7 +181,7 @@ func TestRDBDelErrorMissingKey(t *testing.T) {
 	// check that returns error if key does not exist
 	rdb := &RDB{
 		db: &mockedDB{
-			get: func(key []byte) ([]byte, error) {
+			get: func(_ []byte) ([]byte, error) {
 				return nil, nil
 			},
 		},
@@ -206,11 +206,11 @@ func TestRDBDelErrorNonExistingValue(t *testing.T) {
 				require.Equal(t, key, simpleKey)
 				return simpleValStored, nil
 			},
-			put: func(key, value []byte) error {
+			put: func(_, _ []byte) error {
 				t.Error("Should not be called")
 				return nil
 			},
-			delete: func(key []byte) error {
+			delete: func(_ []byte) error {
 				deleteCalled = true
 				return nil
 			},
@@ -237,11 +237,11 @@ func TestRDBDelErrorTruncatedValue1(t *testing.T) {
 				require.Equal(t, key, simpleKey)
 				return simpleValStored, nil
 			},
-			put: func(key, value []byte) error {
+			put: func(_, _ []byte) error {
 				t.Error("Should not be called")
 				return nil
 			},
-			delete: func(key []byte) error {
+			delete: func(_ []byte) error {
 				deleteCalled = true
 				return nil
 			},
@@ -268,11 +268,11 @@ func TestRDBDelErrorTruncatedValue2(t *testing.T) {
 				require.Equal(t, key, simpleKey)
 				return simpleValStored, nil
 			},
-			put: func(key, value []byte) error {
+			put: func(_, _ []byte) error {
 				t.Error("Should not be called")
 				return nil
 			},
-			delete: func(key []byte) error {
+			delete: func(_ []byte) error {
 				deleteCalled = true
 				return nil
 			},
@@ -298,7 +298,7 @@ func TestRDBDelOnlyValue(t *testing.T) {
 				require.Equal(t, key, simpleKey)
 				return simpleValStored, nil
 			},
-			put: func(key, value []byte) error {
+			put: func(_, _ []byte) error {
 				t.Error("Should not be called")
 				return nil
 			},
@@ -367,7 +367,7 @@ func TestRDBDelWithOffset(t *testing.T) {
 					require.Equal(t, test.after, value)
 					return nil
 				},
-				delete: func(key []byte) error {
+				delete: func(_ []byte) error {
 					t.Error("Should not be called")
 					return nil
 				},
@@ -561,11 +561,11 @@ func TestRDBContext(t *testing.T) {
 					require.Equal(t, simpleKey, key)
 					return test.data, nil
 				},
-				put: func(key, value []byte) error {
+				put: func(_, _ []byte) error {
 					t.Error("Should not be called")
 					return nil
 				},
-				delete: func(key []byte) error {
+				delete: func(_ []byte) error {
 					t.Error("Should not be called")
 					return nil
 				},
@@ -817,19 +817,19 @@ func TestRDBFindFirst(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", nt), func(t *testing.T) {
 			rdb := &RDB{
 				db: &mockedDB{
-					getMulti: func(readOptions *rocksdb.ReadOptions, keys [][]byte) ([][]byte, []error) {
+					getMulti: func(_ *rocksdb.ReadOptions, keys [][]byte) ([][]byte, []error) {
 						require.Equal(t, keys, test.requestedKeys)
 						return test.getMultiValues, test.getMultiErrors
 					},
-					get: func(key []byte) ([]byte, error) {
+					get: func(_ []byte) ([]byte, error) {
 						t.Error("Should not be called")
 						return nil, nil
 					},
-					put: func(key, value []byte) error {
+					put: func(_, _ []byte) error {
 						t.Error("Should not be called")
 						return nil
 					},
-					delete: func(key []byte) error {
+					delete: func(_ []byte) error {
 						t.Error("Should not be called")
 						return nil
 					},

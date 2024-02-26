@@ -39,7 +39,7 @@ var snoopCmd = &cobra.Command{
 Usage example:
   dnswatch snoop --list PID,PNAME,QNAME,RIP
 `,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		ConfigureVerbosity()
 
 		if err := snoop.Run(&cfg); err != nil {

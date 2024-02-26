@@ -149,7 +149,7 @@ func (r *sortedDataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, au
 
 	var zoneCutLength int
 
-	preIterationCheck := func(q []byte, qLength int) bool {
+	preIterationCheck := func(_ []byte, qLength int) bool {
 		zoneCutLength = qLength
 
 		return true

@@ -33,7 +33,7 @@ Usage example:
   dnswatch detailed
 `,
 
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		ConfigureVerbosity()
 
 		cfg.Detailed = true

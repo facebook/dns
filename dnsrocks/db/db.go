@@ -244,7 +244,7 @@ func (f *DB) ValidateDbKey(dbKey []byte) error {
 		err      error
 		keyFound bool
 	)
-	parseResult := func(result []byte) error {
+	parseResult := func(_ []byte) error {
 		// set to true as soon as first key found
 		keyFound = true
 		return nil

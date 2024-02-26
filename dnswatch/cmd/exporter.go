@@ -36,7 +36,7 @@ Usage example:
   dnswatch exporter --period 3s
 `,
 
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		ConfigureVerbosity()
 
 		cfg.Exporter = true
