@@ -14,24 +14,25 @@ limitations under the License.
 package rdb
 
 import (
-	"bytes"
-	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 )
 
 func TestRDBcreateBuckets(t *testing.T) {
 	testCases := []struct {
-		values        []keyValues
+		values        []*dnsdata.MapRecord
 		buckets       []bucket
 		minBucketSize int
 		maxBucketNum  int
 	}{
 		{
 			// single key
-			values: []keyValues{
-				{key: []byte{0}},
+			values: []*dnsdata.MapRecord{
+				{Key: []byte{0}},
 			},
 			buckets: []bucket{
 				{startOffset: 0, endOffset: 1},
@@ -41,10 +42,10 @@ func TestRDBcreateBuckets(t *testing.T) {
 		},
 		{
 			// all keys should be in one basket
-			values: []keyValues{
-				{key: []byte{0}},
-				{key: []byte{0}},
-				{key: []byte{0}},
+			values: []*dnsdata.MapRecord{
+				{Key: []byte{0}},
+				{Key: []byte{0}},
+				{Key: []byte{0}},
 			},
 			buckets: []bucket{
 				{startOffset: 0, endOffset: 3},
@@ -54,12 +55,12 @@ func TestRDBcreateBuckets(t *testing.T) {
 		},
 		{
 			// all keys should be in two baskets
-			values: []keyValues{
-				{key: []byte{0}},
-				{key: []byte{0}},
-				{key: []byte{0}},
-				{key: []byte{1}},
-				{key: []byte{1}},
+			values: []*dnsdata.MapRecord{
+				{Key: []byte{0}},
+				{Key: []byte{0}},
+				{Key: []byte{0}},
+				{Key: []byte{1}},
+				{Key: []byte{1}},
 			},
 			buckets: []bucket{
 				{startOffset: 0, endOffset: 3},
@@ -70,17 +71,17 @@ func TestRDBcreateBuckets(t *testing.T) {
 		},
 		{
 			// four baskets of unequal size
-			values: []keyValues{
-				{key: []byte{0}},
-				{key: []byte{1}},
-				{key: []byte{2}},
-				{key: []byte{3}},
-				{key: []byte{4}},
-				{key: []byte{5}},
-				{key: []byte{6}},
-				{key: []byte{7}},
-				{key: []byte{8}},
-				{key: []byte{9}},
+			values: []*dnsdata.MapRecord{
+				{Key: []byte{0}},
+				{Key: []byte{1}},
+				{Key: []byte{2}},
+				{Key: []byte{3}},
+				{Key: []byte{4}},
+				{Key: []byte{5}},
+				{Key: []byte{6}},
+				{Key: []byte{7}},
+				{Key: []byte{8}},
+				{Key: []byte{9}},
 			},
 			buckets: []bucket{
 				{startOffset: 0, endOffset: 2},
@@ -93,17 +94,17 @@ func TestRDBcreateBuckets(t *testing.T) {
 		},
 		{
 			// four baskets of unequal size, different distribution because of keys
-			values: []keyValues{
-				{key: []byte{0}},
-				{key: []byte{0}},
-				{key: []byte{0}},
-				{key: []byte{0}},
-				{key: []byte{0}},
-				{key: []byte{5}},
-				{key: []byte{6}},
-				{key: []byte{7}},
-				{key: []byte{8}},
-				{key: []byte{9}},
+			values: []*dnsdata.MapRecord{
+				{Key: []byte{0}},
+				{Key: []byte{0}},
+				{Key: []byte{0}},
+				{Key: []byte{0}},
+				{Key: []byte{0}},
+				{Key: []byte{5}},
+				{Key: []byte{6}},
+				{Key: []byte{7}},
+				{Key: []byte{8}},
+				{Key: []byte{9}},
 			},
 			buckets: []bucket{
 				{startOffset: 0, endOffset: 5},
@@ -118,46 +119,72 @@ func TestRDBcreateBuckets(t *testing.T) {
 
 	for i, testCase := range testCases {
 		b := Builder{values: testCase.values}
-		b.createBuckets(testCase.minBucketSize, testCase.maxBucketNum)
-		require.Equal(
+		b.createWriteBuckets(testCase.minBucketSize, testCase.maxBucketNum)
+		require.Equalf(
 			t,
 			testCase.buckets,
 			b.buckets,
-			fmt.Sprintf("Test case #%d mismatch: expected %v, got %v", i, testCase.buckets, b.buckets),
+			"Test case #%d mismatch: expected %v, got %v", i, testCase.buckets, b.buckets,
 		)
 	}
 }
 
+func TestMergeValueBuckets(t *testing.T) {
+	valuesBuckets := [][]*dnsdata.MapRecord{
+		{
+			{Key: []byte{0}},
+			{Key: []byte{0}},
+			{Key: []byte{0}},
+		},
+		{
+			{Key: []byte{14}},
+		},
+		{
+			{Key: []byte{6}},
+			{Key: []byte{7}},
+			{Key: []byte{8}},
+			{Key: []byte{9}},
+		},
+		{
+			{Key: []byte{0}},
+			{Key: []byte{0}},
+			{Key: []byte{5}},
+		},
+		{}, // empty bucket
+		{
+			{Key: []byte{12}},
+			{Key: []byte{13}},
+		},
+		{
+			{Key: []byte{10}},
+			{Key: []byte{11}},
+		},
+	}
+	b := Builder{valueBuckets: valuesBuckets}
+	b.mergeValueBuckets()
+	require.Equal(t, 1, len(b.valueBuckets))
+	require.Equal(t, 15, len(b.values))
+	require.True(t, slices.IsSortedFunc(b.values, keyOrder))
+}
+
 func TestScheduleAdd(t *testing.T) {
-	type kv struct {
-		key []byte
-		val []byte
-	}
-	tc := kv{
-		key: []byte{1, 2, 3},
-		val: []byte{8},
-	}
-	targ := kv{
-		key: []byte{1, 2, 3},
-		val: []byte{8},
+	testData := []dnsdata.MapRecord{
+		{
+			Key:   []byte{1, 2, 3},
+			Value: []byte{8},
+		},
+		{
+			Key:   []byte{2, 7, 9},
+			Value: []byte{8, 12},
+		},
 	}
 
-	b := &Builder{values: make([]keyValues, 0, 1)}
-	b.ScheduleAdd(tc.key, tc.val)
+	b := &Builder{valueBuckets: make([][]*dnsdata.MapRecord, 3)}
+	for _, r := range testData {
+		b.ScheduleAdd(r)
+	}
 
-	// mutate to exercise ownership
-	tc.key[0]++
-	tc.val[0]++
-
-	if len(b.values) != 1 {
-		t.Fatalf("expected 1 value, got %d", len(b.values))
-	}
-	key := b.values[0].key
-	if !bytes.Equal(key, targ.key) {
-		t.Errorf("expected key %v, got %v", targ.key, key)
-	}
-	val := b.values[0].values
-	if !bytes.Equal(val, targ.val) {
-		t.Errorf("expected value %v, got %v", targ.val, val)
-	}
+	require.Equal(t, 1, len(b.valueBuckets[0]))
+	require.Equal(t, 0, len(b.valueBuckets[1]))
+	require.Equal(t, 1, len(b.valueBuckets[2]))
 }

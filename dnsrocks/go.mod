@@ -16,6 +16,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/repustate/go-cdb v0.0.0-20160430174706-6a418fad95e2
+	github.com/segmentio/fasthash v1.0.3
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/sync v0.1.0

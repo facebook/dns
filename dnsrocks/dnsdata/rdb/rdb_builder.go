@@ -19,16 +19,16 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"sort"
+	"slices"
+	"sync"
 	"time"
 
 	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 
+	"github.com/segmentio/fasthash/fnv1a"
 	"golang.org/x/sync/errgroup"
 )
-
-// ballpark for external shard size
-const estimatedKeyCount = 20000000
 
 // template for SST file names
 const templateSSTFileName = "%s/rdb%d.sst"
@@ -43,6 +43,10 @@ type bucket struct {
 	startOffset, endOffset int
 }
 
+func keyOrder(a, b *dnsdata.MapRecord) int {
+	return bytes.Compare(a.Key, b.Key)
+}
+
 // Builder is specifically optimized for building a database from scratch.
 // It has a number of optimizations that would not work on an already existing
 // database, so it should not be used if the database already exist (the result
@@ -50,8 +54,9 @@ type bucket struct {
 type Builder struct {
 	db           DBI
 	writeOptions *rocksdb.WriteOptions
-	values       []keyValues
+	values       []*dnsdata.MapRecord
 	buckets      []bucket
+	valueBuckets [][]*dnsdata.MapRecord
 	path         string
 	useHardlinks bool
 }
@@ -83,7 +88,7 @@ func NewBuilder(path string, useHardlinks bool) (*Builder, error) {
 	)
 	return &Builder{
 		db:           db,
-		values:       make([]keyValues, 0, estimatedKeyCount),
+		valueBuckets: make([][]*dnsdata.MapRecord, runtime.NumCPU()),
 		writeOptions: writeOptions,
 		path:         path,
 		useHardlinks: useHardlinks,
@@ -97,31 +102,63 @@ func (b *Builder) FreeBuilder() {
 }
 
 // ScheduleAdd schedules addition of a multi-value pair of key and value
-func (b *Builder) ScheduleAdd(key, value []byte) {
-	b.values = append(
-		b.values,
-		keyValues{
-			key:    copyBytes(key),
-			values: copyBytes(value),
-		},
-	)
+// we split values between NumCPU() buckets,
+// and all values with the same key will belong to the same bucket thanks to hashing.
+// Effectively, each bucket will contain a non-overlapping with other buckets set of sorted keys.
+func (b *Builder) ScheduleAdd(d dnsdata.MapRecord) {
+	hash := fnv1a.HashBytes32(d.Key)
+	index := int(hash % uint32(len(b.valueBuckets)))
+	bucket := b.valueBuckets[index]
+	b.valueBuckets[index] = append(bucket, &d)
 }
 
 // sort all values in binary order
 func (b *Builder) sortDataset() {
 	log.Println("Sorting ...")
-	sort.Slice(
-		b.values,
-		func(i, j int) bool {
-			return bytes.Compare(b.values[i].key, b.values[j].key) < 0
-		},
-	)
+	var wg sync.WaitGroup
+	for pos := range b.valueBuckets {
+		wg.Add(1)
+		go func(pos int) {
+			slices.SortFunc(b.valueBuckets[pos], keyOrder)
+			wg.Done()
+		}(pos)
+	}
+	wg.Wait()
+}
+
+// Use classic merge sort to merge all pre-sorted valueBuckets into a single sorted list.
+// This is a lot faster than just allowing RocksDB compaction to do it for us, becase we can do it parallel without touching anything on disk.
+func (b *Builder) mergeValueBuckets() {
+	log.Println("Merging value buckets ...")
+	for {
+		result := make([][]*dnsdata.MapRecord, len(b.valueBuckets)/2)
+		var wg sync.WaitGroup
+		for i := 0; i <= len(b.valueBuckets)-2; {
+			wg.Add(1)
+			go func(i int) {
+				result[i/2] = merge(b.valueBuckets[i], b.valueBuckets[i+1])
+				wg.Done()
+			}(i)
+			i += 2
+		}
+		wg.Wait()
+		// don't forget about the last bucket when we have odd number of buckets to merge
+		if len(b.valueBuckets) > 1 && len(b.valueBuckets)%2 == 1 {
+			result = append(result, b.valueBuckets[len(b.valueBuckets)-1])
+		}
+		log.Printf("Merged %d buckets into %d", len(b.valueBuckets), len(result))
+		b.valueBuckets = result
+		if len(b.valueBuckets) == 1 {
+			break
+		}
+	}
+	b.values = b.valueBuckets[0]
 }
 
 // createBuckets splits b.values between the maximum of maxBucketNum buckets; each bucket will contain at least minBucketSize elements,
 // and all values with the same key will belong to the same bucket.
 // Effectively, each bucket will contain a non-overlapping with other buckets set of sorted keys.
-func (b *Builder) createBuckets(minBucketSize, maxBucketNum int) {
+func (b *Builder) createWriteBuckets(minBucketSize, maxBucketNum int) {
 	var bucketEnd int
 	log.Println("Creating buckets no smaller than", minBucketSize, "items each, and no more than", maxBucketNum, "buckets total")
 	b.buckets = make([]bucket, 0, maxBucketNum)
@@ -146,7 +183,7 @@ func (b *Builder) createBuckets(minBucketSize, maxBucketNum int) {
 		} else {
 			for bucketEnd = minInt(bucketStart+bucketSize, len(b.values)); bucketEnd < len(b.values); bucketEnd++ {
 				// find where to slice: values with the same key should always get into the same bucket
-				if !bytes.Equal(b.values[bucketEnd].key, b.values[bucketEnd-1].key) {
+				if !bytes.Equal(b.values[bucketEnd].Key, b.values[bucketEnd-1].Key) {
 					break
 				}
 			}
@@ -192,15 +229,15 @@ func (b *Builder) saveBuckets() ([]string, error) {
 			var prevKey []byte
 			accumulator := make([]byte, 0, 1024)
 			for _, item := range bucketItems {
-				if (prevKey != nil) && (!bytes.Equal(item.key, prevKey)) {
+				if (prevKey != nil) && (!bytes.Equal(item.Key, prevKey)) {
 					if err := writer.Put(prevKey, accumulator); err != nil {
 						return fmt.Errorf("%s: error writing to %s - %w", writerName, filePath, err)
 					}
 					accumulator = accumulator[0:0]
 					keyCount++
 				}
-				accumulator = appendValues(accumulator, item.values)
-				prevKey = item.key
+				accumulator = appendValues(accumulator, item.Value)
+				prevKey = item.Key
 			}
 			// flush
 			if err := writer.Put(prevKey, accumulator); err != nil {
@@ -258,7 +295,8 @@ func (b *Builder) ingestFiles(sstFilePaths []string) error {
 // Execute builds the database from accumulated dataset
 func (b *Builder) Execute() error {
 	b.sortDataset()
-	b.createBuckets(minBucketSize, runtime.NumCPU())
+	b.mergeValueBuckets()
+	b.createWriteBuckets(minBucketSize, runtime.NumCPU())
 
 	sstFilePaths, err := b.saveBuckets()
 	if err != nil {
@@ -270,6 +308,8 @@ func (b *Builder) Execute() error {
 		return err
 	}
 
+	// if we did everything right, this is a no-op, but it's a good idea to have it as a stopgap that will prevent surprises
+	b.db.CompactRangeAll()
 	log.Println("Building done")
 	return nil
 }
