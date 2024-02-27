@@ -16,7 +16,10 @@ package rdb
 import (
 	"fmt"
 	"io"
+	"slices"
 	"testing"
+
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 
 	"github.com/stretchr/testify/require"
 )
@@ -204,4 +207,77 @@ pretending to be good
 	}
 	s := rdbStats(statsStr)
 	require.Equal(t, expected, s)
+}
+
+func TestMerge(t *testing.T) {
+	testCases := []struct {
+		name  string
+		aList []*dnsdata.MapRecord
+		bList []*dnsdata.MapRecord
+		want  []*dnsdata.MapRecord
+	}{
+		{
+			name:  "both empty",
+			aList: []*dnsdata.MapRecord{},
+			bList: []*dnsdata.MapRecord{},
+			want:  []*dnsdata.MapRecord{},
+		},
+		{
+			name:  "first empty",
+			aList: []*dnsdata.MapRecord{},
+			bList: []*dnsdata.MapRecord{
+				{Key: []byte{12, 33}},
+				{Key: []byte{0, 2, 3}},
+			},
+			want: []*dnsdata.MapRecord{
+				{Key: []byte{0, 2, 3}},
+				{Key: []byte{12, 33}},
+			},
+		},
+		{
+			name: "second empty",
+			aList: []*dnsdata.MapRecord{
+				{Key: []byte{12, 33}},
+				{Key: []byte{0, 2, 3}},
+			},
+			bList: []*dnsdata.MapRecord{},
+			want: []*dnsdata.MapRecord{
+				{Key: []byte{0, 2, 3}},
+				{Key: []byte{12, 33}},
+			},
+		},
+		{
+			name: "two full lists",
+			aList: []*dnsdata.MapRecord{
+				{Key: []byte{0, 2, 3}},
+				{Key: []byte{24, 2, 4}},
+				{Key: []byte{1, 10, 8}},
+				{Key: []byte{21, 2}},
+				{Key: []byte{1}},
+			},
+
+			bList: []*dnsdata.MapRecord{
+				{Key: []byte{12, 33}},
+				{Key: []byte{0, 2, 3}},
+			},
+			want: []*dnsdata.MapRecord{
+				{Key: []byte{0, 2, 3}},
+				{Key: []byte{0, 2, 3}},
+				{Key: []byte{1}},
+				{Key: []byte{1, 10, 8}},
+				{Key: []byte{12, 33}},
+				{Key: []byte{21, 2}},
+				{Key: []byte{24, 2, 4}},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			slices.SortFunc(tc.aList, keyOrder)
+			slices.SortFunc(tc.bList, keyOrder)
+			result := merge(tc.aList, tc.bList)
+			require.Equal(t, tc.want, result)
+		})
+	}
 }

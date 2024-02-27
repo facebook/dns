@@ -74,7 +74,7 @@ func compileBuilder(in io.Reader, codec *dnsdata.Codec, destPath string, opts Co
 
 	store := func(data []dnsdata.MapRecord) {
 		for _, m := range data {
-			builder.ScheduleAdd(m.Key, m.Value)
+			builder.ScheduleAdd(m)
 			nw++
 			counter++
 			if counter == DefaultBatchSize {

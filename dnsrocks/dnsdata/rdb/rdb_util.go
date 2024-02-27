@@ -23,6 +23,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 )
 
 var (
@@ -121,4 +123,27 @@ func rdbStats(q string) map[string]int64 {
 		}
 	}
 	return stats
+}
+
+// merge merges two sorted lists of records
+func merge(a []*dnsdata.MapRecord, b []*dnsdata.MapRecord) []*dnsdata.MapRecord {
+	result := make([]*dnsdata.MapRecord, 0, len(a)+len(b))
+	i := 0
+	j := 0
+	for i < len(a) && j < len(b) {
+		if keyOrder(a[i], b[j]) < 0 {
+			result = append(result, a[i])
+			i++
+		} else {
+			result = append(result, b[j])
+			j++
+		}
+	}
+	for ; i < len(a); i++ {
+		result = append(result, a[i])
+	}
+	for ; j < len(b); j++ {
+		result = append(result, b[j])
+	}
+	return result
 }
