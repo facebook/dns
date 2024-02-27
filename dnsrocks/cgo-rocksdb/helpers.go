@@ -19,7 +19,6 @@ package rocksdb
 import "C"
 
 import (
-	"reflect"
 	"unsafe"
 )
 
@@ -27,13 +26,11 @@ type charsSlice []*C.char
 type sizeTSlice []C.size_t
 
 func (s charsSlice) c() **C.char {
-	sH := (*reflect.SliceHeader)(unsafe.Pointer(&s))
-	return (**C.char)(unsafe.Pointer(sH.Data))
+	return unsafe.SliceData(s)
 }
 
 func (s sizeTSlice) c() *C.size_t {
-	sH := (*reflect.SliceHeader)(unsafe.Pointer(&s))
-	return (*C.size_t)(unsafe.Pointer(sH.Data))
+	return unsafe.SliceData(s)
 }
 
 type ptrList struct {
