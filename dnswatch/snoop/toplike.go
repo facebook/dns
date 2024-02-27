@@ -16,7 +16,6 @@ package snoop
 import (
 	"fmt"
 	"math"
-	"math/rand"
 	"sort"
 	"strconv"
 	"time"
@@ -238,8 +237,6 @@ func (t *ToplikeState) refreshScreen() {
 
 // StartTopLike is the toplike stdout handler
 func StartTopLike(refreshChan <-chan *ToplikeData, stopChan chan<- bool, refTime time.Duration) {
-	rand.Seed(time.Now().UnixNano())
-
 	err := termbox.Init()
 	if err != nil {
 		log.Error("failed to initialize screen")

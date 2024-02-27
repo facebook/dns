@@ -16,7 +16,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -84,9 +83,6 @@ func main() {
 	flag.IntVar(&parallelConnections, "parallel-connections", 1, "max number of parallel connections")
 	flag.BoolVar(&reportJSON, "report-json", false, "Report run results to stdout in json format")
 	flag.Parse()
-
-	// Set the seed
-	rand.Seed(time.Now().UTC().UnixNano())
 
 	switch logLevel {
 	case "debug":

@@ -49,7 +49,7 @@ func TestNSID(t *testing.T) {
 		return &src
 	}
 	var responseTime time.Time
-	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	h.Next = test.HandlerFunc(func(_ context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 		responseTime = time.Now()
 		m := new(dns.Msg)
 		m.SetReply(r)
@@ -85,7 +85,7 @@ func TestNoNSIDRequested(t *testing.T) {
 	rec := dnstest.NewRecorder(w)
 	h, err := NewHandler(false)
 	require.NoError(t, err)
-	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	h.Next = test.HandlerFunc(func(_ context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 		m := new(dns.Msg)
 		m.SetReply(r)
 		m.Authoritative = true
@@ -116,7 +116,7 @@ func TestNoEDNSInQuery(t *testing.T) {
 	rec := dnstest.NewRecorder(w)
 	h, err := NewHandler(false)
 	require.NoError(t, err)
-	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	h.Next = test.HandlerFunc(func(_ context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 		m := new(dns.Msg)
 		m.SetReply(r)
 		m.Authoritative = true
@@ -147,7 +147,7 @@ func TestEDNSIsDisabled(t *testing.T) {
 	rec := dnstest.NewRecorder(w)
 	h, err := NewHandler(false)
 	require.NoError(t, err)
-	h.Next = test.HandlerFunc(func(c context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	h.Next = test.HandlerFunc(func(_ context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 		m := new(dns.Msg)
 		m.SetReply(r)
 		m.Authoritative = true

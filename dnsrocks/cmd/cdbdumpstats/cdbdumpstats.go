@@ -48,7 +48,7 @@ func main() {
 
 	if *dumbSlotStats {
 		slotstats := make(map[uint32]int)
-		err := c.ForEachKeys(func(keyHash uint32, key, value []byte) {
+		err := c.ForEachKeys(func(keyHash uint32, _, _ []byte) {
 			slotstats[keyHash]++
 		})
 		if err != nil {

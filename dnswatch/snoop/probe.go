@@ -156,7 +156,7 @@ func determineHostByteOrder() binary.ByteOrder {
 func (p *Probe) loadAndAttachProbes() (*libbpfgo.Module, error) {
 	libbpfgo.SetLoggerCbs(libbpfgo.Callbacks{
 		LogFilters: []func(libLevel int, msg string) bool{
-			func(libLevel int, msg string) bool {
+			func(_ int, _ string) bool {
 				return !p.Debug
 			},
 		},

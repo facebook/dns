@@ -16,7 +16,6 @@ package snoop
 import (
 	"fmt"
 	"math"
-	"math/rand"
 	"sort"
 	"time"
 
@@ -259,8 +258,6 @@ func (t *NetTopState) refreshScreen() {
 
 // StartNetTop is the nettop stdout handler
 func StartNetTop(refreshChan <-chan map[UniqueDNS]*DisplayInfo, stopChan chan<- bool, refTime time.Duration) {
-	rand.Seed(time.Now().UnixNano())
-
 	err := termbox.Init()
 	if err != nil {
 		log.Error("failed to set up screen")

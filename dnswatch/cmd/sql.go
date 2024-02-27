@@ -37,7 +37,7 @@ Usage example:
   dnswatch sql --csv /tmp/dnswatch_out --period 30s --orderby -LATENCY --groupby PNAME,QNAME
 `,
 
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		ConfigureVerbosity()
 
 		if cfg.Csv == "" {
