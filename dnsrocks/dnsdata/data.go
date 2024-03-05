@@ -23,6 +23,7 @@ import (
 	"math/big"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/facebook/dns/dnsrocks/dnsdata/quote"
@@ -282,6 +283,14 @@ const (
 	// TypeHTTPS represents HTTPS record type
 	TypeHTTPS WireType = 65
 )
+
+func (m Lmap) String() string {
+	var builder strings.Builder
+	for _, b := range m {
+		fmt.Fprintf(&builder, "\\%03o", b)
+	}
+	return builder.String()
+}
 
 func (w WireType) String() string {
 	switch w {

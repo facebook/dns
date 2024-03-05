@@ -1687,6 +1687,11 @@ func TestNoEncodeSubnets(t *testing.T) {
 	}
 }
 
+func TestLmapString(t *testing.T) {
+	l := Lmap{97, 1}
+	require.Equal(t, `\141\001`, l.String())
+}
+
 // Benchmarks for various string conversion functions. To execute just them, run:
 // % buck run //dns/fbdns/dnsdata:dnsdata_test-bench -- -test.bench BenchmarkAtoi
 func BenchmarkAtoiFscan(b *testing.B) {

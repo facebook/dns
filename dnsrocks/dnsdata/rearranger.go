@@ -70,6 +70,32 @@ func (r RangePoints) String() string {
 	return strings.Join(result, "\n")
 }
 
+// MarshalTextForLmap returns a text representation of these RangePoints, with provided lmap value
+func (p *RangePoint) MarshalTextForLmap(lmap string) (text []byte, err error) {
+	w := new(bytes.Buffer)
+	w.WriteString(string(prefixRangePoint))
+	w.WriteString(lmap)
+	w.Write(NSEP)
+	ip := p.To16()
+	b, err := ip.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+	w.Write(b)
+	if !p.LocIsNull() {
+		w.Write(NSEP)
+		mlen := p.MaskLen()
+		if ip.To4() != nil {
+			mlen -= (net.IPv6len - net.IPv4len) * 8
+		}
+		fmt.Fprint(w, mlen)
+		w.Write(NSEP)
+		lo := Loc(p.LocID())
+		putloctext(w, lo)
+	}
+	return w.Bytes(), nil
+}
+
 // To16 returns 16-byte IP representation of the rangeStart
 func (p *RangePoint) To16() IPv6 {
 	return p.rangeStart

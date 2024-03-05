@@ -16,7 +16,6 @@ package dnsdata
 import (
 	"bytes"
 	"fmt"
-	"net"
 )
 
 // MarshalText implements encoding.TextMarshaler
@@ -362,29 +361,7 @@ func (r *Rcsmap) MarshalText() (text []byte, err error) {
 
 // MarshalText implements encoding.TextMarshaler
 func (r *Rrangepoint) MarshalText() (text []byte, err error) {
-	pt := r.pt
-	w := new(bytes.Buffer)
-	w.WriteString(string(prefixRangePoint))
-	putlmaptext(w, r.lmap)
-	w.Write(NSEP)
-	ip := pt.To16()
-	b, err := ip.MarshalText()
-	if err != nil {
-		return nil, err
-	}
-	w.Write(b)
-	if !pt.LocIsNull() {
-		w.Write(NSEP)
-		mlen := pt.MaskLen()
-		if ip.To4() != nil {
-			mlen -= (net.IPv6len - net.IPv4len) * 8
-		}
-		fmt.Fprint(w, mlen)
-		w.Write(NSEP)
-		lo := Loc(pt.LocID())
-		putloctext(w, lo)
-	}
-	return w.Bytes(), nil
+	return r.pt.MarshalTextForLmap(r.lmap.String())
 }
 
 // MarshalText implements encoding.TextMarshaler

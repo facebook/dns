@@ -1012,6 +1012,58 @@ func TestIPIncrementByOne(t *testing.T) {
 	}
 }
 
+func TestRangePointMarshalTextForLmap(t *testing.T) {
+	type testCase struct {
+		p    RangePoint
+		lmap string
+		want string
+	}
+	testCases := []testCase{
+		{
+			p: RangePoint{
+				rangeStart: ParseIP("0.0.0.0"),
+				location: rangeLocation{
+					maskLen:     0,
+					locIDIsNull: true,
+				},
+			},
+			lmap: "\\155\\061",
+			want: "!\\155\\061,0.0.0.0",
+		},
+		{
+			p: RangePoint{
+				rangeStart: ParseIP("1.1.1.1"),
+				location: rangeLocation{
+					maskLen:     120,
+					locID:       [2]byte{100, 101},
+					locIDIsNull: false,
+				},
+			},
+			lmap: "\\155\\061",
+			want: "!\\155\\061,1.1.1.1,24,\\144\\145",
+		},
+		{
+			p: RangePoint{
+				rangeStart: ParseIP("2a00:1fa0:42d8::"),
+				location: rangeLocation{
+					maskLen:     64,
+					locID:       [2]byte{97, 1},
+					locIDIsNull: false,
+				},
+			},
+			lmap: "\\105\\028",
+			want: "!\\105\\028,2a00:1fa0:42d8::,64,\\141\\001",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.want, func(t *testing.T) {
+			got, err := tc.p.MarshalTextForLmap(tc.lmap)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, string(got))
+		})
+	}
+}
+
 func assertEqual(t *testing.T, expected net.IP, actual IPv6) {
 	require.Equal(t, []byte(expected), actual[:])
 }
