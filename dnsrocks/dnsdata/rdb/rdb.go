@@ -32,6 +32,9 @@ import (
 // DefaultBatchSize is the default allocation for Batch
 const DefaultBatchSize = 100000
 
+// DefaultBatchNum is the default number of Batches to allocate
+const DefaultBatchNum = 10
+
 // defaults for RocksDB options
 const (
 	defaultBloomFilterBits = 10
