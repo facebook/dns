@@ -470,7 +470,7 @@ func (r *Rnet) UnmarshalText(text []byte) error {
 	if err != nil {
 		return err
 	}
-	ipnet, err := parseipnet(string(f[1]))
+	ipnet, err := ParseIPNet(string(f[1]))
 	if err != nil {
 		return err
 	}
@@ -485,7 +485,8 @@ func (r *Rnet) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func parseipnet(s string) (ipnet *net.IPNet, err error) {
+// ParseIPNet parses a CIDR notation string into a net.IPNet, handling the case when the input is a plain IP address.
+func ParseIPNet(s string) (ipnet *net.IPNet, err error) {
 	_, ipnet, err = net.ParseCIDR(s)
 	if err != nil {
 		ip := net.ParseIP(s)
