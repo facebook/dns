@@ -16,6 +16,7 @@ package dnsdata
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"reflect"
 	"strconv"
 	"testing"
@@ -1690,6 +1691,60 @@ func TestNoEncodeSubnets(t *testing.T) {
 func TestLmapString(t *testing.T) {
 	l := Lmap{97, 1}
 	require.Equal(t, `\141\001`, l.String())
+}
+
+func TestParseIPNet(t *testing.T) {
+	type testCase struct {
+		input   string
+		want    *net.IPNet
+		wantErr bool
+	}
+	testCases := []testCase{
+		{
+			input: "192.168.1.0/24",
+			want: &net.IPNet{
+				IP:   net.IP{192, 168, 1, 0},
+				Mask: net.CIDRMask(24, 32),
+			},
+		},
+		{
+			input:   "blah",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			input: "",
+			want: &net.IPNet{
+				IP:   net.IPv4zero,
+				Mask: net.CIDRMask(0, 32),
+			},
+		},
+		{
+			input: "192.168.1.3",
+			want: &net.IPNet{
+				IP:   net.IP{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 192, 168, 1, 3},
+				Mask: net.CIDRMask(32, 32),
+			},
+		},
+		{
+			input: "2a03:6640::/32",
+			want: &net.IPNet{
+				IP:   net.IP{0x2a, 0x3, 0x66, 0x40, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
+				Mask: net.CIDRMask(32, 128),
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			got, err := ParseIPNet(tc.input)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
 }
 
 // Benchmarks for various string conversion functions. To execute just them, run:
