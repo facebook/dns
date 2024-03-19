@@ -54,9 +54,6 @@ var TLSVersionStrings = map[uint16]string{
 func isSonar(state request.Request) bool {
 	// state.Name() is lower-case!
 	name := state.Name()
-	if strings.HasSuffix(name, ".igsonar.com.") {
-		return true
-	}
 	if strings.HasSuffix(name, ".fbcdn.net.") && strings.Contains(name, "sonar") {
 		return true
 	}

@@ -139,43 +139,12 @@ func TestLoggerNotErrorGoodLogFormat(t *testing.T) {
 	}
 }
 
-// TestIsSonarBadIG tests names that looks like sonat but are not.
-// Those would be filtered out by tailers, but for our simple sonar domain
-// detector, those are being valid.
-// source fbcode/ti/data/tailers/test/sonar_util.py
-func TestIsSonarBadIG(t *testing.T) {
-	testCases := []string{
-		"foo.igsonar.com.",
-		"12iyjg4y0.igsonar.com.",                          // do not starts with 2
-		"22yjg4y0.igsonar.com.",                           // 1 char short
-		"22iyjgw4y0.igsonar.com.",                         // 1 char too many
-		"22iy-g4y0.igsonar.com.",                          // 1 invalid char
-		"1eyaqaaydaaenyrort3p32qcsua000000.igsonar.com.",  // ! starts with 2
-		"2yaqaaydaaenyrort3p32qcsua000000.igsonar.com.",   // 1 char short
-		"2aeyaqaaydaaenyrort3p32qcsua000000.igsonar.com.", // 1 char long
-		"2e-aqaaydaaenyrort3p32qcsua000000.igsonar.com.",  // invalid char
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc, func(t *testing.T) {
-			m := new(dns.Msg)
-			m.SetQuestion(tc, dns.TypeA)
-			s := request.Request{W: nil, Req: m}
-			require.True(t, isSonar(s))
-		})
-	}
-}
-
 // TestIsSonarMoreNames test various names. Their signature may me invalid or
 // such, but they will pass out filter.
 func TestIsSonarMoreNames(t *testing.T) {
 	testCases := []string{
 		"w8dd9dd9310-GMYTANJUGM2DAMZX.snr.whatsapp.net.",
 		"w8dd9dd9310KMNRWGYD-GMYTANJUGM2DAMZX.snr.whatsapp.net.",
-		"22iyjg4y0.igsonar.com.",
-		"2eyaqaaydaaenyrort3p32qcsua000000.igsonar.com.",
-		"3mavldobrdjdbe3t.igsonar.com.",
-		"3jbvldobmetacaadamaarxcf2gpn7pkakkqa.igsonar.com.",
 		"f41366ce340-kdywlzry1535569283-sonar.xy.fbcdn.net.",
 		"f41366ce340-kdywlzry1535569283-sonar.snr.fbcdn.net.",
 		"f3d77e02580klz54ggi-uavvfioa1427990455-sonar.snr.fbcdn.net.",
@@ -198,7 +167,7 @@ func TestIsSonarInvalidNames(t *testing.T) {
 	testCases := []string{
 		"sonar.whatsapp.net.",
 		"w8dd9dd9310KMNRWGYD-GMYTANJUGM2DAMZX-snr.whatsapp.net.",
-		"22iyjg4y0.igsonar.instagram.com.",
+		"22iyjg4y0.sonar.instagram.com.",
 		"3jbvldobmetacaadamaarxcf2gpn7pkakkqa.instagram.com.",
 		"f41366ce340-kdywlzry1535569283-sonar.xy.facebook.com.",
 		"f41366ce340-kdywlzry1535569283-snr.fbcdn.net.",
