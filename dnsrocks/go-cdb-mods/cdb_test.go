@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -24,7 +23,7 @@ var records = []rec{
 var data []byte // set by init()
 
 func TestCdb(t *testing.T) {
-	tmp, err := ioutil.TempFile("", "")
+	tmp, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %s", err)
 	}
@@ -100,7 +99,7 @@ func TestCdb(t *testing.T) {
 }
 
 func TestEmptyFile(t *testing.T) {
-	tmp, err := ioutil.TempFile("", "")
+	tmp, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %s", err)
 	}

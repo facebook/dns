@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -31,7 +30,7 @@ func main() {
 	args := flag.Args()
 	if len(args) == 1 {
 		dir, _ := path.Split(args[0])
-		tmp, err = ioutil.TempFile(dir, "")
+		tmp, err = os.CreateTemp(dir, "")
 		exitOnErr(err)
 	} else if len(args) == 2 {
 		tmp, err = os.OpenFile(args[1], os.O_RDWR|os.O_CREATE, 0644)
