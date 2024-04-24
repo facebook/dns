@@ -253,7 +253,7 @@ type Rtype string
 type Loc []byte
 
 // Lmap is map ID
-type Lmap [2]byte
+type Lmap []byte
 
 // WireType represent DNS wire types
 type WireType uint16
@@ -577,8 +577,8 @@ func (r *Rrangepoint) UnmarshalText(text []byte) error {
 	if err != nil {
 		return err
 	}
+	r.pt.location.locID = make([]byte, len(locID))
 	copy(r.pt.location.locID[:], locID)
-
 	r.pt.location.locIDIsNull = (locID == nil)
 	if !r.pt.location.locIDIsNull && ip.To4() != nil {
 		r.pt.location.maskLen += (net.IPv6len - net.IPv4len) * 8
@@ -1478,7 +1478,7 @@ func getloc(b []byte) (Loc, error) {
 	if err != nil {
 		return Loc(nil), err
 	}
-	if len(q) != 2 {
+	if len(q) < 2 {
 		return Loc(nil), nil
 	}
 	return Loc(q), nil
@@ -1486,8 +1486,8 @@ func getloc(b []byte) (Loc, error) {
 
 func getlmap(b []byte) Lmap {
 	q, _ := quote.Bunquote(b) // BUG: handle error
-	var a [2]byte
-	copy(a[:], q)
+	var a = make([]byte, len(q))
+	copy(a, q)
 	return Lmap(a)
 }
 
@@ -1568,7 +1568,12 @@ func putloc(w io.Writer, lo Loc) {
 	if len(lo) == 2 {
 		_, err = w.Write(lo)
 	} else {
-		_, err = w.Write([]byte{0, 0})
+		if len(lo) < 2 {
+			_, err = w.Write([]byte{0, 0})
+		} else {
+			_, _ = w.Write([]byte{0xff, byte(len(lo))})
+			_, err = w.Write(lo)
+		}
 	}
 	if err != nil {
 		glog.Errorf("%v", err)
@@ -1583,13 +1588,29 @@ func putloctext(w io.Writer, lo Loc) {
 
 // write a two-byte location map ID
 func putlmap(w io.Writer, m Lmap) {
-	_, err := w.Write(m[:])
+	var err error
+	if len(m) == 2 {
+		_, err = w.Write(m)
+	} else {
+		if len(m) < 2 {
+			_, err = w.Write([]byte{0, 0})
+		} else {
+			_, err = w.Write([]byte{0xff, byte(len(m))})
+			if err != nil {
+				glog.Errorf("%v", err)
+			}
+			_, err = w.Write(m)
+		}
+	}
 	if err != nil {
 		glog.Errorf("%v", err)
 	}
 }
 
 func putlmaptext(w io.Writer, m Lmap) {
+	if len(m) == 0 {
+		m = []byte{0, 0}
+	}
 	for _, b := range m {
 		fmt.Fprintf(w, "\\%03o", b)
 	}
@@ -1607,7 +1628,7 @@ func putrrhead(w io.Writer, t WireType, ttl uint32, loc Loc, iswildcard bool) {
 	if err != nil {
 		glog.Errorf("%v", err)
 	}
-	if len(loc) != 2 || (loc[0] == 0 && loc[1] == 0) {
+	if len(loc) < 2 || (len(loc) == 2 && (loc[0] == 0 && loc[1] == 0)) {
 		if iswildcard {
 			_, err = w.Write([]byte("*"))
 		} else {
@@ -1625,7 +1646,12 @@ func putrrhead(w io.Writer, t WireType, ttl uint32, loc Loc, iswildcard bool) {
 		if err != nil {
 			glog.Errorf("%v", err)
 		}
-		_, err = w.Write(loc)
+		if len(loc) > 2 {
+			_, _ = w.Write([]byte{0xff, byte(len(loc))})
+			_, err = w.Write(loc)
+		} else {
+			_, err = w.Write(loc)
+		}
 		if err != nil {
 			glog.Errorf("%v", err)
 		}

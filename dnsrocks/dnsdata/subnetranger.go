@@ -29,20 +29,21 @@ const (
 // the auxiliary structures for the subnet-based location lookup
 type SubnetRanger struct {
 	enabled bool
-	arng    map[Lmap]*Rearranger
+	arng    map[string]*Rearranger
 }
 
 // Enable enables the functionality
 func (r *SubnetRanger) Enable() {
-	r.arng = make(map[Lmap]*Rearranger)
+	r.arng = make(map[string]*Rearranger)
 	r.enabled = true
 }
 
 func (r *SubnetRanger) getRearranger(lmap Lmap) *Rearranger {
-	a := r.arng[lmap]
+	a := r.arng[lmap.String()]
 	if a == nil {
 		a = NewRearranger(InitLocationCount)
-		r.arng[lmap] = a
+		a.lmap = lmap
+		r.arng[lmap.String()] = a
 	}
 	return a
 }
@@ -65,9 +66,9 @@ func (r *SubnetRanger) MarshalMap() (result []MapRecord, err error) {
 
 	group := &errgroup.Group{}
 
-	for lmap, a := range r.arng {
+	for _, a := range r.arng {
 		// closures
-		localLmap := lmap
+		localLmap := a.lmap
 		rearranger := a
 
 		group.Go(
@@ -114,9 +115,9 @@ func (r *SubnetRanger) OpenScanner() (s *SubnetRangerScanner) {
 
 	group := &errgroup.Group{}
 
-	for lmap, a := range r.arng {
+	for _, a := range r.arng {
 		// closures
-		localLmap := lmap
+		localLmap := a.lmap
 		rearranger := a
 
 		group.Go(

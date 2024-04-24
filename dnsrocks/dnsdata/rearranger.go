@@ -41,7 +41,7 @@ type rangeLocation struct {
 	// this mask is the length of the matched prefix
 	maskLen     uint8
 	locIDIsNull bool
-	locID       [2]byte
+	locID       []byte
 }
 
 // RangePoint stores range point along with associated location ID
@@ -59,6 +59,7 @@ type Rearranger struct {
 	hasDefaultIPv4Range bool
 	hasDefaultIPv6Range bool
 	points              RangePoints
+	lmap                Lmap
 }
 
 // String returns a string representation of these RangePoints, useful for debugging
@@ -122,7 +123,7 @@ func (p *RangePoint) LocIsNull() bool {
 
 // LocID returns the location ID for this range
 func (p *RangePoint) LocID() []byte {
-	return p.location.locID[:]
+	return p.location.locID
 }
 
 // String returns a string representation of this location, used for debugging
@@ -157,14 +158,13 @@ func NewRearranger(locationCount int) *Rearranger {
 // ErrInvalidLocation is used when location doesn't match expectations (nil or exactly 2 bytes)
 var ErrInvalidLocation = errors.New("location should be either nil or exactly 2 bytes long as FBDNS depends on it")
 
-func copyLocID(locID []byte) ([2]byte, error) {
-	var x [2]byte
+func copyLocID(locID []byte) ([]byte, error) {
+	var x = make([]byte, len(locID))
 
-	if locID == nil || len(locID) != 2 {
+	if locID == nil || len(locID) < 2 {
 		return x, fmt.Errorf("%w. location value '%v'", ErrInvalidLocation, locID)
 	}
-	copy(x[:], locID)
-
+	copy(x, locID)
 	return x, nil
 }
 

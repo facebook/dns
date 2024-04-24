@@ -849,10 +849,10 @@ func TestInvalidLocation(t *testing.T) {
 	}
 
 	testCases := []testCase{
-		{
-			network: "31.185.13.0/24",
-			locID:   []byte{0, 1, 2, 3},
-		},
+		// {
+		// 	network: "31.185.13.0/24",
+		// 	locID:   []byte{0, 1, 2, 3},
+		// }, We can be longer than 2 bytes now, so this is a bad testcase.
 		{
 			network: "31.185.13.0/24",
 			locID:   []byte{1},
@@ -1035,7 +1035,7 @@ func TestRangePointMarshalTextForLmap(t *testing.T) {
 				rangeStart: ParseIP("1.1.1.1"),
 				location: rangeLocation{
 					maskLen:     120,
-					locID:       [2]byte{100, 101},
+					locID:       []byte{100, 101},
 					locIDIsNull: false,
 				},
 			},
@@ -1047,7 +1047,7 @@ func TestRangePointMarshalTextForLmap(t *testing.T) {
 				rangeStart: ParseIP("2a00:1fa0:42d8::"),
 				location: rangeLocation{
 					maskLen:     64,
-					locID:       [2]byte{97, 1},
+					locID:       []byte{97, 1},
 					locIDIsNull: false,
 				},
 			},
