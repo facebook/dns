@@ -307,7 +307,7 @@ func (r *DataReader) Close() {
 func (r *DataReader) ForEachResourceRecord(domainName []byte, loc *Location, parseRecord func(result []byte) error) error {
 	var err error
 
-	if loc.LocID != EmptyLocation.LocID {
+	if !loc.IsEmpty() {
 		localPackedName := append(loc.LocID[:], domainName...)
 		err = r.ForEach(localPackedName, parseRecord)
 		if err != nil {
@@ -330,14 +330,14 @@ func (r *DataReader) ForEachResourceRecord(domainName []byte, loc *Location, par
 func (r *sortedDataReader) ForEachResourceRecord(domainName []byte, loc *Location, parseRecord func(result []byte) error) error {
 	var err error
 
-	key := make([]byte, len(domainName)+len(loc.LocID)+len(dnsdata.ResourceRecordsKeyMarker))
+	key := make([]byte, len(domainName)+max(len(loc.LocID), len(EmptyLocation.LocID))+len(dnsdata.ResourceRecordsKeyMarker))
 	copy(key, []byte(dnsdata.ResourceRecordsKeyMarker))
 
 	reverseZoneNameToBuffer(domainName, key[len(dnsdata.ResourceRecordsKeyMarker):])
 
 	locationIndex := len(dnsdata.ResourceRecordsKeyMarker) + len(domainName)
 
-	if loc.LocID != EmptyLocation.LocID {
+	if !loc.IsEmpty() {
 		copy(key[locationIndex:], loc.LocID[:])
 		err = r.ForEach(key, parseRecord)
 		if err != nil {

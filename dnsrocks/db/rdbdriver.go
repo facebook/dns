@@ -171,15 +171,16 @@ func (r *rdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 	// Build key prefix: "\000\000\000!{MapID}"
 	// We prime the key byte array (fullKey) with the key prefix,
 	// followed by the original IP address in V6 format.
-	fullKey := make([]byte, 4+2+net.IPv6len+1) // 4 bytes for prefix, 2 bytes for mapID, and the rest is IP and masklen
-	copy(fullKey, ipMapRangePointKeyElement)   // prefix, 4 bytes
-	copy(fullKey[4:], mapID)                   // mapID, 2 bytes
-	copy(fullKey[6:], ipnet.IP.To16())
+	nmap := len(mapID)
+	fullKey := make([]byte, 4+nmap+net.IPv6len+1) // 4 bytes for prefix, n bytes for mapID, and the rest is IP and masklen
+	copy(fullKey, ipMapRangePointKeyElement)      // prefix, 4 bytes
+	copy(fullKey[4:], mapID)                      // mapID, n bytes
+	copy(fullKey[4+nmap:], ipnet.IP.To16())
 	reqMaskLen, _ := ipnet.Mask.Size()
 	if isIPv4(ipnet.IP) {
 		reqMaskLen += 128 - 32
 	}
-	copy(fullKey[6+16:], []byte{uint8(reqMaskLen)})
+	copy(fullKey[4+nmap+16:], []byte{uint8(reqMaskLen)})
 
 	ctx := context.(*rdb.Context)
 
@@ -200,12 +201,12 @@ func (r *rdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 	foundVal = foundVal[4:] // skip over the multi-value header - see ../dnsdata/rdb/rdb_util.go:/Put
 	mlen = foundKey[len(foundKey)-1]
 	switch len(foundVal) {
-	case 2:
-		loc = foundVal
-		return loc, mlen, nil
 	case 0:
 		// Rearranger will always add /0 mask, so if anything - the empty location will match
 		return nil, mlen, nil
+	case 2:
+		loc = foundVal
+		return loc, mlen, nil
 	default:
 		err = fmt.Errorf("Invalid location length %d, value %v", len(foundVal), foundVal)
 		return nil, 0, err

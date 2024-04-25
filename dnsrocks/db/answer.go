@@ -39,7 +39,7 @@ var (
 	ErrWildcardMismatch = errors.New("Wildcard mismatch")
 
 	// EmptyLocation is used to index (prefix) non-location aware qnames for RR's
-	EmptyLocation = Location{}
+	EmptyLocation = Location{MapID: []byte{0, 0}, LocID: []byte{0, 0}}
 )
 
 // dnsLabelWildsafe checks that a label contains only characters that can be
@@ -131,7 +131,7 @@ func (r *DataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, auth boo
 	}
 
 	for {
-		if loc.LocID != EmptyLocation.LocID {
+		if !loc.IsEmpty() {
 			localQ := append(loc.LocID[:], zoneCut...)
 			err := r.ForEach(localQ, parseResult)
 			if err != nil {
@@ -211,7 +211,7 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 
 	for {
 		// Add location prefix to qname
-		if loc.LocID != EmptyLocation.LocID {
+		if !loc.IsEmpty() {
 			localQ := append(loc.LocID[:], q[:]...)
 			err = r.ForEach(localQ, parseResult)
 			if err != nil {

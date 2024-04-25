@@ -36,7 +36,7 @@ func getAuthTestCases() []isAuthTestCase {
 	return []isAuthTestCase{
 		{
 			qname:             "www.example.com.", // This is a CNAME
-			location:          &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:          &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			flagns:            true,
 			flagauthoritative: true,
 			authdomain:        "example.com.",
@@ -44,7 +44,7 @@ func getAuthTestCases() []isAuthTestCase {
 		},
 		{
 			qname:             "wildcard.example.com.", // This is a CNAME
-			location:          &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:          &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			flagns:            true,
 			flagauthoritative: true,
 			authdomain:        "example.com.",
@@ -52,7 +52,7 @@ func getAuthTestCases() []isAuthTestCase {
 		},
 		{
 			qname:             "foo.example.com.", // This is a A Record
-			location:          &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:          &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			flagns:            true,
 			flagauthoritative: true,
 			authdomain:        "example.com.",
@@ -60,7 +60,7 @@ func getAuthTestCases() []isAuthTestCase {
 		},
 		{
 			qname:             "example.com.",
-			location:          &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:          &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			flagns:            true,
 			flagauthoritative: true,
 			authdomain:        "example.com.",
@@ -68,7 +68,7 @@ func getAuthTestCases() []isAuthTestCase {
 		},
 		{
 			qname:             "foo.nonauth.example.com.",
-			location:          &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:          &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			flagns:            true,
 			flagauthoritative: false,
 			authdomain:        "nonauth.example.com.",
@@ -76,7 +76,7 @@ func getAuthTestCases() []isAuthTestCase {
 		},
 		{
 			qname:             "badexample.com.",
-			location:          &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:          &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			flagns:            false,
 			flagauthoritative: false,
 			authdomain:        ".", // Not authoritative
@@ -99,7 +99,7 @@ func getFindAnswerTestCases() []findAnswerTestCase {
 		{
 			qname:            "www.example.com.", // This is a CNAME
 			qtype:            dns.TypeCNAME,
-			location:         &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:         &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			authdomain:       "example.com.",
 			expectedRecords:  true,
 			expectedNXDomain: false,
@@ -107,7 +107,7 @@ func getFindAnswerTestCases() []findAnswerTestCase {
 		{
 			qname:            "wildcard.example.com.", // This is a CNAME
 			qtype:            dns.TypeCNAME,
-			location:         &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:         &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			authdomain:       "example.com.",
 			expectedRecords:  true,
 			expectedNXDomain: false,
@@ -115,7 +115,7 @@ func getFindAnswerTestCases() []findAnswerTestCase {
 		{
 			qname:            "foo.example.com.", // This is a A Record
 			qtype:            dns.TypeA,
-			location:         &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:         &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			authdomain:       "example.com.",
 			expectedRecords:  true,
 			expectedNXDomain: false,
@@ -123,7 +123,7 @@ func getFindAnswerTestCases() []findAnswerTestCase {
 		{
 			qname:            "example.com.",
 			qtype:            dns.TypeMX,
-			location:         &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:         &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			authdomain:       "example.com.",
 			expectedRecords:  true,
 			expectedNXDomain: false,
@@ -131,7 +131,7 @@ func getFindAnswerTestCases() []findAnswerTestCase {
 		{
 			qname:            "example.com.",
 			qtype:            dns.TypeA,
-			location:         &Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			location:         &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			authdomain:       "example.com.",
 			expectedRecords:  false,
 			expectedNXDomain: false, // we have the records for other types (MX), so return NOERROR
@@ -343,24 +343,26 @@ func TestDBFindSOA(t *testing.T) {
 		},
 	}
 
-	loc := &Location{}
+	loc := &Location{MapID: []byte{0, 0}, LocID: []byte{0, 0}}
 
 	for _, config := range testaid.TestDBs {
 		db, err = Open(config.Path, config.Driver)
 		require.Nil(t, err, "could not open fixture database")
 		r, err := NewReader(db)
 		require.Nil(t, err, "could not open db file")
+		t.Run(config.Driver, func(t *testing.T) {
+			for _, tc := range testCases {
+				t.Run(tc.zoneCutString, func(t *testing.T) {
+					a := new(dns.Msg)
+					offset, err := dns.PackDomainName(tc.zoneCutString, zoneCut, 0, nil, false)
+					require.Nilf(t, err, "Failed at packing zoneCut %s", tc.zoneCutString)
+					FindSOA(r, zoneCut[:offset], tc.zoneCutString, loc, a)
+					require.Equalf(t, tc.expectedLength, len(a.Ns),
+						"Expected authoritative section length %d, got %d",
+						tc.expectedLength, len(a.Ns))
+				})
+			}
 
-		for _, tc := range testCases {
-			t.Run(tc.zoneCutString, func(t *testing.T) {
-				a := new(dns.Msg)
-				offset, err := dns.PackDomainName(tc.zoneCutString, zoneCut, 0, nil, false)
-				require.Nilf(t, err, "Failed at packing zoneCut %s", tc.zoneCutString)
-				FindSOA(r, zoneCut[:offset], tc.zoneCutString, loc, a)
-				require.Equalf(t, tc.expectedLength, len(a.Ns),
-					"Expected authoritative section length %d, got %d",
-					tc.expectedLength, len(a.Ns))
-			})
-		}
+		})
 	}
 }

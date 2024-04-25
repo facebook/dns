@@ -179,7 +179,7 @@ func (r *sortedDataReader) find(
 
 	qLength := len(reversedQName)
 
-	key := make([]byte, len(q)+len(loc.LocID)+len(dnsdata.ResourceRecordsKeyMarker))
+	key := make([]byte, len(q)+max(len(loc.LocID), len(EmptyLocation.LocID))+len(dnsdata.ResourceRecordsKeyMarker))
 	copy(key, []byte(dnsdata.ResourceRecordsKeyMarker))
 
 	// assumption is that both provided location AND empty location have same length
@@ -214,7 +214,7 @@ func (r *sortedDataReader) find(
 		}
 
 		// zone cut for different location exists -> check default location
-		if loc.LocID != EmptyLocation.LocID &&
+		if !loc.IsEmpty() &&
 			// empty location override might exists as only location part is different in found key
 			len(key) == len(k) &&
 			bytes.Equal(

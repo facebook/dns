@@ -239,7 +239,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "1.1.1.1",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{0, 0}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		{
 			desc:             "not such resolver match, will be caught by default",
@@ -247,7 +247,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "1.1.1.0",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'c', 0}, Mask: 96, LocID: [2]byte{0, 1}},
+			expectedLocation: Location{MapID: []byte{'c', 0}, Mask: 96, LocID: []byte{0, 1}},
 		},
 		{
 			desc:             "caught by resolver 1.1.1.1/32 map number 2",
@@ -255,7 +255,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "1.1.1.1",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'c', 0}, Mask: 128, LocID: [2]byte{0, 2}},
+			expectedLocation: Location{MapID: []byte{'c', 0}, Mask: 128, LocID: []byte{0, 2}},
 		},
 		{
 			desc:             "caught by resolver 2.2.2.0/24 map number 3",
@@ -263,7 +263,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "2.2.2.5",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'c', 0}, Mask: 120, LocID: [2]byte{0, 3}},
+			expectedLocation: Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
 		},
 		/** ECS */
 		{
@@ -272,7 +272,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "1.1.1.1",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{0, 0}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		{
 			desc:             "not such ECS subnet match, wont set LocID/mask",
@@ -280,7 +280,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "1.1.2.0",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		{
 			desc:             "caught by ECS subnet 1.1.1.0/24 map number 2",
@@ -288,7 +288,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "1.1.1.1",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 2}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 2}},
 		},
 		{
 			desc:             "caught by ECS subnet 2.2.2.0/24 map number 3",
@@ -296,7 +296,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "2.2.2.5",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 3}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 3}},
 		},
 		{
 			desc:             "caught by ECS subnet 2.2.2.0/24 map number 3",
@@ -304,7 +304,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "2.2.2.0",
 			mask:             24,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 3}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 3}},
 		},
 		{
 			desc:             "caught by ECS subnet 2.2.3.0/24 map number 3",
@@ -312,7 +312,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "2.2.3.0",
 			mask:             24,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 3}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 3}},
 		},
 		{
 			desc:             "no such ECS subnet 2.2.2.0/23, this verifies that we wont be caught by 2.2.2.0/24 or 2.2.3.0/24",
@@ -320,7 +320,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "2.2.2.0",
 			mask:             23,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		/*
 			fd8f:a2ea:9f4b::
@@ -332,7 +332,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "fd8f:a2ea:9f4b::1",
 			mask:             128,
-			expectedLocation: Location{MapID: [2]byte{0, 0}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		{
 			desc:             "not such resolver match, will be caught by default",
@@ -340,7 +340,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "fdff::",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'c', 0}, Mask: 0, LocID: [2]byte{0, 1}},
+			expectedLocation: Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 		},
 		{
 			desc:             "caught by resolver fd8f:a2ea:9f4b::/56 map number 4",
@@ -348,7 +348,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "fd8f:a2ea:9f4b::1",
 			mask:             128,
-			expectedLocation: Location{MapID: [2]byte{'c', 0}, Mask: 56, LocID: [2]byte{0, 4}},
+			expectedLocation: Location{MapID: []byte{'c', 0}, Mask: 56, LocID: []byte{0, 4}},
 		},
 		{
 			desc:             "caught by resolver fd48:6525:66bd::/56 map number 5",
@@ -356,7 +356,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "fd48:6525:66bd:1::",
 			mask:             128,
-			expectedLocation: Location{MapID: [2]byte{'c', 0}, Mask: 56, LocID: [2]byte{0, 5}},
+			expectedLocation: Location{MapID: []byte{'c', 0}, Mask: 56, LocID: []byte{0, 5}},
 		},
 		/** ECS */
 		{
@@ -365,7 +365,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "fd8f:a2ea:9f4b:1::",
 			mask:             64,
-			expectedLocation: Location{MapID: [2]byte{0, 0}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		{
 			desc:             "not such ECS subnet match, wont set LocID/mask",
@@ -373,7 +373,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "fdff::",
 			mask:             64,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		{
 			desc:             "caught by ECS subnet fd8f:a2ea:9f4b::/56 map number 4",
@@ -381,7 +381,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "fd8f:a2ea:9f4b:1::",
 			mask:             64,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 56, LocID: [2]byte{0, 4}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 56, LocID: []byte{0, 4}},
 		},
 		{
 			desc:             "caught by ECS subnet fd48:6525:66bd::/56 map number 5",
@@ -389,7 +389,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "fd48:6525:66bd:1::",
 			mask:             64,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 56, LocID: [2]byte{0, 5}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 56, LocID: []byte{0, 5}},
 		},
 		{
 			desc:             "no such ECS subnet fd48:6525::/32, this verifies that we wont be caught by fd48:6525:66bd::/56",
@@ -397,7 +397,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "fd48:6525::",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		{
 			desc:             "no such ECS subnet fd48:6525:66bd::/48, this verifies that we wont be caught by fd48:6525:66bd::/56",
@@ -405,7 +405,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "fd48:6525:66bd::",
 			mask:             48,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 0, LocID: [2]byte{0, 0}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 0, LocID: []byte{0, 0}},
 		},
 		// the following ECS tests are supposed to confuse rearranger for RDB
 		{
@@ -414,7 +414,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.0.0.0",
 			mask:             8,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 104, LocID: [2]byte{0, 6}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 104, LocID: []byte{0, 6}},
 		},
 		{
 			desc:             "4.0.0.0/16 exists, and should be 7",
@@ -422,7 +422,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.0.0.0",
 			mask:             16,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 112, LocID: [2]byte{0, 7}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 112, LocID: []byte{0, 7}},
 		},
 		{
 			desc:             "4.0.0.0/24 exists, and should be 8",
@@ -430,7 +430,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.0.0.0",
 			mask:             24,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 8}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 8}},
 		},
 		{
 			desc:             "4.4.4.0/24 should be 9",
@@ -438,7 +438,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.4.0",
 			mask:             24,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 9}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 9}},
 		},
 		{
 			desc:             "4.4.5.0/24 should be 10",
@@ -446,7 +446,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.5.0",
 			mask:             24,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 10}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 10}},
 		},
 		{
 			desc:             "4.4.0.0/16 should be caught by 4.0.0.0/8",
@@ -454,7 +454,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.0.0",
 			mask:             16,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 104, LocID: [2]byte{0, 6}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 104, LocID: []byte{0, 6}},
 		},
 		{
 			desc:             "4.4.4.4/32 should be caught by 4.4.4.0/24",
@@ -462,7 +462,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.4.0",
 			mask:             24,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 9}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 9}},
 		},
 		{
 			desc:             "4.4.5.5/32 should be caught by 4.4.5.0/24",
@@ -470,7 +470,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.5.0",
 			mask:             24,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 10}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 10}},
 		},
 		{
 			desc:             "4.4.5.1/32 should be 11",
@@ -478,7 +478,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.5.1",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 128, LocID: [2]byte{0, 11}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 128, LocID: []byte{0, 11}},
 		},
 		{
 			desc:             "4.4.5.2/32 should be caught by 4.4.5.0/24",
@@ -486,7 +486,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.5.2",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 10}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 10}},
 		},
 		{
 			desc:             "4.4.5.3/32 should be 12",
@@ -494,7 +494,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.5.3",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 128, LocID: [2]byte{0, 12}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 128, LocID: []byte{0, 12}},
 		},
 		{
 			desc:             "4.4.6.0/32 should be caught by 4.0.0.0/8",
@@ -502,7 +502,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "4.4.6.0",
 			mask:             32,
-			expectedLocation: Location{MapID: [2]byte{'e', 'c'}, Mask: 104, LocID: [2]byte{0, 6}},
+			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 104, LocID: []byte{0, 6}},
 		},
 	}
 	for _, dbconfig := range testaid.TestDBs {
@@ -521,7 +521,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 				t.Fatalf("failed at packing domain %s: %v", tc.qname, err)
 			}
 			t.Run(fmt.Sprintf("%s/dbi.FindMap for test case %d/%s", dbconfig.Driver, i, tc.desc), func(t *testing.T) {
-				var location Location
+				location := Location{MapID: []byte{0, 0}, LocID: []byte{0, 0}}
 				id, err := db.dbi.FindMap(q[:offset], tc.qmap, db.dbi.NewContext())
 				if id != nil {
 					copy(location.MapID[:], id)
@@ -574,37 +574,37 @@ func testFindLocationForResolversCustomBitmap(t *testing.T, separateBitmap bool)
 		{
 			domain:           "cnamemap.example.com.",
 			resolver:         "1.1.1.1",
-			expectedLocation: Location{MapID: [2]byte{'c', '\000'}, Mask: 128, LocID: [2]byte{0, 2}},
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 128, LocID: []byte{0, 2}},
 		},
 		{
 			domain:           "cnamemap.example.com.",
 			resolver:         "1.1.0.1",
-			expectedLocation: Location{MapID: [2]byte{'c', '\000'}, Mask: 96, LocID: [2]byte{0, 1}},
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 96, LocID: []byte{0, 1}},
 		},
 		{
 			domain:           "cnamemap.example.com.",
 			resolver:         "2.2.2.2",
-			expectedLocation: Location{MapID: [2]byte{'c', '\000'}, Mask: 120, LocID: [2]byte{0, 3}},
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 120, LocID: []byte{0, 3}},
 		},
 		{
 			domain:           "cnamemap.example.com.",
 			resolver:         "fd8f:a2ea:9f4b::1",
-			expectedLocation: Location{MapID: [2]byte{'c', '\000'}, Mask: 56, LocID: [2]byte{0, 4}},
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 56, LocID: []byte{0, 4}},
 		},
 		{
 			domain:           "cnamemap.example.com.",
 			resolver:         "::1",
-			expectedLocation: Location{MapID: [2]byte{'c', '\000'}, Mask: 0, LocID: [2]byte{0, 1}},
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 0, LocID: []byte{0, 1}},
 		},
 		{
 			domain:           "cnamemap.example.com.",
 			resolver:         "fd58:6525:66bd:a::1",
-			expectedLocation: Location{MapID: [2]byte{'c', '\000'}, Mask: 64, LocID: [2]byte{0, 3}},
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 64, LocID: []byte{0, 3}},
 		},
 		{
 			domain:           "cnamemap.example.com.",
 			resolver:         "fd58:6525:66bd::1",
-			expectedLocation: Location{MapID: [2]byte{'c', '\000'}, Mask: 56, LocID: [2]byte{0, 2}},
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 56, LocID: []byte{0, 2}},
 		},
 	}
 
@@ -785,26 +785,26 @@ func testDBCorrectEcsAnswerCustomBitmap(t *testing.T, separateBitMap bool) {
 		},
 	}
 
-	// TODO: aluck is rebuilding RDB maps (T41316106), testing only CDB for now
 	for _, config := range testaid.TestDBs {
 		if db, err = Open(config.Path, config.Driver); err != nil {
 			t.Fatalf("Could not open fixture database: %v", err)
 		}
 		r, err := NewReader(db)
 		require.Nil(t, err, "Could not open db file")
-
-		for _, tc := range testCases {
-			t.Run(fmt.Sprintf("%s/%v", config.Driver, tc), func(t *testing.T) {
-				edns, err := makeECSOption(tc.ecs)
-				require.Nilf(t, err, "Failed to generate ECS option for %s", tc.ecs)
-				ecs := edns.Option[0].(*dns.EDNS0_SUBNET)
-				offset, err := dns.PackDomainName("example.com.", packedQName, 0, nil, false)
-				require.NoError(t, err)
-				_, err = r.EcsLocation(packedQName[:offset], ecs)
-				require.NoError(t, err)
-				require.Equalf(t, tc.expectedECS, *ecs, "unexpected ECS response value")
-			})
-		}
+		t.Run(config.Driver, func(t *testing.T) {
+			for _, tc := range testCases {
+				t.Run(fmt.Sprintf("%s/%v", config.Driver, tc), func(t *testing.T) {
+					edns, err := makeECSOption(tc.ecs)
+					require.Nilf(t, err, "Failed to generate ECS option for %s", tc.ecs)
+					ecs := edns.Option[0].(*dns.EDNS0_SUBNET)
+					offset, err := dns.PackDomainName("example.com.", packedQName, 0, nil, false)
+					require.NoError(t, err)
+					_, err = r.EcsLocation(packedQName[:offset], ecs)
+					require.NoError(t, err)
+					require.Equalf(t, tc.expectedECS, *ecs, "unexpected ECS response value")
+				})
+			}
+		})
 	}
 }
 

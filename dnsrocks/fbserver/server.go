@@ -85,7 +85,7 @@ const connectionKey = "dns.connection"
 // record id.data.test for location \000\000 (e.g no location). We store a TXT
 // record with the timestamp of when the DB was generated.
 var dbTimestampName = []byte{2, 'i', 'd', 4, 'd', 'a', 't', 'a', 4, 't', 'e', 's', 't', 0}
-var dbTimestampLocation = db.Location{LocID: [2]byte{0, 0}}
+var dbTimestampLocation = db.EmptyLocation
 
 type anyMetricsExporter interface {
 	ConsumeStats(category string, stats *metrics.Stats) error

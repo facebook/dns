@@ -14,6 +14,7 @@ limitations under the License.
 package db
 
 import (
+	"bytes"
 	"net"
 	"os"
 
@@ -57,9 +58,29 @@ func init() {
 // For ECS MapID, the associated mask.
 // The LocID, the location ID used to find matching records.
 type Location struct {
-	MapID [2]byte // The map in which we found the name.
-	Mask  uint8   // The subnet mask we found a match for. Used for ECS.
-	LocID [2]byte // The location id.
+	MapID []byte // The map in which we found the name.
+	Mask  uint8  // The subnet mask we found a match for. Used for ECS.
+	LocID []byte // The location id.
+}
+
+// Equal checks whether the two locations have same LocID
+func (l Location) Equal(b Location) bool {
+	return bytes.Equal(l.LocID[:], b.LocID[:])
+}
+
+// IsEmpty is true when its LocID is the same as EmptyLocation's, {0, 0}.
+func (l Location) IsEmpty() bool {
+	return l.Equal(EmptyLocation)
+}
+
+// IsZero is true when its LocID is {0, 0}.
+func (l Location) IsZero() bool {
+	return bytes.Equal(l.LocID[:], []byte{0, 0})
+}
+
+// IsZeroMap is true when its MapID is {0, 0}.
+func (l Location) IsZeroMap() bool {
+	return bytes.Equal(l.MapID[:], []byte{0, 0})
 }
 
 // FindECS finds a EDNS0_SUBNET option in a DNS Msg.
@@ -105,7 +126,7 @@ func (r *DataReader) FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns
 		}
 	}
 	// resolver location lookup if we did not find any Client subnet match.
-	if loc == nil || loc.LocID == [2]byte{0, 0} {
+	if loc == nil || loc.IsZero() {
 		loc, err = r.ResolverLocation(qname, ip)
 	}
 	return ecs, loc, err
@@ -114,7 +135,7 @@ func (r *DataReader) FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns
 // findLocation finds the `Location` in mtype maps that matches the `ipnet`, and returns Location.
 // If no mtype is found for the domain, Location.MapID will be {0, 0}
 func (r *DataReader) findLocation(q []byte, mtype []byte, ipnet *net.IPNet) (*Location, error) {
-	var location = &Location{}
+	var location = &Location{MapID: []byte{0, 0}, LocID: []byte{0, 0}}
 
 	// FindMap looks up mapID for domain e.g DB key "{mtype}{packed_domain}{MapID}"
 	// Starting from a domain = q, first we try to get an exact match
@@ -176,11 +197,11 @@ func (r *DataReader) EcsLocation(q []byte, ecs *dns.EDNS0_SUBNET) (*Location, er
 		return nil, err
 	}
 	// There is no mapping for this qname
-	if loc.MapID == [2]byte{0, 0} {
+	if loc.IsZeroMap() {
 		return nil, nil
 	}
 	// We found a match
-	if loc.LocID != [2]byte{0, 0} {
+	if !loc.IsZero() {
 		ecs.SourceScope = loc.Mask
 		if ecs.Family == 1 {
 			ecs.SourceScope -= 96

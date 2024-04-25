@@ -212,7 +212,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 					},
 				},
 				section:  NsSection,
-				location: Location{MapID: [2]byte{'c', 0}, Mask: 120, LocID: [2]byte{0, 3}},
+				location: Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
 				expectInExtra: []dns.RR{
 					&dns.A{
 						Hdr: dns.RR_Header{
@@ -251,7 +251,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 					},
 				},
 				section:  AnswerSection,
-				location: Location{MapID: [2]byte{'c', 0}, Mask: 120, LocID: [2]byte{0, 3}},
+				location: Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
 				expectInExtra: []dns.RR{
 					&dns.A{
 						Hdr: dns.RR_Header{
@@ -290,7 +290,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 					},
 				},
 				section:       AnswerSection,
-				location:      Location{MapID: [2]byte{'c', 0}, Mask: 120, LocID: [2]byte{0, 3}},
+				location:      Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
 				expectInExtra: []dns.RR{},
 			},
 			{ // When we have a CNAME record in Answer section, AdditionalSectionForRecords
@@ -309,7 +309,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 					},
 				},
 				section:       AnswerSection,
-				location:      Location{MapID: [2]byte{'c', 0}, Mask: 120, LocID: [2]byte{0, 3}},
+				location:      Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
 				expectInExtra: []dns.RR{},
 			},
 		}

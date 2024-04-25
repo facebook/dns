@@ -70,19 +70,19 @@ func TestGetNs(t *testing.T) {
 		{
 			// example.com has NS records
 			qname:         "example.com.",
-			location:      Location{MapID: [2]byte{0, 0}, Mask: 0, LocID: [2]byte{0, 0}},
+			location:      Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
 			expectedCount: 2,
 		},
 		{
 			// nonauth.example.com has NS records
 			qname:         "nonauth.example.com.",
-			location:      Location{MapID: [2]byte{0, 0}, Mask: 0, LocID: [2]byte{0, 0}},
+			location:      Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
 			expectedCount: 2,
 		},
 		{
 			// doesnotexist.example.com does not have ns records but matches wildcard
 			qname:         "doesnotexist.example.com.",
-			location:      Location{MapID: [2]byte{0, 0}, Mask: 0, LocID: [2]byte{0, 0}},
+			location:      Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
 			expectedCount: 0,
 		},
 		{
@@ -90,7 +90,7 @@ func TestGetNs(t *testing.T) {
 			// return the non localized records when we provide a location and there
 			// is a location matching the client.
 			qname:         "example.com.",
-			location:      Location{MapID: [2]byte{'e', 'c'}, Mask: 120, LocID: [2]byte{0, 2}},
+			location:      Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 2}},
 			expectedCount: 2,
 		},
 	}
