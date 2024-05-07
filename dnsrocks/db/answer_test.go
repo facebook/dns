@@ -362,7 +362,6 @@ func TestDBFindSOA(t *testing.T) {
 						tc.expectedLength, len(a.Ns))
 				})
 			}
-
 		})
 	}
 }
