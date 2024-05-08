@@ -277,12 +277,13 @@ Currently two types of trigger files are supported:
 
 	go srv.LogMapAge()
 	go srv.DumpBackendStats()
+
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	s := <-sig
-	srv.Shutdown()
+	glog.Infof("Signal (%v) received, stopping\n", s)
 
-	glog.Fatalf("Signal (%v) received, stopping\n", s)
+	srv.Shutdown()
 }
 
 func failOnErr(err error, msg string) {
