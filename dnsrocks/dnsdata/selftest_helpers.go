@@ -38,15 +38,20 @@ func GetSubnets(dataPath string) ([]*net.IPNet, error) {
 			continue
 		}
 		rtype := decodeRtype(line)
-		if rtype != prefixNet {
+		if rtype != prefixNet && rtype != prefixRangePoint {
 			continue
 		}
 		r, err := codec.DecodeLn(line)
 		if err != nil {
 			return nets, fmt.Errorf("error decoding %s: %w", string(line), err)
 		}
-		rr := r.(*Rnet)
-		nets = append(nets, rr.ipnet)
+		switch rr := r.(type) {
+		case *Rnet:
+			nets = append(nets, rr.ipnet)
+		case *Rrangepoint:
+			n := &net.IPNet{IP: net.IP(rr.pt.rangeStart[:]), Mask: net.CIDRMask(int(rr.pt.location.maskLen), 128)}
+			nets = append(nets, n)
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nets, err
