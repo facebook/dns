@@ -107,13 +107,13 @@ func main() {
 	cliflags.IntVar(&serverConfig.DBConfig.ReloadInterval, "reloadtime", 10, "Time between each CDB reload")
 	cliflags.DurationVar(&serverConfig.DBConfig.ReloadTimeout, "reloadtimeout", time.Second, "Time to wait for DB to finish reload")
 	cliflags.BoolVar(&serverConfig.DBConfig.WatchDB, "watchdb", false, "Watch DB file change and reload")
-	cliflags.StringVar(&serverConfig.DBConfig.Path, "dbpath", "./data.cdb", "Path to the database")
+	cliflags.StringVar(&serverConfig.DBConfig.Path, "dbpath", "./rocksdb", "Path to the database")
 	cliflags.StringVar(&serverConfig.DBConfig.ControlPath, "control-path", "",
 		`Path to the control directory. When not empty, FBDNS watches given directory for trigger files that control DB reloads.
 Currently two types of trigger files are supported:
 * 'switchdb' - full reload trigger file, must contain new DB path as a text in it
 * 'reload' - partial reload (WAL catchup) trigger file, content of the file is ignored`)
-	cliflags.StringVar(&serverConfig.DBConfig.Driver, "dbdriver", "cdb", "Name of the database engine to use (cdb, rocksdb)")
+	cliflags.StringVar(&serverConfig.DBConfig.Driver, "dbdriver", "rocksdb", "Name of the database engine to use (cdb, rocksdb)")
 
 	// Cache config
 	cliflags.BoolVar(&serverConfig.CacheConfig.Enabled, "cache", false, "Whether or not we should cache DNS messages")

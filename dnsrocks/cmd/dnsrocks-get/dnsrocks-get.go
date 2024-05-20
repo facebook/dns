@@ -35,7 +35,7 @@ func main() {
 		handlerConfig dnsserver.HandlerConfig
 	)
 	flag.StringVar(&dbConfig.Path, "dbpath", "", "Path to CDB")
-	flag.StringVar(&dbConfig.Driver, "dbdriver", "cdb", "DB driver")
+	flag.StringVar(&dbConfig.Driver, "dbdriver", "rocksdb", "DB driver (cdb or rocksdb)")
 	flag.IntVar(&maxans, "maxans", 1, "Max number of answer server should return.")
 	qType := flag.String("qtype", "A", "Type of the query")
 	qName := flag.String("qname", "", "Name to query")
