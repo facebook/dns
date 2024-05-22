@@ -36,6 +36,7 @@ import (
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 	"github.com/facebook/dns/dnsrocks/metrics"
 	"github.com/facebook/dns/dnsrocks/nsid"
+	"github.com/facebook/dns/dnsrocks/ratelimit"
 	"github.com/facebook/dns/dnsrocks/tlsconfig"
 	"github.com/facebook/dns/dnsrocks/whoami"
 )
@@ -204,13 +205,14 @@ func (srv *Server) listenConf() net.ListenConfig {
 // errors.
 func (srv *Server) Start() (err error) {
 	var (
-		defaultHandler   plugin.Handler = srv.db
-		maxAnswerHandler *maxAnswerHandler
-		whoamiHandler    *whoami.Handler
-		dotTLSAHandler   *dotTLSAHandler
-		anyHandler       *anyHandler
-		nsidHandler      *nsid.Handler
-		numListeners     = srv.conf.ReusePort
+		defaultHandler     plugin.Handler = srv.db
+		maxAnswerHandler   *maxAnswerHandler
+		whoamiHandler      *whoami.Handler
+		dotTLSAHandler     *dotTLSAHandler
+		anyHandler         *anyHandler
+		nsidHandler        *nsid.Handler
+		concurrencyHandler *ratelimit.ConcurrencyHandler
+		numListeners       = srv.conf.ReusePort
 	)
 
 	// We have at least 1 listener
@@ -318,6 +320,15 @@ func (srv *Server) Start() (err error) {
 			glog.Infof("Max UDP size not set")
 		}
 
+		// Allow up to 100 concurrent queries per CPU.
+		// This is faster than 10 according to BenchmarkUDP.
+		maxWorkers := 100 * srv.conf.NumCPU
+		if concurrencyHandler, err = ratelimit.NewConcurrencyHandler(maxWorkers); err != nil {
+			return err
+		}
+		concurrencyHandler.Next = handler.defaultHandler
+		handler.defaultHandler = concurrencyHandler
+
 		addr := joinAddress(ip, srv.conf.Port)
 
 		for i := 0; i < numListeners; i++ {
@@ -328,6 +339,7 @@ func (srv *Server) Start() (err error) {
 			}
 			s.ReadTimeout = srv.conf.ReadTimeout
 			s.NotifyStartedFunc = srv.NotifyStartedFunc
+			s.DecorateReader = concurrencyHandler.DecorateReader
 			srv.servers = append(srv.servers, s)
 			// Server never calls Done() method, it only provides
 			// this wg for client to use.
@@ -349,6 +361,7 @@ func (srv *Server) Start() (err error) {
 				s.ReadTimeout = srv.conf.ReadTimeout
 				s.NotifyStartedFunc = srv.NotifyStartedFunc
 				s.IdleTimeout = idleTimeoutFunc
+				s.DecorateReader = concurrencyHandler.DecorateReader
 				srv.servers = append(srv.servers, s)
 				// Server never calls Done() method, it only provides
 				// this wg for client to use.
@@ -372,6 +385,7 @@ func (srv *Server) Start() (err error) {
 				s.ReadTimeout = srv.conf.ReadTimeout
 				s.NotifyStartedFunc = srv.NotifyStartedFunc
 				s.IdleTimeout = idleTimeoutFunc
+				s.DecorateReader = concurrencyHandler.DecorateReader
 				srv.servers = append(srv.servers, s)
 				// Server never calls Done() method, it only provides
 				// this wg for client to use.

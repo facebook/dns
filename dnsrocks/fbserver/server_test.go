@@ -20,6 +20,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -51,6 +52,7 @@ func makeTestServerConfig(tcp, tls bool) ServerConfig {
 	s.DBConfig.Driver = db.Driver
 	s.DBConfig.Path = db.Path
 	s.DBConfig.ReloadInterval = 100
+	s.NumCPU = runtime.NumCPU()
 	return s
 }
 

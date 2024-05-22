@@ -36,6 +36,7 @@ type ServerConfig struct {
 	ReusePort      int
 	MaxTCPQueries  int
 	TCPIdleTimeout time.Duration
+	NumCPU         int
 	ReadTimeout    time.Duration
 	TLSConfig      tlsconfig.TLSConfig
 	HandlerConfig  dnsserver.HandlerConfig
