@@ -17,7 +17,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"math"
+	"net"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -54,7 +57,7 @@ func makeTestServerConfig(tcp, tls bool) ServerConfig {
 // makeTestServer spins up standalone DNS servers based on the ServerConfig `config`.
 // returns a map of `network`/listening address.
 // network can be any of udp, tcp, tcp-tls
-func makeTestServer(t *testing.T, config ServerConfig) (map[string]string, *Server) {
+func makeTestServer(t testing.TB, config ServerConfig) (map[string]string, *Server) {
 	var m = make(map[string]string)
 	logger := dnsserver.DummyLogger{}
 	stats := stats.DummyStats{}
@@ -471,4 +474,96 @@ func TestMaxUDPSize(t *testing.T) {
 			require.False(t, tcpResponse.Truncated)
 		})
 	}
+}
+
+func sprayUDP(conn *net.UDPConn, limit int) {
+	qname := "0123456789.example.com."
+	msg := (&dns.Msg{}).SetQuestion(qname, dns.TypeA)
+	buf, _ := msg.Pack()
+	for i := range limit {
+		// Cache busting for the QNAME, which falls on a wildcard.
+		label := fmt.Sprintf("%010d", i)
+		copy(buf[13:], label)
+		if _, err := conn.Write(buf); err != nil {
+			return
+		}
+	}
+}
+
+// Confirm that spraying UDP packets to the server is not the limiting
+// step in BenchmarkUDP.
+func BenchmarkSpray(b *testing.B) {
+	l, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv6loopback, Port: 0})
+	require.Nil(b, err)
+	defer l.Close()
+
+	host, port, err := net.SplitHostPort(l.LocalAddr().String())
+	require.Nil(b, err)
+
+	portNum, err := strconv.Atoi(port)
+	require.Nil(b, err)
+
+	addr := net.UDPAddr{
+		IP:   net.ParseIP(host),
+		Port: portNum, // UDP equivalent of /dev/null
+	}
+	conn, err := net.DialUDP("udp", nil, &addr)
+	require.Nil(b, err)
+	defer conn.Close()
+
+	b.ResetTimer()
+	sprayUDP(conn, b.N)
+	b.StopTimer()
+
+	seconds := b.Elapsed().Seconds()
+	b.ReportMetric(float64(b.N)/seconds, "queries/sec")
+	// This metric is less meaningful than QPS, so we can hide it.
+	b.ReportMetric(0, "ns/op")
+}
+
+// Measure the goodput of the server over UDP in answers/sec.
+// Queries have randomized QNAME and ECS subnet to avoid caching.
+func BenchmarkUDP(b *testing.B) {
+	config := makeTestServerConfig(false, false)
+	portMap, srv := makeTestServer(b, config)
+	defer srv.Shutdown()
+
+	addr := portMap["udp"]
+	host, port, err := net.SplitHostPort(addr)
+	require.Nil(b, err)
+	portNum, err := strconv.Atoi(port)
+	require.Nil(b, err)
+	udpAddr := net.UDPAddr{
+		IP:   net.ParseIP(host),
+		Port: portNum,
+	}
+	conn, err := net.DialUDP("udp", nil, &udpAddr)
+	require.Nil(b, err, "Error connecting to server")
+	defer conn.Close()
+
+	// Strategy: Spray DNS packets as fast as possible,
+	// accepting that many or most will be lost.
+	// Only count replies.
+
+	b.ResetTimer()
+	go sprayUDP(conn, math.MaxInt)
+	readBuf := make([]byte, 65536)
+	n := 0
+	for range b.N {
+		n, err = conn.Read(readBuf)
+		require.Nil(b, err)
+	}
+	b.StopTimer()
+	// Terminate the spraying thread.
+	conn.Close()
+
+	lastResponse := dns.Msg{}
+	lastResponse.Unpack(readBuf[:n])
+	// To confirm response content, uncomment:
+	// b.Logf("%v", lastResponse)
+
+	seconds := b.Elapsed().Seconds()
+	b.ReportMetric(float64(b.N)/seconds, "responses/sec")
+	// This metric is less meaningful than QPS, so we can hide it.
+	b.ReportMetric(0, "ns/op")
 }
