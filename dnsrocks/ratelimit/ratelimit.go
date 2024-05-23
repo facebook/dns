@@ -19,10 +19,9 @@ import (
 	"net"
 	"time"
 
-	"golang.org/x/sync/semaphore"
-
 	"github.com/coredns/coredns/plugin"
 	"github.com/miekg/dns"
+	"golang.org/x/sync/semaphore"
 )
 
 // ConcurrencyHandler is a [plugin.Handler] that limits how many queries

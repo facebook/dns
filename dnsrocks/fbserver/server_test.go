@@ -560,7 +560,8 @@ func BenchmarkUDP(b *testing.B) {
 	conn.Close()
 
 	lastResponse := dns.Msg{}
-	lastResponse.Unpack(readBuf[:n])
+	err = lastResponse.Unpack(readBuf[:n])
+	require.NoError(b, err)
 	// To confirm response content, uncomment:
 	// b.Logf("%v", lastResponse)
 
