@@ -10,9 +10,9 @@ jobs:
       CGO_LDFLAGS_ALLOW: .*
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.22
+          go-version: 1.22.3
       - name: "Install deps"
         run: sudo apt-get update; sudo apt-get install -y libpcap0.8 libpcap0.8-dev make clang  gcc-multilib
       - name: "Install libbpf-1"

@@ -1,6 +1,6 @@
 module github.com/facebook/dns/dnsrocks
 
-go 1.22
+go 1.22.3
 
 require (
 	github.com/coredns/coredns v1.11.3
@@ -17,8 +17,8 @@ require (
 	github.com/prometheus/client_model v0.6.0
 	github.com/repustate/go-cdb v0.0.0-20160430174706-6a418fad95e2
 	github.com/segmentio/fasthash v1.0.3
-	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.1
+	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.8.4
 	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.19.0
 	golang.org/x/term v0.19.0

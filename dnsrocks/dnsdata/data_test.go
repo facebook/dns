@@ -1753,7 +1753,7 @@ func BenchmarkAtoiFscan(b *testing.B) {
 	var out uint32
 	in := []byte("12345")
 	for i := 0; i < b.N; i++ {
-		fmt.Fscan(bytes.NewBuffer(in), &out)
+		_, _ = fmt.Fscan(bytes.NewBuffer(in), &out)
 	}
 }
 
@@ -1761,7 +1761,7 @@ func BenchmarkAtoiSscan(b *testing.B) {
 	var out uint32
 	in := []byte("12345")
 	for i := 0; i < b.N; i++ {
-		fmt.Sscan(string(in), &out)
+		_, _ = fmt.Sscan(string(in), &out)
 	}
 }
 
