@@ -1,4 +1,4 @@
-name: perftest_fbdns
+name: functional_test_fbdns_cdb
 on: [push, pull_request]
 jobs:
   test:
@@ -16,4 +16,4 @@ jobs:
       - name: install rocksdb
         run: sudo bash .github/scripts/install_rocks_head.sh
       - name : Perform perftest
-        run: sudo bash .github/scripts/perftest_fbdns.sh
+        run: sudo bash .github/scripts/test_fbdns_cdb.sh
