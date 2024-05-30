@@ -16,7 +16,6 @@ package main
 import (
 	"os"
 	"path"
-	"runtime"
 	"testing"
 	"time"
 
@@ -47,7 +46,6 @@ func getConfig(tcp bool) fbserver.ServerConfig {
 	serverConfig.ReusePort = 0
 	serverConfig.WhoamiDomain = ""
 	serverConfig.RefuseANY = false
-	serverConfig.NumCPU = runtime.NumCPU()
 	// the default setup should be backward compatible with current spec: 1 IP address and maxanswer not specified
 
 	// DB config

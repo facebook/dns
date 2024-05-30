@@ -37,7 +37,7 @@ import (
 	_ "net/http/pprof"
 )
 
-func setCPU(cpu string) (int, error) {
+func setCPU(cpu string) error {
 	var numCPU int
 
 	availCPU := runtime.NumCPU()
@@ -48,7 +48,7 @@ func setCPU(cpu string) (int, error) {
 		pctStr := cpu[:len(cpu)-1]
 		pctInt, err := strconv.Atoi(pctStr)
 		if err != nil || pctInt < 1 || pctInt > 100 {
-			return -1, errors.New("invalid CPU value: percentage must be between 1-100")
+			return errors.New("invalid CPU value: percentage must be between 1-100")
 		}
 		percent = float32(pctInt) / 100
 		numCPU = int(float32(availCPU) * percent)
@@ -56,7 +56,7 @@ func setCPU(cpu string) (int, error) {
 		// Number
 		num, err := strconv.Atoi(cpu)
 		if err != nil || num < 1 {
-			return -1, errors.New("invalid CPU value: provide a number or percent greater than 0")
+			return errors.New("invalid CPU value: provide a number or percent greater than 0")
 		}
 		numCPU = num
 	}
@@ -66,7 +66,7 @@ func setCPU(cpu string) (int, error) {
 	}
 
 	runtime.GOMAXPROCS(numCPU)
-	return numCPU, nil
+	return nil
 }
 
 func main() {
@@ -193,8 +193,7 @@ Currently two types of trigger files are supported:
 		glog.Infof("go version: %s go arch: %s go OS: %s", runtime.Version(), runtime.GOARCH, runtime.GOOS)
 		os.Exit(0)
 	}
-	serverConfig.NumCPU, err = setCPU(*cpu)
-	failOnErr(err, "Error setting number of CPU")
+	failOnErr(setCPU(*cpu), "Error setting number of CPU")
 
 	// TODO (jifen) this should be deprecated in subsequent
 	// diff since IDN no longer rely on this
