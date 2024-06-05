@@ -148,6 +148,13 @@ func (options *Options) SetMaxOpenFiles(numFiles int) {
 	C.rocksdb_options_set_max_open_files(options.cOptions, C.int(numFiles))
 }
 
+// SetMaxSubcompactions sets the maximum number of subcompactions.
+// See https://github.com/facebook/rocksdb/wiki/Subcompaction for details.
+// 1 (default) means disabled
+func (options *Options) SetMaxSubcompactions(n int) {
+	C.rocksdb_options_set_max_subcompactions(options.cOptions, C.uint32_t(n))
+}
+
 // OptimizeLevelStyleCompaction - read more about Level Style compaction
 // at https://github.com/facebook/rocksdb/wiki/Leveled-Compaction ,
 // or about compactions in general https://github.com/facebook/rocksdb/wiki/Compaction
