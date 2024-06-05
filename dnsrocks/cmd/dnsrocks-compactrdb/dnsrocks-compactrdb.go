@@ -31,6 +31,7 @@ func compact(dbpath string) error {
 	// we don't need to keep old logs or old files
 	options.SetDeleteObsoleteFilesPeriodMicros(0)
 	options.SetKeepLogFileNum(1)
+	options.SetMaxSubcompactions(runtime.NumCPU())
 	db, err := rocksdb.OpenDatabase(dbpath, false, false, options)
 	if err != nil {
 		return err
