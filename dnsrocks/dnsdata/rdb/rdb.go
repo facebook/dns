@@ -248,6 +248,7 @@ func NewUpdater(dbpath string) (*RDB, error) {
 	// we don't need to keep old logs or old files
 	opt.SetDeleteObsoleteFilesPeriodMicros(0)
 	opt.SetKeepLogFileNum(1)
+	opt.SetMaxSubcompactions(runtime.NumCPU())
 
 	db, err := rocksdb.OpenDatabase(dbpath, false, false, opt)
 	if err != nil {
