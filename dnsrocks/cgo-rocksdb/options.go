@@ -448,16 +448,21 @@ func NewDefaultReadOptions() *ReadOptions {
 //   - fillCache: Should the "data block"/"index block"" read for this iteration be placed in block cache?
 func NewReadOptions(verifyChecksum, fillCache bool) *ReadOptions {
 	readOptions := NewDefaultReadOptions()
-	cReadOptions := readOptions.cReadOptions
-	if !verifyChecksum {
-		// default: True
-		C.rocksdb_readoptions_set_verify_checksums(cReadOptions, C.BOOL_CHAR_FALSE)
-	}
-	if !fillCache {
-		// default: True
-		C.rocksdb_readoptions_set_fill_cache(cReadOptions, C.BOOL_CHAR_FALSE)
-	}
+	readOptions.SetVerifyChecksums(verifyChecksum)
+	readOptions.SetFillCache(fillCache)
 	return readOptions
+}
+
+// SetVerifyChecksums sets verify_checksums flag
+// https://github.com/facebook/rocksdb/wiki/basic-operations#checksums
+func (readOptions *ReadOptions) SetVerifyChecksums(verifyChecksum bool) {
+	C.rocksdb_readoptions_set_verify_checksums(readOptions.cReadOptions, BoolToChar(verifyChecksum))
+}
+
+// SetFillCache sets fill_cache flag
+// https://github.com/facebook/rocksdb/wiki/Block-Cache
+func (readOptions *ReadOptions) SetFillCache(fillCache bool) {
+	C.rocksdb_readoptions_set_fill_cache(readOptions.cReadOptions, BoolToChar(fillCache))
 }
 
 // SetSnapshot forces using previously made 'snapshot' for read operations
@@ -469,11 +474,6 @@ func (readOptions *ReadOptions) SetSnapshot(snapshot *Snapshot) {
 // allocated Snapshot object
 func (readOptions *ReadOptions) UnsetSnapshot() {
 	C.rocksdb_readoptions_set_snapshot(readOptions.cReadOptions, nil)
-}
-
-// FreeReadOptions frees up the memory previously allocated by NewReadOptions
-func (readOptions *ReadOptions) FreeReadOptions() {
-	C.rocksdb_readoptions_destroy(readOptions.cReadOptions)
 }
 
 // SetIterateLowerBound sets lower bound for key seek
@@ -488,6 +488,11 @@ func (readOptions *ReadOptions) SetIterateLowerBound(key []byte) {
 func (readOptions *ReadOptions) SetIterateUpperBound(key []byte) {
 	cKeyPtr, cKeyLen := bytesToPtr(key)
 	C.rocksdb_readoptions_set_iterate_upper_bound(readOptions.cReadOptions, cKeyPtr, cKeyLen)
+}
+
+// FreeReadOptions frees up the memory previously allocated by NewReadOptions
+func (readOptions *ReadOptions) FreeReadOptions() {
+	C.rocksdb_readoptions_destroy(readOptions.cReadOptions)
 }
 
 // WaitForCompactOptions is a set of options for WaitForCompact call
