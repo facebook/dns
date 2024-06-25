@@ -433,6 +433,13 @@ func (batch *Batch) Delete(key []byte) {
 	C.rocksdb_writebatch_delete(batch.cBatch, cKeyPtr, cKeyLen)
 }
 
+// DeleteRange deletes a range of keys.
+func (batch *Batch) DeleteRange(startKey []byte, endKey []byte) {
+	cStartKeyPtr, cStartKeyLen := bytesToPtr(startKey)
+	cEndKeyPtr, cEndKeyLen := bytesToPtr(endKey)
+	C.rocksdb_writebatch_delete_range(batch.cBatch, cStartKeyPtr, cStartKeyLen, cEndKeyPtr, cEndKeyLen)
+}
+
 // Destroy destroys a Batch object
 func (batch *Batch) Destroy() {
 	C.rocksdb_writebatch_destroy(batch.cBatch)
