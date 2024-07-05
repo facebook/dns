@@ -20,6 +20,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -51,6 +52,7 @@ func makeTestServerConfig(tcp, tls bool) ServerConfig {
 	s.DBConfig.Driver = db.Driver
 	s.DBConfig.Path = db.Path
 	s.DBConfig.ReloadInterval = 100
+	s.NumCPU = runtime.NumCPU()
 	return s
 }
 
@@ -524,47 +526,52 @@ func BenchmarkSpray(b *testing.B) {
 // Measure the goodput of the server over UDP in answers/sec.
 // Queries have randomized QNAME and ECS subnet to avoid caching.
 func BenchmarkUDP(b *testing.B) {
-	config := makeTestServerConfig(false, false)
-	portMap, srv := makeTestServer(b, config)
-	defer srv.Shutdown()
+	for _, maxConcurrency := range []int{-1, 1, 10, 100, 1000} {
+		b.Run(fmt.Sprintf("maxConcurrency=%d", maxConcurrency), func(b *testing.B) {
+			config := makeTestServerConfig(false, false)
+			config.MaxConcurrency = maxConcurrency
+			portMap, srv := makeTestServer(b, config)
+			defer srv.Shutdown()
 
-	addr := portMap["udp"]
-	host, port, err := net.SplitHostPort(addr)
-	require.Nil(b, err)
-	portNum, err := strconv.Atoi(port)
-	require.Nil(b, err)
-	udpAddr := net.UDPAddr{
-		IP:   net.ParseIP(host),
-		Port: portNum,
+			addr := portMap["udp"]
+			host, port, err := net.SplitHostPort(addr)
+			require.Nil(b, err)
+			portNum, err := strconv.Atoi(port)
+			require.Nil(b, err)
+			udpAddr := net.UDPAddr{
+				IP:   net.ParseIP(host),
+				Port: portNum,
+			}
+			conn, err := net.DialUDP("udp", nil, &udpAddr)
+			require.Nil(b, err, "Error connecting to server")
+			defer conn.Close()
+
+			// Strategy: Spray DNS packets as fast as possible,
+			// accepting that many or most will be lost.
+			// Only count replies.
+
+			b.ResetTimer()
+			go sprayUDP(conn, math.MaxInt)
+			readBuf := make([]byte, 65536)
+			n := 0
+			for range b.N {
+				n, err = conn.Read(readBuf)
+				require.Nil(b, err)
+			}
+			b.StopTimer()
+			// Terminate the spraying thread.
+			conn.Close()
+
+			lastResponse := dns.Msg{}
+			err = lastResponse.Unpack(readBuf[:n])
+			require.NoError(b, err)
+			// To confirm response content, uncomment:
+			// b.Logf("%v", lastResponse)
+
+			seconds := b.Elapsed().Seconds()
+			b.ReportMetric(float64(b.N)/seconds, "responses/sec")
+			// This metric is less meaningful than QPS, so we can hide it.
+			b.ReportMetric(0, "ns/op")
+		})
 	}
-	conn, err := net.DialUDP("udp", nil, &udpAddr)
-	require.Nil(b, err, "Error connecting to server")
-	defer conn.Close()
-
-	// Strategy: Spray DNS packets as fast as possible,
-	// accepting that many or most will be lost.
-	// Only count replies.
-
-	b.ResetTimer()
-	go sprayUDP(conn, math.MaxInt)
-	readBuf := make([]byte, 65536)
-	n := 0
-	for range b.N {
-		n, err = conn.Read(readBuf)
-		require.Nil(b, err)
-	}
-	b.StopTimer()
-	// Terminate the spraying thread.
-	conn.Close()
-
-	lastResponse := dns.Msg{}
-	err = lastResponse.Unpack(readBuf[:n])
-	require.NoError(b, err)
-	// To confirm response content, uncomment:
-	// b.Logf("%v", lastResponse)
-
-	seconds := b.Elapsed().Seconds()
-	b.ReportMetric(float64(b.N)/seconds, "responses/sec")
-	// This metric is less meaningful than QPS, so we can hide it.
-	b.ReportMetric(0, "ns/op")
 }

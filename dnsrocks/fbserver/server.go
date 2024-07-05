@@ -36,6 +36,7 @@ import (
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 	"github.com/facebook/dns/dnsrocks/metrics"
 	"github.com/facebook/dns/dnsrocks/nsid"
+	"github.com/facebook/dns/dnsrocks/throttle"
 	"github.com/facebook/dns/dnsrocks/tlsconfig"
 	"github.com/facebook/dns/dnsrocks/whoami"
 )
@@ -210,6 +211,7 @@ func (srv *Server) Start() (err error) {
 		dotTLSAHandler   *dotTLSAHandler
 		anyHandler       *anyHandler
 		nsidHandler      *nsid.Handler
+		throttleHandler  *throttle.Handler
 		numListeners     = srv.conf.ReusePort
 	)
 
@@ -318,6 +320,16 @@ func (srv *Server) Start() (err error) {
 			glog.Infof("Max UDP size not set")
 		}
 
+		if srv.conf.MaxConcurrency > 0 {
+			maxWorkers := srv.conf.MaxConcurrency * srv.conf.NumCPU
+			glog.Infof("Limiting total concurrency to %d", maxWorkers)
+			if throttleHandler, err = throttle.NewHandler(maxWorkers); err != nil {
+				return err
+			}
+			throttleHandler.Next = handler.defaultHandler
+			handler.defaultHandler = throttleHandler
+		}
+
 		addr := joinAddress(ip, srv.conf.Port)
 
 		for i := 0; i < numListeners; i++ {
@@ -328,6 +340,9 @@ func (srv *Server) Start() (err error) {
 			}
 			s.ReadTimeout = srv.conf.ReadTimeout
 			s.NotifyStartedFunc = srv.NotifyStartedFunc
+			if throttleHandler != nil {
+				throttleHandler.Attach(s)
+			}
 			srv.servers = append(srv.servers, s)
 			// Server never calls Done() method, it only provides
 			// this wg for client to use.
@@ -349,6 +364,9 @@ func (srv *Server) Start() (err error) {
 				s.ReadTimeout = srv.conf.ReadTimeout
 				s.NotifyStartedFunc = srv.NotifyStartedFunc
 				s.IdleTimeout = idleTimeoutFunc
+				if throttleHandler != nil {
+					throttleHandler.Attach(s)
+				}
 				srv.servers = append(srv.servers, s)
 				// Server never calls Done() method, it only provides
 				// this wg for client to use.
@@ -372,6 +390,9 @@ func (srv *Server) Start() (err error) {
 				s.ReadTimeout = srv.conf.ReadTimeout
 				s.NotifyStartedFunc = srv.NotifyStartedFunc
 				s.IdleTimeout = idleTimeoutFunc
+				if throttleHandler != nil {
+					throttleHandler.Attach(s)
+				}
 				srv.servers = append(srv.servers, s)
 				// Server never calls Done() method, it only provides
 				// this wg for client to use.

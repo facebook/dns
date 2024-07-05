@@ -15,7 +15,7 @@ limitations under the License.
 // Source: github.com/miekg/dns (interfaces: PacketConnReader)
 
 // Package ratelimit is a generated GoMock package.
-package ratelimit
+package throttle
 
 import (
 	net "net"

@@ -15,7 +15,7 @@ limitations under the License.
 // Source: github.com/coredns/coredns/plugin (interfaces: Handler)
 
 // Package ratelimit is a generated GoMock package.
-package ratelimit
+package throttle
 
 import (
 	context "context"
