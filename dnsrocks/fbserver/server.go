@@ -212,6 +212,7 @@ func (srv *Server) Start() (err error) {
 		anyHandler       *anyHandler
 		nsidHandler      *nsid.Handler
 		throttleHandler  *throttle.Handler
+		throttleLimiter  *throttle.Limiter
 		numListeners     = srv.conf.ReusePort
 	)
 
@@ -279,6 +280,17 @@ func (srv *Server) Start() (err error) {
 		glog.Info("-nsid was not specified, disabling NSID responses")
 	}
 
+	// Share one limiter across all IPs.
+	if srv.conf.MaxConcurrency > 0 {
+		maxWorkers := srv.conf.MaxConcurrency * srv.conf.NumCPU
+		glog.Infof("Limiting total concurrency to %d", maxWorkers)
+		if throttleLimiter, err = throttle.NewLimiter(maxWorkers); err != nil {
+			return err
+		}
+
+		go throttle.Monitor(throttleLimiter, srv.stats, time.Second)
+	}
+
 	// For each configured IP, we may start a number of DNS servers for each
 	// transport protocol.
 	for ip, maxAns := range srv.conf.IPAns {
@@ -320,12 +332,8 @@ func (srv *Server) Start() (err error) {
 			glog.Infof("Max UDP size not set")
 		}
 
-		if srv.conf.MaxConcurrency > 0 {
-			maxWorkers := srv.conf.MaxConcurrency * srv.conf.NumCPU
-			glog.Infof("Limiting total concurrency to %d", maxWorkers)
-			if throttleHandler, err = throttle.NewHandler(maxWorkers); err != nil {
-				return err
-			}
+		if throttleLimiter != nil {
+			throttleHandler = throttle.NewHandler(throttleLimiter)
 			throttleHandler.Next = handler.defaultHandler
 			handler.defaultHandler = throttleHandler
 		}

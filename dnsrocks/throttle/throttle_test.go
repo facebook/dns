@@ -29,8 +29,9 @@ func TestConcurrencyReader(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	h, err := NewHandler(3)
+	l, err := NewLimiter(3)
 	require.NoError(t, err)
+	h := NewHandler(l)
 	next := NewMockHandler(ctrl)
 	h.Next = next
 	innerReader := NewMockPacketConnReader(ctrl)
@@ -78,30 +79,75 @@ func TestConcurrencyReader(t *testing.T) {
 // Verify that context cancellation causes Acquire() to return early
 // with an error.
 func TestContext(t *testing.T) {
-	h, err := NewHandler(3)
+	l, err := NewLimiter(3)
 	require.NoError(t, err)
 
 	for range 3 {
-		err = h.Acquire(context.Background())
+		err = l.acquire(context.Background())
 		require.NoError(t, err)
 	}
 
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
-	err = h.Acquire(canceled)
+	err = l.acquire(canceled)
 	require.Error(t, err)
 }
 
 func TestMsgInvalid(t *testing.T) {
-	h, err := NewHandler(3)
+	l, err := NewLimiter(3)
 	require.NoError(t, err)
+	h := NewHandler(l)
 
 	// This handler is limited to three concurrent requests,
 	// but calling MsgInvalid decrements the counter so we can
 	// do this loop as many times as we want.
 	for range 10 {
-		err = h.Acquire(context.Background())
+		err = l.acquire(context.Background())
 		require.NoError(t, err)
 		h.MsgInvalid(nil, nil)
 	}
+}
+
+func TestCount(t *testing.T) {
+	l, err := NewLimiter(3)
+	require.NoError(t, err)
+	require.EqualValues(t, 0, l.Count())
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Add three queries.
+	err = l.acquire(ctx)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, l.Count())
+
+	err = l.acquire(ctx)
+	require.NoError(t, err)
+	require.EqualValues(t, 2, l.Count())
+
+	err = l.acquire(ctx)
+	require.NoError(t, err)
+	require.EqualValues(t, 3, l.Count())
+
+	// Remove three queries.
+	l.release()
+	require.EqualValues(t, 2, l.Count())
+
+	l.release()
+	require.EqualValues(t, 1, l.Count())
+
+	l.release()
+	require.EqualValues(t, 0, l.Count())
+
+	// Add one query again.
+	err = l.acquire(ctx)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, l.Count())
+
+	// Cancel the context.
+	cancel()
+
+	// Count should not be incremented if the context was canceled.
+	err = l.acquire(ctx)
+	require.Error(t, err)
+	require.EqualValues(t, 1, l.Count())
 }
