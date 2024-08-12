@@ -478,6 +478,65 @@ func TestMaxUDPSize(t *testing.T) {
 	}
 }
 
+// Regression test for throttle jamming bug.
+func TestThrottleJamming(t *testing.T) {
+	// Setup
+	qname := "example.com."
+	validQuery := (&dns.Msg{}).SetQuestion(qname, dns.TypeA)
+	acceptBuf, err := validQuery.Pack()
+	require.Nil(t, err)
+
+	badOpcode := validQuery.Copy()
+	badOpcode.MsgHdr.Opcode = dns.OpcodeStatus
+	notImplementedBuf, err := badOpcode.Pack()
+	require.Nil(t, err)
+
+	response := validQuery.Copy()
+	response.MsgHdr.Response = true
+	ignoredBuf, err := response.Pack()
+	require.Nil(t, err)
+
+	noQuestions := validQuery.Copy()
+	noQuestions.Question = nil
+	rejectBuf, err := noQuestions.Pack()
+	require.Nil(t, err)
+
+	invalidBuf := make([]byte, 1)
+
+	N := 10
+	config := makeTestServerConfig(true, false)
+	config.MaxConcurrency = N
+	portMap, srv := makeTestServer(t, config)
+	defer srv.Shutdown()
+
+	// Try to jam the throttle by sending weird (and regular) packets.
+	for i := 0; i < N*config.NumCPU; i++ {
+		for _, buf := range [][]byte{acceptBuf, notImplementedBuf, ignoredBuf, rejectBuf, invalidBuf} {
+			conn, err := net.Dial("tcp", portMap["tcp"])
+			require.Nil(t, err)
+
+			tcpLen := []byte{0, uint8(len(buf))}
+			_, err = conn.Write(tcpLen)
+			_, err = conn.Write(buf)
+			require.Nil(t, err)
+
+			conn.Close()
+		}
+	}
+
+	// Check that the server is still working (not jammed).
+	c := new(dns.Client)
+	c.Net = "tcp"
+	m := new(dns.Msg)
+	m.SetQuestion("foo2.example.com.", dns.TypeA)
+	r, _, err := c.Exchange(m, portMap["tcp"])
+	require.Nil(t, err)
+	require.NotEqual(t, 0, len(r.Answer))
+
+	cname := r.Answer[0].(*dns.CNAME).Target
+	require.Equal(t, "some-other.domain.", cname)
+}
+
 func sprayUDP(conn *net.UDPConn, limit int) {
 	qname := "0123456789.example.com."
 	msg := (&dns.Msg{}).SetQuestion(qname, dns.TypeA)

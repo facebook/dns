@@ -110,11 +110,21 @@ func (h *Handler) MsgInvalid([]byte, error) {
 	h.lim.release()
 }
 
+// MsgAcceptFunc is a [dns.MsgAcceptFunc].
+func (h *Handler) MsgAcceptFunc(dh dns.Header) dns.MsgAcceptAction {
+	action := dns.DefaultMsgAcceptFunc(dh)
+	if action != dns.MsgAccept {
+		h.lim.release()
+	}
+	return action
+}
+
 // Attach connects this handler to a Server's message processing path.
 // This method must be called before the server starts.
 func (h *Handler) Attach(s *dns.Server) {
 	s.DecorateReader = h.DecorateReader
 	s.MsgInvalidFunc = h.MsgInvalid
+	s.MsgAcceptFunc = h.MsgAcceptFunc
 }
 
 // Reader is a [dns.Reader] that blocks when
