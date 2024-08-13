@@ -20,8 +20,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/coredns/coredns/plugin"
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
+
+	"github.com/coredns/coredns/plugin"
 	"github.com/miekg/dns"
 	"golang.org/x/sync/semaphore"
 )
