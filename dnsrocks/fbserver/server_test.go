@@ -517,6 +517,7 @@ func TestThrottleJamming(t *testing.T) {
 
 			tcpLen := []byte{0, uint8(len(buf))}
 			_, err = conn.Write(tcpLen)
+			require.Nil(t, err)
 			_, err = conn.Write(buf)
 			require.Nil(t, err)
 
