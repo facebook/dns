@@ -14,6 +14,7 @@ limitations under the License.
 package fbserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -170,12 +171,14 @@ func (srv *Server) initTCPServer(addr string, h dns.Handler, s *metrics.Stats) (
 
 // initTLSServer loads TLS certificates and session keys, before opening a
 // monitored TCP/TLS socket and returns a DNS server ready for ActivateAndServe.
-func (srv *Server) initTLSServer(addr string, h dns.Handler, conf *tlsconfig.TLSConfig, s *metrics.Stats) (*dns.Server, error) {
-	tlsConf, err := tlsconfig.InitTLSConfig(conf)
+// The context is used to teminate the session ticket refresh goroutine.
+func (srv *Server) initTLSServer(ctx context.Context, addr string, h dns.Handler, conf *tlsconfig.TLSConfig, s *metrics.Stats) (*dns.Server, error) {
+	tlsConf, err := tlsconfig.InitTLSConfig(ctx, conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init TLS config: %w", err)
 	}
-	l, err := listenTLS(addr, srv.listenConf(), tlsConf, s)
+	// This listener is owned by [dns.Server], and will be closed by [dns.Server.Shutdown].
+	l, err := listenTLS(addr, srv.listenConf(), tlsConf, s) //nolint:contextcheck
 	if err != nil {
 		return nil, fmt.Errorf("failed to init TCP/TLS server: %w", err)
 	}
@@ -390,8 +393,10 @@ func (srv *Server) Start() (err error) {
 			// Optionally start a TLS server for the address as well.
 			if srv.conf.TLS {
 				addr := joinAddress(ip, srv.conf.TLSConfig.Port)
-				s, err := srv.initTLSServer(addr, handler, &srv.conf.TLSConfig, stats)
+				ctx, cancel := context.WithCancel(context.Background())
+				s, err := srv.initTLSServer(ctx, addr, handler, &srv.conf.TLSConfig, stats)
 				if err != nil {
+					cancel()
 					return err
 				}
 				s.MaxTCPQueries = srv.conf.MaxTCPQueries
@@ -410,6 +415,7 @@ func (srv *Server) Start() (err error) {
 					if err != nil {
 						glog.Errorf("TCP-TLS server for %s failed to start: %v", addr, err)
 					}
+					cancel()
 				}()
 			}
 		}

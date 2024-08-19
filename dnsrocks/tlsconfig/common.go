@@ -26,7 +26,7 @@ type CryptoSSLConfig struct {
 // SessionTicketKeysConfig contains the config for handling session resumption
 type SessionTicketKeysConfig struct {
 	SeedFile               string
-	SeedFileReloadInterval int
+	SeedFileReloadInterval int // seconds, 0 to disable reload
 }
 
 // TLSConfig contains config for a given TLS Listener

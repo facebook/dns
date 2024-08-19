@@ -14,6 +14,7 @@ limitations under the License.
 package tlsconfig
 
 import (
+	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
@@ -80,16 +81,19 @@ func loadSessionTicketKeys(reader io.Reader) (keys [][32]byte, err error) {
 	return
 }
 
-func initSessionTicketKeys(config *tls.Config, keyConfig *SessionTicketKeysConfig) {
-	if keyConfig.SeedFile != "" {
-		err := loadSessionTicketFromFile(config, keyConfig.SeedFile)
-		if err != nil {
-			glog.Errorf(
-				"Failed to load session tickets: %s. Skipping periodic reload ticker",
-				err,
-			)
-			return
-		}
+func initSessionTicketKeys(ctx context.Context, config *tls.Config, keyConfig *SessionTicketKeysConfig) {
+	if keyConfig.SeedFile == "" {
+		glog.Infof("Skipping loading session ticket keys, no seed file provided.")
+		return
+	}
+	err := loadSessionTicketFromFile(config, keyConfig.SeedFile)
+	if err != nil {
+		glog.Errorf(
+			"Failed to load session tickets: %s. Skipping periodic reload ticker",
+			err,
+		)
+	}
+	if keyConfig.SeedFileReloadInterval > 0 {
 		glog.Infof(
 			"Setting ticker to reload seed file %s every %d seconds.",
 			keyConfig.SeedFile,
@@ -98,7 +102,6 @@ func initSessionTicketKeys(config *tls.Config, keyConfig *SessionTicketKeysConfi
 		ticker := time.NewTicker(
 			time.Duration(keyConfig.SeedFileReloadInterval) * time.Second,
 		)
-		quit := make(chan struct{})
 		go func() {
 			for {
 				select {
@@ -110,20 +113,21 @@ func initSessionTicketKeys(config *tls.Config, keyConfig *SessionTicketKeysConfi
 							err,
 						)
 					}
-				case <-quit:
+				case <-ctx.Done():
 					ticker.Stop()
 					return
 				}
 			}
 		}()
 	} else {
-		glog.Infof("Skipping loading session ticket keys, no seed file provided.")
+		glog.Infof("Not reloading seed file")
 	}
 }
 
 // InitTLSConfig loads keys and certs from a base TLSConfig into a new
-// TLSConfig.
-func InitTLSConfig(conf *TLSConfig) (*tls.Config, error) {
+// TLSConfig.  If configured, the TLSConfig will periodically refresh its
+// session ticket keys for the lifetime of the context.
+func InitTLSConfig(ctx context.Context, conf *TLSConfig) (*tls.Config, error) {
 	var err error
 	var certs []tls.Certificate
 	var cert tls.Certificate
@@ -135,6 +139,6 @@ func InitTLSConfig(conf *TLSConfig) (*tls.Config, error) {
 	config := tls.Config{
 		Certificates: certs,
 	}
-	initSessionTicketKeys(&config, &conf.SessionTicketKeys)
+	initSessionTicketKeys(ctx, &config, &conf.SessionTicketKeys)
 	return &config, nil
 }
