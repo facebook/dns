@@ -14,8 +14,10 @@ limitations under the License.
 package tlsconfig
 
 import (
+	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/facebook/dns/dnsrocks/testaid"
 
@@ -38,7 +40,7 @@ func TestInitTLSConfigLoadsCertAndKey(t *testing.T) {
 	defer os.Remove(certfile)
 	tlsconfigstruct := makeTLSConfig(certfile, SessionTicketKeysConfig{})
 
-	tlsconfig, err := InitTLSConfig(tlsconfigstruct)
+	tlsconfig, err := InitTLSConfig(context.Background(), tlsconfigstruct)
 	require.NotNil(t, tlsconfig.Certificates)
 	require.Nil(t, err)
 }
@@ -51,7 +53,7 @@ func TestInitTLSConfigErrorsOnInvalidCertAndKeyPath(t *testing.T) {
 	os.Remove(tmpfile.Name())
 	tlsconfigstruct := makeTLSConfig(tmpfile.Name(), SessionTicketKeysConfig{})
 
-	tlsconfig, err := InitTLSConfig(tlsconfigstruct)
+	tlsconfig, err := InitTLSConfig(context.Background(), tlsconfigstruct)
 	require.NotNil(t, err)
 	require.Nil(t, tlsconfig)
 }
@@ -66,7 +68,30 @@ func TestInitTLSConfigNoErrorOnInvalidResumptionTicket(t *testing.T) {
 	os.Remove(tmpfile.Name())
 	tlsconfigstruct := makeTLSConfig(certfile, SessionTicketKeysConfig{SeedFile: tmpfile.Name()})
 
-	tlsconfig, err := InitTLSConfig(tlsconfigstruct)
+	tlsconfig, err := InitTLSConfig(context.Background(), tlsconfigstruct)
 	require.Nil(t, err)
 	require.NotNil(t, tlsconfig)
+}
+
+// TestCancellation exercises (but does not validate) the cancellation
+// pathway. It can only catch crash bugs.
+func TestCancellation(t *testing.T) {
+	certfile := testaid.MkTestCert(t)
+	defer os.Remove(certfile)
+	tmpfile, err := os.CreateTemp("", "example")
+	require.Nil(t, err)
+	os.Remove(tmpfile.Name())
+	tlsconfigstruct := makeTLSConfig(certfile, SessionTicketKeysConfig{
+		SeedFile:               tmpfile.Name(),
+		SeedFileReloadInterval: 1, // 1 second
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	tlsconfig, err := InitTLSConfig(ctx, tlsconfigstruct)
+	require.Nil(t, err)
+	require.NotNil(t, tlsconfig)
+
+	cancel()
+	// Give the loop plenty of time to discover the cancellation.
+	time.Sleep(5 * time.Second)
 }
