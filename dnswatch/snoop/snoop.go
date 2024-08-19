@@ -337,7 +337,7 @@ func (c *Consumer) handleOutputSetup() {
 		go startPrometheusExporter(c.exporterQueue, c.Config.ExporterListen)
 		return
 	}
-	log.Infof(DisplayHeader(c.Fields))
+	log.Info(DisplayHeader(c.Fields))
 }
 
 func (c *Consumer) handlePrint(d *DisplayInfo) {
@@ -346,10 +346,10 @@ func (c *Consumer) handlePrint(d *DisplayInfo) {
 		return
 	}
 	if c.Config.Detailed {
-		log.Infof(d.DetailedString())
+		log.Info(d.DetailedString())
 		return
 	}
-	log.Infof(d.String())
+	log.Info(d.String())
 }
 
 func (c *Consumer) handleRefresh() {

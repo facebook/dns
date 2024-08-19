@@ -16,6 +16,7 @@ package snoop
 import (
 	"bytes"
 	_ "embed" // Embed needs to be imported for the []byte containing the embedded Bpf object
+	"errors"
 
 	"encoding/binary"
 
@@ -182,7 +183,7 @@ func (p *Probe) loadAndAttachProbes() (*libbpfgo.Module, error) {
 			return nil, fmt.Errorf("unable attaching fentry/"+kernelFnName+": %w", err)
 		}
 		if kprobelink.FileDescriptor() == 0 {
-			return nil, fmt.Errorf("kprobe/" + kernelFnName + "not running.")
+			return nil, errors.New("kprobe/" + kernelFnName + "not running.")
 		}
 	}
 	return bpfModule, nil
