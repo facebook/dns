@@ -14,13 +14,14 @@ limitations under the License.
 package cdb
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path"
 	"testing"
 
 	"github.com/facebook/dns/dnsrocks/testutils"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,7 +39,7 @@ func TestCreateCDB(t *testing.T) {
 		{getData("data.nets"), nil, true},
 		{getData("data.empty"), nil, true},
 		// can't parse cdb as valid data
-		{getData("data.cdb"), errors.WithStack(errors.New("")), false},
+		{getData("data.cdb"), fmt.Errorf("%w", errors.New("")), false},
 	}
 
 	for _, test := range tests {

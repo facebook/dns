@@ -14,13 +14,13 @@ limitations under the License.
 package cdb
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"runtime"
 
 	"github.com/facebook/dns/dnsrocks/dnsdata"
 
-	"github.com/pkg/errors"
 	cdb "github.com/repustate/go-cdb"
 	"golang.org/x/sync/errgroup"
 )
@@ -45,12 +45,12 @@ func CreateCDB(ipath string, opath string, options *CreatorOptions) (mw int, err
 	// Open infile for read
 	ifile, err := os.Open(ipath)
 	if err != nil {
-		return 0, errors.Wrapf(err, "can't open input file")
+		return 0, fmt.Errorf("can't open input file: %w", err)
 	}
 	defer ifile.Close()
 	serial, err := dnsdata.DeriveSerial(ifile)
 	if err != nil {
-		return 0, errors.Wrapf(err, "can't stat input file")
+		return 0, fmt.Errorf("can't stat input file: %w", err)
 	}
 
 	// cleanup partially written db in case of failure
@@ -62,7 +62,7 @@ func CreateCDB(ipath string, opath string, options *CreatorOptions) (mw int, err
 
 	db, err := cdb.NewWriter(opath)
 	if err != nil {
-		return 0, errors.Wrapf(err, "can't create output database")
+		return 0, fmt.Errorf("can't create output database: %w", err)
 	}
 	defer db.Close()
 
@@ -73,7 +73,7 @@ func CreateCDB(ipath string, opath string, options *CreatorOptions) (mw int, err
 func CreateCDBFromReader(r io.Reader, db cdb.Writer, serial uint32, workers int) (nw int, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.Errorf("recovered panic while writing CDB: %v", r)
+			err = fmt.Errorf("recovered panic while writing CDB: %v", r)
 		}
 	}()
 
@@ -99,7 +99,7 @@ func CreateCDBFromReader(r io.Reader, db cdb.Writer, serial uint32, workers int)
 		}
 	}
 	if err := g.Wait(); err != nil {
-		return nw, errors.Wrapf(err, "can't create output database")
+		return nw, fmt.Errorf("can't create output database: %w", err)
 	}
 	return nw, nil
 }
