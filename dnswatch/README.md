@@ -12,18 +12,20 @@ It helps with investigating what DNS queries are made on the host by which proce
 # Dependencies
 - libbpf 1.1.0
 - libpcap
+- [libbcc](https://github.com/iovisor/bcc/blob/master/INSTALL.md#packages)
 
 # Build dependencies
 - go 1.18 +
 - bpftool
 - libpcap-dev
 - libbpf-dev
+- libbcc-dev
 - clang
 - make
 
 
 # Building DNSWatch
-- Make sure your build host has all the build dependencies `apt-get install libbpf1 libbpf-dev libpcap0.8 libpcap0.8-dev make clang gcc-multilib`
+- Make sure your build host has all the build dependencies `apt-get install libbpf1 libbpf-dev libpcap0.8 libpcap0.8-dev make clang gcc-multilib libbpfcc-dev`
 - You also might need to install bpftool. `apt-get install bpftool`
 - run `make`
 
