@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/google/gopacket/layers"
 	mkdns "github.com/miekg/dns"
@@ -36,6 +37,14 @@ type DisplayInfo struct {
 	queryAddr    net.IP
 	responseAddr net.IP
 	fields       []FieldID
+}
+
+func stackStringVertical(stack []string) string {
+	return strings.Join(stack, "\n")
+}
+
+func stackStringHorizontal(stack []string) string {
+	return strings.Join(stack, " -> ")
 }
 
 // DisplayHeader displays the header the field list
@@ -105,6 +114,8 @@ func (d *DisplayInfo) FieldValue(field FieldID) string {
 		s = d.queryAddr.String()
 	case FieldRADDR:
 		s = d.responseAddr.String()
+	case FieldSTACK:
+		s = stackStringHorizontal(d.stack)
 	}
 	return fmt.Sprintf(FieldToMeta[field].Format, s)
 }
@@ -167,6 +178,10 @@ func (d *DisplayInfo) DetailedString() string {
 		s += ", process name: " + UNK
 	}
 	s += "\n"
+	if len(d.stack) > 0 {
+		s += ";; STACK:\n"
+		s += stackStringVertical(d.stack) + "\n\n"
+	}
 
 	s += ";; query: "
 	if d.query != nil {

@@ -21,6 +21,8 @@ import (
 )
 
 func init() {
+	detailedCmd.Flags().BoolVar(&cfg.ProbeDebug, "probedebug", false, "debug only probe using stdout")
+	detailedCmd.Flags().BoolVar(&cfg.FilterDebug, "filterdebug", false, "debug only filter using stdout")
 	RootCmd.AddCommand(detailedCmd)
 }
 

@@ -170,6 +170,7 @@ type ProcInfo struct {
 	tid     int
 	pName   string
 	cmdline string
+	stack   []string
 }
 
 // UniqueDNS uniquely identifies DNS pair query-response
@@ -220,6 +221,7 @@ func (c *Consumer) handleProcessData(pData *ProbeDTO) {
 		tid:     int(pData.ProbeData.Pid),
 		pName:   unix.ByteSliceToString(pData.ProbeData.Comm[:]),
 		cmdline: unix.ByteSliceToString(pData.ProbeData.Cmdline[:]),
+		stack:   pData.ProbeData.Stack,
 	}
 }
 

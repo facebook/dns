@@ -27,6 +27,8 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/facebook/dns/dnswatch/snoop/bccsymcache"
+
 	"github.com/aquasecurity/libbpfgo"
 	log "github.com/sirupsen/logrus"
 )
@@ -49,6 +51,9 @@ var pidToCommCache map[uint32][commLength]byte
 
 // used to cache pid to CmdLine translation
 var pidToCmdLineCache map[uint32][cmdlineLength]byte
+
+// used to cache stacktrace symbol resolver cache
+var pidToSymbolCache map[uint32]*bccsymcache.Cache
 
 // fnIDToFnName maps FnID to kernel function name
 var fnIDToFnName = map[FnID]string{
@@ -75,17 +80,23 @@ const (
 
 	// argLength is the max len of a single arg
 	argLength = 30
+
+	// maxStackRawtp is the max depth of the stack from bpf code MAX_STACK_RAWTP
+	maxStackRawtp = 100
 )
 
 // ProbeEventData is a struct populated with data from kernel
 // It must match the struct in the BPF program
 type ProbeEventData struct {
+	UserStack [maxStackRawtp]uint64
 	// Tgid is the thread group id
 	Tgid uint32
 	// Pid is the process id
 	Pid uint32
 	// SockPortNr is the socket number used to send_msg
 	SockPortNr int32
+	//
+	UserStackSize int32
 	// FnID is the identifier of the function
 	FnID uint8
 }
@@ -105,6 +116,8 @@ type EnhancedProbeData struct {
 	SockPortNr int32
 	// FnID is the identifier of the function
 	FnID uint8
+	// Stack is the stack trace
+	Stack []string
 }
 
 // Probe is the BPF handler which attaches kprobes to kernel functions
@@ -195,6 +208,12 @@ func (p *Probe) loadAndAttachProbes() (*libbpfgo.Module, error) {
 func (p *Probe) Run(ch chan<- *ProbeDTO) error {
 	pidToCommCache = make(map[uint32][commLength]byte)
 	pidToCmdLineCache = make(map[uint32][cmdlineLength]byte)
+	pidToSymbolCache = make(map[uint32]*bccsymcache.Cache)
+	defer func() {
+		for _, cache := range pidToSymbolCache {
+			cache.Free()
+		}
+	}()
 
 	bpfModule, err := p.loadAndAttachProbes()
 	if err != nil {
@@ -236,12 +255,19 @@ func (p *Probe) Run(ch chan<- *ProbeDTO) error {
 			enhanchedEvent.FnID = event.FnID
 			enhanchedEvent.SockPortNr = event.SockPortNr
 			enhanchedEvent.Comm, err = getProcComm(event.Pid)
-
 			if err != nil {
 				if p.Debug {
 					log.Printf("unable to read event cmd: %v", err)
 				}
 			}
+
+			enhanchedEvent.Stack, err = getProcStacktrace(event.Pid, event.UserStackSize, event.UserStack[:])
+			if err != nil {
+				if p.Debug {
+					log.Printf("unable to get pid %d stack: %v", event.Pid, err)
+				}
+			}
+
 			cmdLine, err := getProcCmdLine(event.Pid)
 			if err != nil {
 				if p.Debug {
@@ -322,4 +348,35 @@ func getProcCmdLine(pid uint32) ([cmdlineLength]byte, error) {
 	pidToCmdLineCache[pid] = retbuf
 
 	return retbuf, nil
+}
+
+func getProcStacktrace(pid uint32, stackSize int32, stack []uint64) ([]string, error) {
+	log.Debugf("stacktrace: size:%v, data:%v", stackSize, stack)
+	if stackSize <= 0 {
+		return nil, errors.New("stacktrace coming from BPF is empty")
+	}
+	if pid == 0 {
+		return nil, errors.New("pid is 0")
+	}
+	var cache *bccsymcache.Cache
+	cache, found := pidToSymbolCache[pid]
+	if !found {
+		cache = bccsymcache.New(int(pid))
+		pidToSymbolCache[pid] = cache
+	}
+
+	result := []string{}
+
+	for _, addr := range stack {
+		if addr == 0 {
+			break
+		}
+		sym, err := cache.ResolveAddr(addr)
+		if err != nil {
+			return result, err
+		}
+		n := fmt.Sprintf("%s+%d (%s)", sym.DemangleName, sym.Offset, sym.Module)
+		result = append(result, n)
+	}
+	return result, nil
 }

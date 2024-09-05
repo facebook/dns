@@ -37,6 +37,7 @@ const (
 	FieldCMDLINE
 	FieldQADDR
 	FieldRADDR
+	FieldSTACK
 )
 
 // FieldMeta describes the data format for each field
@@ -60,6 +61,7 @@ var FieldToMeta = map[FieldID]FieldMeta{
 	FieldCMDLINE: {"CMDLINE", "%-120v "},
 	FieldQADDR:   {"QADDR", "%-40v "},
 	FieldRADDR:   {"RADDR", "%-40v "},
+	FieldSTACK:   {"STACK", "%-40v "},
 }
 
 // AllFieldNames returns list of all acceptable field names
