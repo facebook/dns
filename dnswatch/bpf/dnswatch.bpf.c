@@ -28,12 +28,17 @@ limitations under the License.
 #define HASHMAP_SIZE 100003
 #define DNS_PROBE_PORT 53
 
+/* Permit pretty deep stack traces */
+#define MAX_STACK_RAWTP 100
+// order from bigger to smaller types and explicitly request packing
 struct dnswatch_kprobe_event_data {
+  u64 user_stack[MAX_STACK_RAWTP];
   u32 tgid;
   u32 pid;
   int sock_port_nr;
+  int user_stack_size;
   char fn_id;
-};
+} __attribute__((packed));
 
 // dnswatch_kprobe_output_events adds events in perf map
 // BPF_PERF_OUTPUT(dnswatch_kprobe_output_events);
@@ -56,6 +61,7 @@ sendmsg_solver(struct pt_regs* ctx, char fn_id, u16 dport, u16 sport) {
   u64 __pid_tgid = bpf_get_current_pid_tgid();
   u32 __tgid = __pid_tgid >> 32;
   u32 __pid = __pid_tgid;
+  int max_len = MAX_STACK_RAWTP * sizeof(u64);
 
   struct dnswatch_kprobe_event_data* data = bpf_ringbuf_reserve(
       &dnswatch_kprobe_output_events,
@@ -68,7 +74,8 @@ sendmsg_solver(struct pt_regs* ctx, char fn_id, u16 dport, u16 sport) {
   data->pid = __pid;
   data->sock_port_nr = (int)sport;
   data->fn_id = fn_id;
-
+  data->user_stack_size =
+      bpf_get_stack(ctx, data->user_stack, max_len, BPF_F_USER_STACK);
   bpf_ringbuf_submit(data, 0);
   return 0;
 }
