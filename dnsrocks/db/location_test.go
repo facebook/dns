@@ -578,6 +578,11 @@ func testFindLocationForResolversCustomBitmap(t *testing.T, separateBitmap bool)
 		},
 		{
 			domain:           "cnamemap.example.com.",
+			resolver:         "3.3.3.3",
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 128, LocID: []byte("fml1c01")},
+		},
+		{
+			domain:           "cnamemap.example.com.",
 			resolver:         "1.1.0.1",
 			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 96, LocID: []byte{0, 1}},
 		},

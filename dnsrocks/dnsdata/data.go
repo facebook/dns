@@ -1581,8 +1581,12 @@ func putloc(w io.Writer, lo Loc) {
 }
 
 func putloctext(w io.Writer, lo Loc) {
-	for _, b := range lo {
-		fmt.Fprintf(w, "\\%03o", b)
+	if len(lo) == 2 {
+		for _, b := range lo {
+			fmt.Fprintf(w, "\\%03o", b)
+		}
+	} else {
+		putquotedtext(w, lo)
 	}
 }
 
@@ -1611,13 +1615,17 @@ func putlmaptext(w io.Writer, m Lmap) {
 	if len(m) == 0 {
 		m = []byte{0, 0}
 	}
-	for _, b := range m {
-		fmt.Fprintf(w, "\\%03o", b)
+	if len(m) == 2 {
+		for _, b := range m {
+			fmt.Fprintf(w, "\\%03o", b)
+		}
+	} else {
+		putquotedtext(w, m)
 	}
 }
 
-func putquotedtext(w io.Writer, data []byte) {
-	_, err := w.Write(quote.Bquote(data[:]))
+func putquotedtext(w io.Writer, b []byte) {
+	_, err := w.Write(quote.Bquote(b))
 	if err != nil {
 		glog.Errorf("%v", err)
 	}
@@ -1646,15 +1654,7 @@ func putrrhead(w io.Writer, t WireType, ttl uint32, loc Loc, iswildcard bool) {
 		if err != nil {
 			glog.Errorf("%v", err)
 		}
-		if len(loc) > 2 {
-			_, _ = w.Write([]byte{0xff, byte(len(loc))})
-			_, err = w.Write(loc)
-		} else {
-			_, err = w.Write(loc)
-		}
-		if err != nil {
-			glog.Errorf("%v", err)
-		}
+		putloc(w, loc)
 	}
 	err = binary.Write(w, binary.BigEndian, ttl)
 	if err != nil {

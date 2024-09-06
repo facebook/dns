@@ -15,6 +15,7 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -187,10 +188,24 @@ func (c *cdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 		if errors.Is(err, io.EOF) {
 			continue
 		}
-		if err == nil {
+		if err != nil {
+			return nil, 0, err
+		}
+
+		if len(locID) < 2 {
+			err = fmt.Errorf("Invalid location length %d, value %v", len(locID), locID)
+			return nil, 0, err
+		}
+		if locID[0] != 0xff {
 			return locID, mask, nil
 		}
-		return nil, 0, err
+		locLen, locID := locID[1], locID[2:]
+		if int(locLen) > len(locID) {
+			err = fmt.Errorf("invalid location length byte %d > %d", locLen, len(locID))
+			return nil, 0, err
+		}
+		locID = locID[:locLen]
+		return locID, mask, nil
 	}
 	return nil, 0, nil
 }

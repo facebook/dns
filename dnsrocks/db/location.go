@@ -135,7 +135,7 @@ func (r *DataReader) FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns
 // findLocation finds the `Location` in mtype maps that matches the `ipnet`, and returns Location.
 // If no mtype is found for the domain, Location.MapID will be {0, 0}
 func (r *DataReader) findLocation(q []byte, mtype []byte, ipnet *net.IPNet) (*Location, error) {
-	var location = &Location{MapID: []byte{0, 0}, LocID: []byte{0, 0}}
+	var location = EmptyLocation
 
 	// FindMap looks up mapID for domain e.g DB key "{mtype}{packed_domain}{MapID}"
 	// Starting from a domain = q, first we try to get an exact match
@@ -146,8 +146,8 @@ func (r *DataReader) findLocation(q []byte, mtype []byte, ipnet *net.IPNet) (*Lo
 		return nil, err
 	}
 	if mapID != nil {
-		// We found a match. Copy this to the MapID
-		copy(location.MapID[:], mapID)
+		location.MapID = make([]byte, len(mapID))
+		copy(location.MapID, mapID)
 	}
 
 	// Find the location id
@@ -156,11 +156,11 @@ func (r *DataReader) findLocation(q []byte, mtype []byte, ipnet *net.IPNet) (*Lo
 		return nil, err
 	}
 	if locID != nil {
-		copy(location.LocID[:], locID)
+		location.LocID = make([]byte, len(locID))
+		copy(location.LocID, locID)
 		location.Mask = mask
 	}
-
-	return location, nil
+	return &location, nil
 }
 
 // ResolverLocation find the location associated with a client IP (resolver)

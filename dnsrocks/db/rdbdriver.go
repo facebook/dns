@@ -208,8 +208,21 @@ func (r *rdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 		loc = foundVal
 		return loc, mlen, nil
 	default:
-		err = fmt.Errorf("Invalid location length %d, value %v", len(foundVal), foundVal)
-		return nil, 0, err
+		if len(foundVal) < 2 {
+			err = fmt.Errorf("Invalid location length %d, value %v", len(foundVal), foundVal)
+			return nil, 0, err
+		}
+		if foundVal[0] != 0xff {
+			loc = foundVal
+			return loc, mlen, nil
+		}
+		locLen, foundVal := foundVal[1], foundVal[2:]
+		if int(locLen) > len(foundVal) {
+			err = fmt.Errorf("invalid location length byte %d > %d", locLen, len(foundVal))
+			return nil, 0, err
+		}
+		loc = foundVal[:locLen]
+		return loc, mlen, nil
 	}
 }
 

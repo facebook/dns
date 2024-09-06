@@ -5,6 +5,7 @@
 %\000\002,fd58:6525:66bd::/56,c\000
 %\000\004,fd8f:a2ea:9f4b::/56,c\000
 %\000\005,fd48:6525:66bd::/56,c\000
+%fml1c01,3.3.3.3/32,c\000
 
 # Locations with interesting identifiers, including:
 # - 0o054 (comma)
@@ -152,6 +153,7 @@ Ccnamemap.example.com,foo.example.com,3600,,\000\002
 Ccnamemap.example.com,bar.example.com,3600,,\000\003
 Ccnamemap.example.com,bar.example.com,3600,,\000\004
 Ccnamemap.example.com,foo.example.com,3600,,\000\005
+Ccnamemap.example.com,three.example.com,3600,,fml1c01
 
 C*.example.com,some-other.domain,1800,,
 
