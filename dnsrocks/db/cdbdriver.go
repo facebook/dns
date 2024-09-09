@@ -97,6 +97,8 @@ func (c *cdbdriver) FindMap(domain, mtype []byte, context Context) ([]byte, erro
 
 		// We found a match. Copy this to the MapID
 		if err == nil {
+			// keep the [ff, n] prefix of the long IDs -
+			// would have to reinject on lookups otherwise
 			return mapID, nil
 		} else if !errors.Is(err, io.EOF) {
 			return nil, err
@@ -125,12 +127,12 @@ func (c *cdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 
 	// Lookup the subnet in IP MAP: map ID, IP subnet -> LocID
 	// Build key prefix: "\000%{MapID}"
-	k := make([]byte, 4+net.IPv6len+1)
+	nmap := len(mapID)
+	k := make([]byte, 2+nmap+net.IPv6len+1)
 	copy(k, ipMapKeyElement)
 	dlen := 2
 	copy(k[dlen:], mapID)
-
-	dlen += 2
+	dlen += nmap
 
 	// Find the maskLens
 	tmpmask, _ := ipnet.Mask.Size()

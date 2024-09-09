@@ -361,7 +361,7 @@ func (r *Rcsmap) MarshalText() (text []byte, err error) {
 
 // MarshalText implements encoding.TextMarshaler
 func (r *Rrangepoint) MarshalText() (text []byte, err error) {
-	return r.pt.MarshalTextForLmap(r.lmap.String())
+	return r.pt.MarshalTextForLmap(r.lmap)
 }
 
 // MarshalText implements encoding.TextMarshaler

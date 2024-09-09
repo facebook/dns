@@ -151,7 +151,7 @@ func (r *DataReader) findLocation(q []byte, mtype []byte, ipnet *net.IPNet) (*Lo
 	}
 
 	// Find the location id
-	locID, mask, err := r.db.dbi.GetLocationByMap(ipnet, location.MapID[:], r.context)
+	locID, mask, err := r.db.dbi.GetLocationByMap(ipnet, location.MapID, r.context)
 	if err != nil {
 		return nil, err
 	}

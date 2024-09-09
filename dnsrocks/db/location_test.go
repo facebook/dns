@@ -504,6 +504,23 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			mask:             32,
 			expectedLocation: Location{MapID: []byte{'e', 'c'}, Mask: 104, LocID: []byte{0, 6}},
 		},
+		// long map IDs
+		{
+			desc:             "long map ID-1",
+			qname:            "long.example.com.",
+			qmap:             []byte{0, 'M'},
+			ip:               "1.1.1.2",
+			mask:             32,
+			expectedLocation: Location{MapID: []byte("\xff\x04map0"), Mask: 120, LocID: []byte("fml1")},
+		},
+		{
+			desc:             "long map ID-2",
+			qname:            "long.example.com.",
+			qmap:             []byte{0, '8'},
+			ip:               "10.10.10.0",
+			mask:             24,
+			expectedLocation: Location{MapID: []byte("\xff\x04map0"), Mask: 96, LocID: []byte("other")},
+		},
 	}
 	for _, dbconfig := range testaid.TestDBs {
 		if db, err = Open(dbconfig.Path, dbconfig.Driver); err != nil {
@@ -524,7 +541,8 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 				location := Location{MapID: []byte{0, 0}, LocID: []byte{0, 0}}
 				id, err := db.dbi.FindMap(q[:offset], tc.qmap, db.dbi.NewContext())
 				if id != nil {
-					copy(location.MapID[:], id)
+					location.MapID = make([]byte, len(id))
+					copy(location.MapID, id)
 				}
 				require.Nil(t, err)
 				require.Equal(t, tc.expectedLocation.MapID, location.MapID, "MapID does not match.")

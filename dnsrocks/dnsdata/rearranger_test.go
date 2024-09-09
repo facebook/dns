@@ -1015,7 +1015,7 @@ func TestIPIncrementByOne(t *testing.T) {
 func TestRangePointMarshalTextForLmap(t *testing.T) {
 	type testCase struct {
 		p    RangePoint
-		lmap string
+		lmap Lmap
 		want string
 	}
 	testCases := []testCase{
@@ -1027,7 +1027,7 @@ func TestRangePointMarshalTextForLmap(t *testing.T) {
 					locIDIsNull: true,
 				},
 			},
-			lmap: "\\155\\061",
+			lmap: Lmap("\155\061"),
 			want: "!\\155\\061,0.0.0.0",
 		},
 		{
@@ -1039,7 +1039,7 @@ func TestRangePointMarshalTextForLmap(t *testing.T) {
 					locIDIsNull: false,
 				},
 			},
-			lmap: "\\155\\061",
+			lmap: Lmap("\155\061"),
 			want: "!\\155\\061,1.1.1.1,24,\\144\\145",
 		},
 		{
@@ -1051,8 +1051,8 @@ func TestRangePointMarshalTextForLmap(t *testing.T) {
 					locIDIsNull: false,
 				},
 			},
-			lmap: "\\105\\028",
-			want: "!\\105\\028,2a00:1fa0:42d8::,64,\\141\\001",
+			lmap: Lmap("\105\027"),
+			want: "!\\105\\027,2a00:1fa0:42d8::,64,\\141\\001",
 		},
 	}
 	for _, tc := range testCases {
@@ -1076,7 +1076,7 @@ func BenchmarkRearranger(b *testing.B) {
 
 	locations := []testLocation{}
 
-	for i := 1; i <= 0xFFFF; i++ {
+	for i := 1; i <= 0xFEFE; i++ {
 		location := []byte{byte(i / 0xFF), byte(i % 0xFF)}
 		network := fmt.Sprintf("2a00:1fa0:%x::/64", i)
 

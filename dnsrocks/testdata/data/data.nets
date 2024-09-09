@@ -157,6 +157,31 @@ Ccnamemap.example.com,three.example.com,3600,,fml1c01
 
 C*.example.com,some-other.domain,1800,,
 
+# Maps with long map IDs and location IDs
+#
+%fml1,1.1.1.0/24,map0
+%ams2,2.2.2.0/24,map0
+%lon3,3.3.3.0/24,map0
+%other,0.0.0.0/0,map0
+%other,::/0,map0
+#
+#!map0,::,0,other
+#!map0,0.0.0.0,0,other
+#!map0,1.1.1.0,24,fml1
+#!map0,1.1.2.0,0,other
+#!map0,2.2.2.0,24,ams2
+#!map0,2.2.3.0,0,other
+#!map0,3.3.3.0,24,lon3
+#!map0,3.3.4.0,0,other
+#!map0,::1:0:0:0,0,other
+#
+Mlong.example.com,map0
+8long.example.com,map0
++long.example.com,1.1.1.1,180,,fml1,1
++long.example.com,1.1.1.2,180,,ams2,1
++long.example.com,1.1.1.3,180,,lon3,1
++long.example.com,1.1.10.10,180,,other,1
+#
 
 #################
 ## example.net ##

@@ -99,10 +99,11 @@ func (r *rdbdriver) FindMap(domain, mtype []byte, context Context) ([]byte, erro
 	}
 
 	mapID, _, err := r.db.FindFirst(keys)
-
 	if err != nil {
 		return nil, err
 	}
+	// keep the [ff, n] prefix of the long IDs -
+	// would have to reinject on lookups otherwise
 	return mapID, nil
 }
 
@@ -153,7 +154,8 @@ func (r *rdbdriver) findMapInSortedData(domain, mtype []byte, context Context) (
 		k = k[:prefixLen+length+1+len(suffix)]
 		suffix = wildcardKeyElement
 	}
-
+	// keep the [ff, n] prefix of the long IDs -
+	// would have to reinject on lookups otherwise
 	return mapID, err
 }
 

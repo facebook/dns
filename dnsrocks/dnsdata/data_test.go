@@ -81,6 +81,14 @@ var codectests = []codecTest{
 		},
 	},
 	{
+		in:      []byte("%\\000\\001,192.168.1.0/24,map0"),
+		outText: []byte("%\\000\\001,192.168.1.0/24,map0"),
+		out: []MapRecord{
+			{Key: []byte{0, 37, 255, 4, 'm', 'a', 'p', '0', 192, 168, 1}, Value: []byte{0, 1}},
+			{Key: []byte{0, 37, 255, 4, 'm', 'a', 'p', '0', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 1, 0, 120}, Value: []byte{0, 1}},
+		},
+	},
+	{
 		in:      []byte("%fml1c01,192.168.2.0/24"),
 		outText: []byte("%fml1c01,192.168.2.0/24,\\000\\000"),
 		out: []MapRecord{
@@ -1084,6 +1092,22 @@ var codectests = []codecTest{
 		},
 	},
 	{
+		in:      []byte("Mab.net,map0"),
+		outText: []byte("Mab.net,map0"),
+		out: []MapRecord{
+			{
+				Key:   []byte{0, 'M', 2, 'a', 'b', 3, 'n', 'e', 't', 0, '='},
+				Value: []byte{255, 4, 'm', 'a', 'p', '0'},
+			},
+		},
+		outV2: []MapRecord{
+			{
+				Key:   []byte{0, 'M', 3, 'n', 'e', 't', 2, 'a', 'b', 0, '='},
+				Value: []byte{255, 4, 'm', 'a', 'p', '0'},
+			},
+		},
+	},
+	{
 		in:      []byte("Mfbasic.n\\145t,c\\000"),
 		outText: []byte("Mfbasic.net,\\143\\000"),
 		out: []MapRecord{
@@ -1132,6 +1156,22 @@ var codectests = []codecTest{
 		},
 	},
 	{
+		in:      []byte("8abc.net,map0"),
+		outText: []byte("8abc.net,map0"),
+		out: []MapRecord{
+			{
+				Key:   []byte{0, '8', 3, 'a', 'b', 'c', 3, 'n', 'e', 't', 0, '='},
+				Value: []byte{255, 4, 'm', 'a', 'p', '0'},
+			},
+		},
+		outV2: []MapRecord{
+			{
+				Key:   []byte{0, '8', 3, 'n', 'e', 't', 3, 'a', 'b', 'c', 0, '='},
+				Value: []byte{255, 4, 'm', 'a', 'p', '0'},
+			},
+		},
+	},
+	{
 		in:      []byte("!m1,0.0.0.0"),
 		outText: []byte("!\\155\\061,0.0.0.0"),
 		out: []MapRecord{
@@ -1148,6 +1188,16 @@ var codectests = []codecTest{
 			{
 				Key:   []byte{0, 0, 0, '!', 'm', '1', 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff, 0x0, 0x0, 0x0, 0x0, 0x60},
 				Value: []byte{'d', 'e'},
+			},
+		},
+	},
+	{
+		in:      []byte("!map1,0.0.0.0,0,def"),
+		outText: []byte("!map1,0.0.0.0,0,def"),
+		out: []MapRecord{
+			{
+				Key:   []byte{0, 0, 0, '!', 0xff, 4, 'm', 'a', 'p', '1', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0, 0x60},
+				Value: []byte{255, 3, 'd', 'e', 'f'},
 			},
 		},
 	},
@@ -1575,7 +1625,7 @@ func testMarshalText(t *testing.T, codec *Codec, inText, outText []byte, expecte
 		t.Fatalf("error converting: %v", err)
 	}
 	if !reflect.DeepEqual(out, expectedOut) {
-		t.Fatalf("encoded differs: %v != %v (\n%#v\n%#v\n)",
+		t.Fatalf("encoded differs: %q != %q (\n%#v\n%#v\n)",
 			out, expectedOut,
 			out, expectedOut)
 	}

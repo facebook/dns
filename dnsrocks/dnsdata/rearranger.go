@@ -72,10 +72,10 @@ func (r RangePoints) String() string {
 }
 
 // MarshalTextForLmap returns a text representation of these RangePoints, with provided lmap value
-func (p *RangePoint) MarshalTextForLmap(lmap string) (text []byte, err error) {
+func (p *RangePoint) MarshalTextForLmap(lmap Lmap) (text []byte, err error) {
 	w := new(bytes.Buffer)
 	w.WriteString(string(prefixRangePoint))
-	w.WriteString(lmap)
+	putlmaptext(w, lmap)
 	w.Write(NSEP)
 	ip := p.To16()
 	b, err := ip.MarshalText()

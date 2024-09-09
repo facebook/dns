@@ -286,9 +286,7 @@ const (
 
 func (m Lmap) String() string {
 	var builder strings.Builder
-	for _, b := range m {
-		fmt.Fprintf(&builder, "\\%03o", b)
-	}
+	putlmaptext(&builder, m)
 	return builder.String()
 }
 
