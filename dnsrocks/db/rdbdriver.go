@@ -15,6 +15,7 @@ package db
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"time"
@@ -167,6 +168,49 @@ func isIPv4(addr net.IP) bool {
 	return addr != nil && (len(addr) == net.IPv4len || net.IP.Equal(addr[:12], firstIPv4[:12]))
 }
 
+func unpackLocation(foundKey, foundVal []byte) (loc []byte, mlen uint8, err error) {
+	if len(foundVal) < 4 {
+		if len(foundVal) == 0 {
+			return nil, 0, nil // consistent with the return at the end of cdbdriver.go:/GetLocationByMap
+		}
+		return nil, 0, fmt.Errorf("short value: length %d, value %v", len(foundVal), foundVal)
+	}
+	if len(foundKey) == 0 {
+		return nil, 0, fmt.Errorf("empty key with non-empty value %v", foundVal)
+	}
+	// take the first value from the potential multi-value - see ../dnsdata/rdb/rdb_util.go
+	valLen := binary.LittleEndian.Uint32(foundVal[:4])
+	if len(foundVal) < int(valLen)+4 {
+		return nil, 0, fmt.Errorf("short value: length %d, length from header %d, value %v", len(foundVal), valLen, foundVal)
+	}
+	foundVal = foundVal[4 : 4+valLen] // skip over the multi-value header
+	mlen = foundKey[len(foundKey)-1]
+	switch valLen {
+	case 0:
+		// Rearranger will always add /0 mask, so if anything - the empty location will match
+		return nil, mlen, nil
+	case 2:
+		loc = foundVal
+		return loc, mlen, nil
+	default:
+		if valLen < 3 {
+			err = fmt.Errorf("Invalid location length %d, value %v", len(foundVal), foundVal)
+			return nil, 0, err
+		}
+		if foundVal[0] != 0xff {
+			loc = foundVal
+			return loc, mlen, nil
+		}
+		locLen, foundVal := foundVal[1], foundVal[2:]
+		if int(locLen) > int(valLen) {
+			err = fmt.Errorf("invalid location length byte %d > %d", locLen, valLen)
+			return nil, 0, err
+		}
+		loc = foundVal[:locLen]
+		return loc, mlen, nil
+	}
+}
+
 // GetLocationByMap finds and returns location and mask. If the location is not found, returns nil and 0.
 func (r *rdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Context) (loc []byte, mlen uint8, err error) {
 	// Lookup the subnet in IP MAP: map ID, IP address -> LocID, mask
@@ -182,50 +226,17 @@ func (r *rdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 	if isIPv4(ipnet.IP) {
 		reqMaskLen += 128 - 32
 	}
-	copy(fullKey[4+nmap+16:], []byte{uint8(reqMaskLen)})
+	copy(fullKey[4+nmap+16:], []byte{uint8(reqMaskLen)}) //nolint:gosec
 
 	ctx := context.(*rdb.Context)
 
 	// NOTE: Rearranger has merging on adjacent locations with same mask and locID,
 	// so findClosest() might return the key that will match some other IP. It is fine for our purposes.
-	// foundVal will consist of mask (1 byte) and LocID (2 bytes); if LocID is null, then there will be mask only.
 	foundKey, foundVal, err := r.db.FindClosest(fullKey, ctx)
 	if err != nil {
 		return nil, 0, err
 	}
-	if len(foundVal) == 0 {
-		return nil, 0, nil // consistent with the return at the end of cdbdriver.go:/GetLocationByMap
-	}
-	if len(foundVal) < 4 {
-		err = fmt.Errorf("short value: length %d, value %v, map %v", len(foundVal), foundVal, mapID)
-		return nil, 0, err
-	}
-	foundVal = foundVal[4:] // skip over the multi-value header - see ../dnsdata/rdb/rdb_util.go:/Put
-	mlen = foundKey[len(foundKey)-1]
-	switch len(foundVal) {
-	case 0:
-		// Rearranger will always add /0 mask, so if anything - the empty location will match
-		return nil, mlen, nil
-	case 2:
-		loc = foundVal
-		return loc, mlen, nil
-	default:
-		if len(foundVal) < 2 {
-			err = fmt.Errorf("Invalid location length %d, value %v", len(foundVal), foundVal)
-			return nil, 0, err
-		}
-		if foundVal[0] != 0xff {
-			loc = foundVal
-			return loc, mlen, nil
-		}
-		locLen, foundVal := foundVal[1], foundVal[2:]
-		if int(locLen) > len(foundVal) {
-			err = fmt.Errorf("invalid location length byte %d > %d", locLen, len(foundVal))
-			return nil, 0, err
-		}
-		loc = foundVal[:locLen]
-		return loc, mlen, nil
-	}
+	return unpackLocation(foundKey, foundVal)
 }
 
 func (r *rdbdriver) Close() error {
