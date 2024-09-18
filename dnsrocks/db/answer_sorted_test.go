@@ -37,15 +37,60 @@ func TestQNameReverse3(t *testing.T) {
 }
 
 func TestFindLongestCommonPrefix(t *testing.T) {
-	str1 := []byte("\003net\005fbcdn\002xx\010scontent\002bc\000")
-	str2 := []byte("\003net\005fbcdn\002xx\010scontent\001a\002bc\001e\000")
-	expectedPrefix := []byte("\003net\005fbcdn\002xx\010scontent\000")
-
-	prefixLen := findCommonLongestPrefix(str1, str2)
-
-	require.Equal(t, len(expectedPrefix)-1, prefixLen)
-
-	prefixLen = findCommonLongestPrefix(str2, str1)
-
-	require.Equal(t, len(expectedPrefix)-1, prefixLen)
+	testCases := []struct {
+		name       string
+		str1       []byte
+		str2       []byte
+		wantPrefix []byte
+		wantLen    int
+	}{
+		{
+			name:    "both empty",
+			wantLen: 0,
+		},
+		{
+			name:       "first empty",
+			str1:       []byte{},
+			str2:       []byte("\003net\005fbcdn\002xx\010scontent\001a\002bc\001e\000"),
+			wantPrefix: []byte{},
+			wantLen:    0,
+		},
+		{
+			name:       "second empty",
+			str1:       []byte("\003net\005fbcdn\002xx\010scontent\002bc\000"),
+			str2:       []byte{},
+			wantPrefix: []byte{},
+			wantLen:    0,
+		},
+		{
+			name:       "match",
+			str1:       []byte("\003net\005fbcdn\002xx\010scontent\002bc\000"),
+			str2:       []byte("\003net\005fbcdn\002xx\010scontent\001a\002bc\001e\000"),
+			wantPrefix: []byte("\003net\005fbcdn\002xx\010scontent"),
+			wantLen:    22,
+		},
+		{
+			name:       "no match",
+			str1:       []byte("\003net\005fbcdn\002xx\010scontent\002bc\000"),
+			str2:       []byte("\003com\005test\002best\010why\000"),
+			wantPrefix: []byte{},
+			wantLen:    0,
+		},
+		{
+			name:       "bad packed",
+			str2:       []byte("\003net\005fbcdn\070xx\010scontent\000"), // \070 here is a bad packing directive, which will cause us to walk past the string length
+			str1:       []byte("\003net\005fbcdn\070xx\010scontent\000"),
+			wantPrefix: []byte("\003net\005fbcdn"),
+			wantLen:    10,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := findCommonLongestPrefix(tc.str1, tc.str2)
+			require.Equal(t, tc.wantLen, got)
+			gotPrefix := tc.str1[:got]
+			require.Equal(t, tc.wantPrefix, gotPrefix)
+			require.Equal(t, tc.str2[:got], gotPrefix)
+		})
+	}
 }
