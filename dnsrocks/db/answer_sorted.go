@@ -297,7 +297,7 @@ func findCommonLongestPrefix(str1 []byte, str2 []byte) int {
 		match := true
 
 		for j := i + 1; j <= i+int(str1[i]); j++ {
-			if str1[j] != str2[j] {
+			if j >= len(str1) || j >= len(str2) || str1[j] != str2[j] {
 				match = false
 				break
 			}
