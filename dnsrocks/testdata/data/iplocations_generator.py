@@ -15,8 +15,8 @@ def print_networks(ipn):
     while True:
         cpt += 1
         x = cpt % MAX_ID + 1
-        print("%\\000\\00{},{},c\\000".format(x, n))
-        print("%\\000\\00{},{},ec".format(x, n))
+        print(f"%\\000\\00{x},{n},c\\000")
+        print(f"%\\000\\00{x},{n},ec")
         n = list(n.subnets())
         if len(n) == 1:
             break
