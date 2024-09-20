@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"math/big"
 	"net"
 	"strconv"
@@ -146,7 +147,7 @@ type Rmx struct {
 type Rmx1 struct {
 	rshared
 	mx   []byte // the MX prefix/server
-	dist uint32 // the "distance" (default: 0)
+	dist uint16 // the "distance" (default: 0)
 	c    *Codec
 }
 
@@ -518,7 +519,9 @@ func (r *Rnet) MarshalMap() ([]MapRecord, error) {
 		putlmap(k, r.lmap)
 		k.Write(r.ipnet.IP[12:nbytes])
 		v := new(bytes.Buffer)
-		putloc(v, r.lo)
+		if err := putloc(v, r.lo); err != nil {
+			return nil, err
+		}
 		m = append(m, MapRecord{Key: k.Bytes(), Value: v.Bytes()})
 	}
 
@@ -528,7 +531,9 @@ func (r *Rnet) MarshalMap() ([]MapRecord, error) {
 	k.Write(r.ipnet.IP[0:16])
 	k.Write([]byte{byte(nbits)})
 	v := new(bytes.Buffer)
-	putloc(v, r.lo)
+	if err := putloc(v, r.lo); err != nil {
+		return nil, err
+	}
 	m = append(m, MapRecord{Key: k.Bytes(), Value: v.Bytes()})
 	return m, nil
 }
@@ -601,7 +606,9 @@ func (r *Rrangepoint) MarshalMap() ([]MapRecord, error) {
 		mlen := pt.MaskLen()
 		k.Write([]byte{mlen})
 		lo := Loc(pt.LocID())
-		putloc(v, lo)
+		if err := putloc(v, lo); err != nil {
+			return nil, err
+		}
 	}
 	mr := MapRecord{Key: k.Bytes(), Value: v.Bytes()}
 	return []MapRecord{mr}, nil
@@ -796,29 +803,31 @@ func (r *Rsoa) loadDefaults() {
 
 // MarshalMap implements MapMarshaler
 func (r *Rsoa) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
-	v := new(bytes.Buffer)                    // BUG scale
-	putrrhead(v, TypeSOA, r.ttl, r.lo, false) // BUG wildcard?
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
+	v := new(bytes.Buffer) // BUG scale
+	if err = putrrhead(v, TypeSOA, r.ttl, r.lo, false); err != nil {
+		return nil, err
+	}
 	putdom(v, r.ns)
 	putdom(v, r.adm)
-	err := binary.Write(v, binary.BigEndian, r.ser)
-	if err != nil {
+
+	if err = binary.Write(v, binary.BigEndian, r.ser); err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, r.ref)
-	if err != nil {
+	if err = binary.Write(v, binary.BigEndian, r.ref); err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, r.ret)
-	if err != nil {
+	if err = binary.Write(v, binary.BigEndian, r.ret); err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, r.exp)
-	if err != nil {
+	if err = binary.Write(v, binary.BigEndian, r.exp); err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, r.min)
-	if err != nil {
+	if err = binary.Write(v, binary.BigEndian, r.min); err != nil {
 		return nil, err
 	}
 
@@ -933,9 +942,15 @@ func (r *Rns1) loadDefaults() {
 
 // MarshalMap implements MapMarshaler
 func (r *Rns1) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
-	v := new(bytes.Buffer)                   // BUG scale
-	putrrhead(v, TypeNS, r.ttl, r.lo, false) // BUG wildcard?
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
+	v := new(bytes.Buffer) // BUG scale
+	if err = putrrhead(v, TypeNS, r.ttl, r.lo, false); err != nil {
+		return nil, err
+	}
 	putdom(v, r.ns)
 	m := []MapRecord{{Key: k, Value: v.Bytes()}}
 	return m, nil
@@ -980,23 +995,29 @@ func (r *Raddr) loadDefaults() {
 
 // MarshalMap implements MapMarshaler
 func (r *Raddr) MarshalMap() ([]MapRecord, error) {
+	var err error
+	var k []byte
 	if r.ip == nil {
 		return []MapRecord{}, nil
 	}
 
-	k := makedomainkey(r.dom, r.lo, r.c)
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
 	v := new(bytes.Buffer)
 	if ip4 := r.ip.To4(); ip4 != nil {
-		putrrhead(v, TypeA, r.ttl, r.lo, r.iswildcard)
-		err := binary.Write(v, binary.BigEndian, r.weight)
-		if err != nil {
+		if err = putrrhead(v, TypeA, r.ttl, r.lo, r.iswildcard); err != nil {
+			return nil, err
+		}
+		if err = binary.Write(v, binary.BigEndian, r.weight); err != nil {
 			return nil, err
 		}
 		v.Write(ip4)
 	} else {
-		putrrhead(v, TypeAAAA, r.ttl, r.lo, r.iswildcard)
-		err := binary.Write(v, binary.BigEndian, r.weight)
-		if err != nil {
+		if err := putrrhead(v, TypeAAAA, r.ttl, r.lo, r.iswildcard); err != nil {
+			return nil, err
+		}
+		if err = binary.Write(v, binary.BigEndian, r.weight); err != nil {
 			return nil, err
 		}
 		v.Write(r.ip)
@@ -1093,7 +1114,7 @@ func (r *Rmx1) unmarshalFields(f [][]byte) error {
 		frag := [][]byte{r.mx, []byte("mx"), r.dom}
 		r.mx = bytes.Join(frag, []byte("."))
 	}
-	getuint32(f[3], &r.dist)
+	getuint16(f[3], &r.dist)
 	getuint32(f[4], &r.ttl)
 	// f[5] ignored
 	var err error
@@ -1107,11 +1128,16 @@ func (r *Rmx1) loadDefaults() {
 
 // MarshalMap implements MapMarshaler
 func (r *Rmx1) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
-	v := new(bytes.Buffer)                   // BUG scale
-	putrrhead(v, TypeMX, r.ttl, r.lo, false) // BUG wildcard?
-	err := binary.Write(v, binary.BigEndian, uint16(r.dist))
-	if err != nil {
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
+	v := new(bytes.Buffer) // BUG scale
+	if err = putrrhead(v, TypeMX, r.ttl, r.lo, false); err != nil {
+		return nil, err
+	}
+	if err = binary.Write(v, binary.BigEndian, r.dist); err != nil {
 		return nil, err
 	}
 	putdom(v, r.mx)
@@ -1194,19 +1220,22 @@ func (r *Rsrv1) unmarshalFields(f [][]byte) error {
 
 // MarshalMap implements MapMarshaler
 func (r *Rsrv1) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
-	v := new(bytes.Buffer)                    // BUG scale
-	putrrhead(v, TypeSRV, r.ttl, r.lo, false) // BUG wildcard?
-	err := binary.Write(v, binary.BigEndian, r.pri)
-	if err != nil {
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, r.weight)
-	if err != nil {
+	v := new(bytes.Buffer) // BUG scale
+	if err = putrrhead(v, TypeSRV, r.ttl, r.lo, false); err != nil {
 		return nil, err
 	}
-	err = binary.Write(v, binary.BigEndian, r.port)
-	if err != nil {
+	if err = binary.Write(v, binary.BigEndian, r.pri); err != nil {
+		return nil, err
+	}
+	if err = binary.Write(v, binary.BigEndian, r.weight); err != nil {
+		return nil, err
+	}
+	if err = binary.Write(v, binary.BigEndian, r.port); err != nil {
 		return nil, err
 	}
 	putdom(v, r.srv)
@@ -1251,9 +1280,15 @@ func (r *Rcname) loadDefaults() {
 
 // MarshalMap implements MapMarshaler
 func (r *Rcname) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
 	v := new(bytes.Buffer) // BUG scale
-	putrrhead(v, TypeCNAME, r.ttl, r.lo, r.iswildcard)
+	if err = putrrhead(v, TypeCNAME, r.ttl, r.lo, r.iswildcard); err != nil {
+		return nil, err
+	}
 	putdom(v, r.cname)
 	m := []MapRecord{{Key: k, Value: v.Bytes()}}
 	return m, nil
@@ -1278,9 +1313,15 @@ func (r *Rptr) loadDefaults() {
 
 // MarshalMap implements MapMarshaler
 func (r *Rptr) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
-	v := new(bytes.Buffer)                    // BUG scale
-	putrrhead(v, TypePTR, r.ttl, r.lo, false) // BUG wildcard
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
+	v := new(bytes.Buffer) // BUG scale
+	if err = putrrhead(v, TypePTR, r.ttl, r.lo, false); err != nil {
+		return nil, err
+	}
 	putdom(v, r.host)
 	m := []MapRecord{{Key: k, Value: v.Bytes()}}
 	return m, nil
@@ -1305,9 +1346,15 @@ func (r *Rtxt) loadDefaults() {
 
 // MarshalMap implements MapMarshaler
 func (r *Rtxt) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
 	v := new(bytes.Buffer) // BUG scale
-	putrrhead(v, TypeTXT, r.ttl, r.lo, r.iswildcard)
+	if err = putrrhead(v, TypeTXT, r.ttl, r.lo, r.iswildcard); err != nil {
+		return nil, err
+	}
 	for sofar := 0; sofar < len(r.txt); {
 		n := len(r.txt) - sofar
 		if n > 127 {
@@ -1343,9 +1390,15 @@ func (r *Raux) loadDefaults() {
 
 // MarshalMap implements MapMarshaler
 func (r *Raux) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
-	v := new(bytes.Buffer)                    // BUG scale
-	putrrhead(v, r.rtype, r.ttl, r.lo, false) // BUG wildcard
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
+	v := new(bytes.Buffer) // BUG scale
+	if err = putrrhead(v, r.rtype, r.ttl, r.lo, false); err != nil {
+		return nil, err
+	}
 	v.Write(r.rdata)
 	m := []MapRecord{{Key: k, Value: v.Bytes()}}
 	return m, nil
@@ -1426,19 +1479,23 @@ func (r *Rhttps) UnmarshalText(text []byte) error {
 // based on the type of the caller. The map key includes the domain name
 // and location, the value is "rrhead" + RDATA
 func (r *Rsvcb) MarshalMap() ([]MapRecord, error) {
-	k := makedomainkey(r.dom, r.lo, r.c)
+	var err error
+	var k []byte
+	if k, err = makedomainkey(r.dom, r.lo, r.c); err != nil {
+		return nil, err
+	}
 
 	var buf bytes.Buffer
-	putrrhead(&buf, r.wtype, r.ttl, r.lo, r.iswildcard)
+	if err = putrrhead(&buf, r.wtype, r.ttl, r.lo, r.iswildcard); err != nil {
+		return nil, err
+	}
 
 	// marshal the RDATA part
-	err := binary.Write(&buf, binary.BigEndian, r.priority)
-	if err != nil {
+	if err = binary.Write(&buf, binary.BigEndian, r.priority); err != nil {
 		return nil, err
 	}
 	putdom(&buf, r.tgtname)
-	err = r.params.ToWire(&buf)
-	if err != nil {
+	if err = r.params.ToWire(&buf); err != nil {
 		return nil, err
 	}
 
@@ -1561,7 +1618,7 @@ func putdomtext(w io.Writer, a []byte) {
 }
 
 // write a two-byte location ID
-func putloc(w io.Writer, lo Loc) {
+func putloc(w io.Writer, lo Loc) error {
 	var err error
 	if len(lo) == 2 {
 		_, err = w.Write(lo)
@@ -1569,13 +1626,17 @@ func putloc(w io.Writer, lo Loc) {
 		if len(lo) < 2 {
 			_, err = w.Write([]byte{0, 0})
 		} else {
-			_, _ = w.Write([]byte{0xff, byte(len(lo))})
+			if len(lo) > math.MaxUint8 {
+				return fmt.Errorf("location %v too long: %d>%d", lo, len(lo), math.MaxUint8)
+			}
+			_, err = w.Write([]byte{0xff, byte(len(lo))})
+			if err != nil {
+				return err
+			}
 			_, err = w.Write(lo)
 		}
 	}
-	if err != nil {
-		glog.Errorf("%v", err)
-	}
+	return err
 }
 
 func putloctext(w io.Writer, lo Loc) {
@@ -1629,10 +1690,10 @@ func putquotedtext(w io.Writer, b []byte) {
 	}
 }
 
-func putrrhead(w io.Writer, t WireType, ttl uint32, loc Loc, iswildcard bool) {
+func putrrhead(w io.Writer, t WireType, ttl uint32, loc Loc, iswildcard bool) error {
 	err := binary.Write(w, binary.BigEndian, uint16(t))
 	if err != nil {
-		glog.Errorf("%v", err)
+		return err
 	}
 	if len(loc) < 2 || (len(loc) == 2 && (loc[0] == 0 && loc[1] == 0)) {
 		if iswildcard {
@@ -1641,7 +1702,7 @@ func putrrhead(w io.Writer, t WireType, ttl uint32, loc Loc, iswildcard bool) {
 			_, err = w.Write([]byte("="))
 		}
 		if err != nil {
-			glog.Errorf("%v", err)
+			return err
 		}
 	} else {
 		if iswildcard {
@@ -1650,18 +1711,18 @@ func putrrhead(w io.Writer, t WireType, ttl uint32, loc Loc, iswildcard bool) {
 			_, err = w.Write([]byte(">"))
 		}
 		if err != nil {
-			glog.Errorf("%v", err)
+			return err
 		}
-		putloc(w, loc)
+		if err = putloc(w, loc); err != nil {
+			return err
+		}
 	}
 	err = binary.Write(w, binary.BigEndian, ttl)
 	if err != nil {
-		glog.Errorf("%v", err)
+		return err
 	}
 	_, err = w.Write([]byte{0, 0, 0, 0, 0, 0, 0, 0}) // ttd[8] is not used
-	if err != nil {
-		glog.Errorf("%v", err)
-	}
+	return err
 }
 
 // Convert unsigned integer to decimal string.
@@ -1706,7 +1767,7 @@ func Reverseaddr(ip net.IP) []byte {
 	return buf
 }
 
-func makedomainkey(domain []byte, lo Loc, codec *Codec) []byte {
+func makedomainkey(domain []byte, lo Loc, codec *Codec) ([]byte, error) {
 	k := new(bytes.Buffer) // BUG scale
 	k.Grow(len(domain) + 2)
 
@@ -1715,13 +1776,17 @@ func makedomainkey(domain []byte, lo Loc, codec *Codec) []byte {
 	if codec.Features.UseV2Keys {
 		k.WriteString(ResourceRecordsKeyMarker)
 		putreverseddom(k, domain)
-		putloc(k, lo)
+		if err := putloc(k, lo); err != nil {
+			return nil, err
+		}
 	} else {
-		putloc(k, lo)
+		if err := putloc(k, lo); err != nil {
+			return nil, err
+		}
 		putdom(k, domain)
 	}
 
-	return k.Bytes()
+	return k.Bytes(), nil
 }
 
 func makemapkey(mapID, domain []byte, codec *Codec) []byte {
