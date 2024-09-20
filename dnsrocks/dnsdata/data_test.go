@@ -1631,6 +1631,51 @@ func testMarshalText(t *testing.T, codec *Codec, inText, outText []byte, expecte
 	}
 }
 
+func TestPutloc(t *testing.T) {
+	testCases := []struct {
+		name    string
+		in      Loc
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name:    "empty",
+			in:      Loc{},
+			want:    []byte{0, 0},
+			wantErr: false,
+		},
+		{
+			name:    "two bytes",
+			in:      Loc{4, 10},
+			want:    []byte{4, 10},
+			wantErr: false,
+		},
+		{
+			name:    "multibyte",
+			in:      Loc{97, 108, 101, 120},
+			want:    []byte{255, 4, 97, 108, 101, 120},
+			wantErr: false,
+		},
+		{
+			name:    "too long",
+			in:      Loc(make([]byte, 256)),
+			wantErr: true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			v := new(bytes.Buffer)
+			err := putloc(v, tc.in)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, v.Bytes())
+		})
+	}
+}
+
 func BenchmarkMarshalText(b *testing.B) {
 	for _, tc := range codectests {
 		b.Run(string(tc.in), func(b *testing.B) {
