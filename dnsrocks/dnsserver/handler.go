@@ -36,6 +36,11 @@ const (
 	maxAnswer         maxAnswerKey = "maxans"
 	// DefaultMaxAnswer is the default number of answer returned for A\AAAA query
 	DefaultMaxAnswer = 1
+
+	emptyLoc           = "\x00\x00"
+	defaultLoc2        = "\x00\x01"
+	defaultFallbackLoc = "\x00\x02"
+	defaultLocN        = "@default"
 )
 
 var typeToStats = make(map[uint16]string)
@@ -206,16 +211,24 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		return dns.RcodeServerFailure, nil
 	}
 
-	if loc.Mask > 0 {
-		h.stats.IncrementCounter("DNS_location.ecs")
-	} else if loc.LocID[0] == 0 && loc.LocID[1] == 0 {
+	if string(loc.LocID) == emptyLoc {
 		h.stats.IncrementCounter("DNS_location.empty")
-	} else if loc.LocID[0] == 0 && loc.LocID[1] == 1 {
-		h.stats.IncrementCounter("DNS_location.default")
-	} else if loc.LocID[0] == 0 && loc.LocID[1] == 2 {
-		h.stats.IncrementCounter("DNS_location.fallback_default")
 	} else {
-		h.stats.IncrementCounter("DNS_location.resolver")
+		if loc.Mask > 0 {
+			h.stats.IncrementCounter("DNS_location.ecs")
+		} else if string(loc.LocID) == defaultLoc2 || string(loc.LocID) == defaultLocN {
+			h.stats.IncrementCounter("DNS_location.default")
+		} else if string(loc.LocID) == defaultFallbackLoc {
+			h.stats.IncrementCounter("DNS_location.fallback_default")
+		} else {
+			h.stats.IncrementCounter("DNS_location.resolver")
+		}
+
+		if len(loc.LocID) == 2 {
+			h.stats.IncrementCounter("DNS_location.short")
+		} else {
+			h.stats.IncrementCounter("DNS_location.long")
+		}
 	}
 
 	if h.cacheConfig.Enabled {
