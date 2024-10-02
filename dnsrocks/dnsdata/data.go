@@ -287,7 +287,7 @@ const (
 
 func (m Lmap) String() string {
 	var builder strings.Builder
-	putlmaptext(&builder, m)
+	Putlmaptext(&builder, m)
 	return builder.String()
 }
 
@@ -1639,7 +1639,8 @@ func putloc(w io.Writer, lo Loc) error {
 	return err
 }
 
-func putloctext(w io.Writer, lo Loc) {
+// Putloctext escapes the location ID and writes it to the writer
+func Putloctext(w io.Writer, lo Loc) {
 	if len(lo) == 2 {
 		for _, b := range lo {
 			fmt.Fprintf(w, "\\%03o", b)
@@ -1670,7 +1671,8 @@ func putlmap(w io.Writer, m Lmap) {
 	}
 }
 
-func putlmaptext(w io.Writer, m Lmap) {
+// Putlmaptext escapes the map ID and writes it to the writer
+func Putlmaptext(w io.Writer, m Lmap) {
 	if len(m) == 0 {
 		m = []byte{0, 0}
 	}

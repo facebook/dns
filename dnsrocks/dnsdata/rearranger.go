@@ -75,7 +75,7 @@ func (r RangePoints) String() string {
 func (p *RangePoint) MarshalTextForLmap(lmap Lmap) (text []byte, err error) {
 	w := new(bytes.Buffer)
 	w.WriteString(string(prefixRangePoint))
-	putlmaptext(w, lmap)
+	Putlmaptext(w, lmap)
 	w.Write(NSEP)
 	ip := p.To16()
 	b, err := ip.MarshalText()
@@ -92,7 +92,7 @@ func (p *RangePoint) MarshalTextForLmap(lmap Lmap) (text []byte, err error) {
 		fmt.Fprint(w, mlen)
 		w.Write(NSEP)
 		lo := Loc(p.LocID())
-		putloctext(w, lo)
+		Putloctext(w, lo)
 	}
 	return w.Bytes(), nil
 }

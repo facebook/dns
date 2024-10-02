@@ -44,7 +44,7 @@ func (r *Rsoa) MarshalText() (text []byte, err error) {
 	// skip one unused field
 	w.Write(NSEP)
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 
 	return w.Bytes(), nil
 }
@@ -53,11 +53,11 @@ func (r *Rsoa) MarshalText() (text []byte, err error) {
 func (r *Rnet) MarshalText() (text []byte, err error) {
 	w := new(bytes.Buffer)
 	w.WriteString(string(prefixNet))
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	w.Write(NSEP)
 	w.Write([]byte(r.ipnet.String()))
 	w.Write(NSEP)
-	putlmaptext(w, r.lmap)
+	Putlmaptext(w, r.lmap)
 	return w.Bytes(), nil
 }
 
@@ -79,7 +79,7 @@ func (r *Rns) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.Rns1.lo)
+	Putloctext(w, r.Rns1.lo)
 	return w.Bytes(), nil
 }
 
@@ -97,7 +97,7 @@ func (r *Rns1) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	return w.Bytes(), nil
 }
 
@@ -120,7 +120,7 @@ func (r *Raddr) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	w.Write(NSEP)
 	fmt.Fprintf(w, "%d", r.weight)
 	return w.Bytes(), nil
@@ -145,7 +145,7 @@ func (r *Rpaddr) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	return w.Bytes(), nil
 }
 
@@ -169,7 +169,7 @@ func (r *Rmx) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.Rmx1.lo)
+	Putloctext(w, r.Rmx1.lo)
 	return w.Bytes(), nil
 }
 
@@ -189,7 +189,7 @@ func (r *Rmx1) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	return w.Bytes(), nil
 }
 
@@ -217,7 +217,7 @@ func (r *Rsrv) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.Rsrv1.lo)
+	Putloctext(w, r.Rsrv1.lo)
 	return w.Bytes(), nil
 }
 
@@ -241,7 +241,7 @@ func (r *Rsrv1) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	return w.Bytes(), nil
 }
 
@@ -260,7 +260,7 @@ func (r *Rcname) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	return w.Bytes(), nil
 }
 
@@ -276,7 +276,7 @@ func (r *Rptr) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	return w.Bytes(), nil
 }
 
@@ -295,7 +295,7 @@ func (r *Rtxt) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	return w.Bytes(), nil
 }
 
@@ -313,7 +313,7 @@ func (r *Raux) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.lo)
+	Putloctext(w, r.lo)
 	return w.Bytes(), nil
 }
 
@@ -335,7 +335,7 @@ func (r *Rdot) MarshalText() (text []byte, err error) {
 	w.Write(NSEP)
 	// skip one unused field
 	w.Write(NSEP)
-	putloctext(w, r.Rns1.lo)
+	Putloctext(w, r.Rns1.lo)
 	return w.Bytes(), nil
 }
 
@@ -345,7 +345,7 @@ func (r *Ripmap) MarshalText() (text []byte, err error) {
 	w.WriteString(string(prefixIPMap))
 	putdomtext(w, r.dom)
 	w.Write(NSEP)
-	putlmaptext(w, r.lmap)
+	Putlmaptext(w, r.lmap)
 	return w.Bytes(), nil
 }
 
@@ -355,7 +355,7 @@ func (r *Rcsmap) MarshalText() (text []byte, err error) {
 	w.WriteString(string(prefixCSMap))
 	putdomtext(w, r.dom)
 	w.Write(NSEP)
-	putlmaptext(w, r.lmap)
+	Putlmaptext(w, r.lmap)
 	return w.Bytes(), nil
 }
 
@@ -381,7 +381,7 @@ func (r *Rsvcb) MarshalText() (text []byte, err error) {
 	buf.Write(NSEP)
 	fmt.Fprintf(buf, "%d", r.ttl)
 	buf.Write(NSEP)
-	putloctext(buf, r.lo)
+	Putloctext(buf, r.lo)
 	buf.Write(NSEP)
 	fmt.Fprintf(buf, "%d", r.priority)
 	buf.Write(NSEP)

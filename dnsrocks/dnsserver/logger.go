@@ -19,15 +19,16 @@ import (
 	"strings"
 
 	"github.com/coredns/coredns/request"
+	"github.com/facebook/dns/dnsrocks/db"
 	"github.com/miekg/dns"
 )
 
 // Logger is an interface for logging messages
 type Logger interface {
 	// LogFailed logs a message when we could not construct an answer
-	LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET)
+	LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location)
 	// Log logs a DNS response
-	Log(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET)
+	Log(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location)
 }
 
 // TextLogger logs to an io.Writer
@@ -36,24 +37,25 @@ type TextLogger struct {
 }
 
 // Log is used to log to an ioWriter.
-func (l *TextLogger) Log(state request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET) {
+func (l *TextLogger) Log(state request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET, _ *db.Location) {
 	fmt.Fprintf(l.IoWriter, "[%s] %s %s %s\n",
 		state.IP(), strings.ToUpper(state.Proto()),
 		state.Name(), state.Type())
 }
 
 // LogFailed is used to log failures
-func (l *TextLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET) {
+func (l *TextLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location) {
 	m := new(dns.Msg)
 	m.SetRcode(r, dns.RcodeServerFailure)
-	l.Log(state, m, ecs)
+	l.Log(state, m, ecs, loc)
 }
 
 // DummyLogger logs nothing
 type DummyLogger struct{}
 
 // Log is used to log to an ioWriter.
-func (l *DummyLogger) Log(_ request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET) {}
+func (l *DummyLogger) Log(_ request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET, _ *db.Location) {}
 
 // LogFailed is used to log failures
-func (l *DummyLogger) LogFailed(_ request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET) {}
+func (l *DummyLogger) LogFailed(_ request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET, _ *db.Location) {
+}
