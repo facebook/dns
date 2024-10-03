@@ -119,7 +119,7 @@ func (l *DNSTapLogger) StartLoggerOutput() {
 }
 
 // Log is used to log to dnstap.
-func (l *DNSTapLogger) Log(state request.Request, r *dns.Msg, _ *dns.EDNS0_SUBNET) {
+func (l *DNSTapLogger) Log(state request.Request, r *dns.Msg, _ *dns.EDNS0_SUBNET, _ *db.Location) {
 	// FIXME: implement Bad_query, EDNS_FORMERR, EDNS_BADVERS
 
 	// We only sample non-sonar names
@@ -160,8 +160,8 @@ func (l *DNSTapLogger) Log(state request.Request, r *dns.Msg, _ *dns.EDNS0_SUBNE
 }
 
 // LogFailed is used to log failures
-func (l *DNSTapLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET) {
+func (l *DNSTapLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location) {
 	m := new(dns.Msg)
 	m.SetRcode(r, dns.RcodeServerFailure)
-	l.Log(state, m, ecs)
+	l.Log(state, m, ecs, loc)
 }
