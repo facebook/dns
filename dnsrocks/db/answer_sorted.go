@@ -61,7 +61,7 @@ func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname 
 				hdr := dns.RR_Header{Name: qname, Rrtype: rec.Qtype, Class: dns.ClassINET, Ttl: rec.TTL, Rdlength: uint16(len(result[rec.Offset:]))}
 				rr, _, err = dns.UnpackRRWithHeader(hdr, result, rec.Offset)
 				if err != nil {
-					glog.Errorf("Failed to convert from tinydns format %v %d, %d", err, hdr.Rdlength, len(result[rec.Offset:]))
+					glog.Errorf("Failed to create resource record %v %d, %d, qname: %s", err, hdr.Rdlength, len(result[rec.Offset:]), qname)
 					return err
 				}
 				a.Answer = append(a.Answer, rr)
