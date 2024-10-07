@@ -19,8 +19,9 @@ import (
 	"strings"
 
 	"github.com/coredns/coredns/request"
-	"github.com/facebook/dns/dnsrocks/db"
 	"github.com/miekg/dns"
+
+	"github.com/facebook/dns/dnsrocks/db"
 )
 
 // Logger is an interface for logging messages
