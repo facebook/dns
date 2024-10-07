@@ -201,12 +201,15 @@ func (c *cdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 		if locID[0] != 0xff {
 			return locID, mask, nil
 		}
-		locLen, locID := locID[1], locID[2:]
-		if int(locLen) > len(locID) {
+		locLen := locID[1]
+		if 2+int(locLen) > len(locID) {
 			err = fmt.Errorf("invalid location length byte %d > %d", locLen, len(locID))
 			return nil, 0, err
 		}
-		locID = locID[:locLen]
+
+		// keep the [ff, n] prefix of the long IDs -
+		// would have to reinject on lookups otherwise
+		locID = locID[:2+locLen]
 		return locID, mask, nil
 	}
 	return nil, 0, nil

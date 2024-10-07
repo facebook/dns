@@ -511,7 +511,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, 'M'},
 			ip:               "1.1.1.2",
 			mask:             32,
-			expectedLocation: Location{MapID: []byte("\xff\x04map0"), Mask: 120, LocID: []byte("fml1")},
+			expectedLocation: Location{MapID: []byte("\xff\x04map0"), Mask: 120, LocID: []byte("\xff\x04fml1")},
 		},
 		{
 			desc:             "long map ID-2",
@@ -519,7 +519,7 @@ func testDBFindLocationCustomBitmap(t *testing.T, separateBitmap bool) {
 			qmap:             []byte{0, '8'},
 			ip:               "10.10.10.0",
 			mask:             24,
-			expectedLocation: Location{MapID: []byte("\xff\x04map0"), Mask: 96, LocID: []byte("other")},
+			expectedLocation: Location{MapID: []byte("\xff\x04map0"), Mask: 96, LocID: []byte("\xff\x05other")},
 		},
 	}
 	for _, dbconfig := range testaid.TestDBs {
@@ -597,7 +597,7 @@ func testFindLocationForResolversCustomBitmap(t *testing.T, separateBitmap bool)
 		{
 			domain:           "cnamemap.example.com.",
 			resolver:         "3.3.3.3",
-			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 128, LocID: []byte("fml1c01")},
+			expectedLocation: Location{MapID: []byte{'c', '\000'}, Mask: 128, LocID: []byte("\xff\x07fml1c01")},
 		},
 		{
 			domain:           "cnamemap.example.com.",

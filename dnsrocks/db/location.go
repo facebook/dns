@@ -60,7 +60,7 @@ func init() {
 type Location struct {
 	MapID []byte // The map in which we found the name.
 	Mask  uint8  // The subnet mask we found a match for. Used for ECS.
-	LocID []byte // The location id.
+	LocID []byte // The location ID, including the 2-byte header for long IDs.
 }
 
 // Equal checks whether the two locations have same LocID

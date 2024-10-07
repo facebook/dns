@@ -59,6 +59,14 @@ func getAuthTestCases() []isAuthTestCase {
 			expectedErr:       nil,
 		},
 		{
+			qname:             "long.example.com.", // This is a A Record
+			location:          &Location{MapID: []byte("\xff\x04map0"), Mask: 0, LocID: []byte("\xff\x05other")},
+			flagns:            true,
+			flagauthoritative: true,
+			authdomain:        "example.com.",
+			expectedErr:       nil,
+		},
+		{
 			qname:             "example.com.",
 			location:          &Location{MapID: []byte{'c', 0}, Mask: 0, LocID: []byte{0, 1}},
 			flagns:            true,
@@ -363,5 +371,81 @@ func TestDBFindSOA(t *testing.T) {
 				})
 			}
 		})
+	}
+}
+
+func TestExtractRRFromRow(t *testing.T) {
+	type testCase struct {
+		name       string
+		row        []byte
+		wildcard   bool
+		expectedRR ResourceRecord
+	}
+	testCases := []testCase{{
+		name:     "A record with long ID",
+		row:      []byte{0, 1, 62, 0xff, 6, 'a', 'b', 'c', '1', '2', '3', 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 192, 0, 2, 1},
+		wildcard: false,
+		expectedRR: ResourceRecord{
+			Weight: 100,
+			Qtype:  1,
+			TTL:    60,
+			Offset: 27,
+		},
+	}, {
+		name:     "AAAA record with long ID",
+		row:      []byte{0, 28, 62, 0xff, 6, 'a', 'b', 'c', '1', '2', '3', 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		wildcard: false,
+		expectedRR: ResourceRecord{
+			Weight: 100,
+			Qtype:  28,
+			TTL:    60,
+			Offset: 27,
+		},
+	}, {
+		name:     "A record with short ID",
+		row:      []byte{0, 1, 62, 0xa, 0xb, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 192, 0, 2, 1},
+		wildcard: false,
+		expectedRR: ResourceRecord{
+			Weight: 100,
+			Qtype:  1,
+			TTL:    60,
+			Offset: 21,
+		},
+	}, {
+		name:     "AAAA record with short ID",
+		row:      []byte{0, 28, 62, 0xa, 0xb, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		wildcard: false,
+		expectedRR: ResourceRecord{
+			Weight: 100,
+			Qtype:  28,
+			TTL:    60,
+			Offset: 21,
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rr, err := ExtractRRFromRow(tc.row, tc.wildcard)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedRR, rr)
+		})
+	}
+}
+
+func TestExtractRRFromRow_Invalid(t *testing.T) {
+	// Valid row
+	row := []byte{0, 1, 62, 0xff, 6, 'a', 'b', 'c', '1', '2', '3', 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 192, 0, 2, 1}
+
+	// Meta-test: check that the valid row is permitted
+	_, err := ExtractRRFromRow(row, false)
+	require.NoError(t, err)
+	// Remove RDATA.  Row is still valid
+	_, err = ExtractRRFromRow(row[:len(row)-4], false)
+	require.NoError(t, err)
+
+	// Further truncations are all invalid.
+	for i := 0; i < len(row)-4; i++ {
+		_, err := ExtractRRFromRow(row[:i], false)
+		require.Error(t, err)
 	}
 }

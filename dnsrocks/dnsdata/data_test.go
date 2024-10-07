@@ -486,6 +486,25 @@ var codectests = []codecTest{
 		},
 	},
 	{
+		// Long location ID
+		in:      []byte(`+2cthefacebook.com,102.132.96.18,300,,abc123,50000`),
+		outText: []byte("+2cthefacebook.com,102.132.96.18,300,,abc123,50000"),
+		out: []MapRecord{{
+			Key:   []byte{0xff, 6, 'a', 'b', 'c', '1', '2', '3', 13, 50, 99, 116, 104, 101, 102, 97, 99, 101, 98, 111, 111, 107, 3, 99, 111, 109, 0},
+			Value: []byte{0, 1, 62, 0xff, 6, 'a', 'b', 'c', '1', '2', '3', 0, 0, 1, 44, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 195, 80, 102, 132, 96, 18},
+		}},
+		outV2: []MapRecord{
+			{
+				Key: []byte{
+					0, 111, // prefix
+					3, 99, 111, 109, 13, 50, 99, 116, 104, 101, 102, 97, 99, 101, 98, 111, 111, 107, 0, // inverted name
+					0xff, 6, 'a', 'b', 'c', '1', '2', '3', // location
+				},
+				Value: []byte{0, 1, 62, 0xff, 6, 'a', 'b', 'c', '1', '2', '3', 0, 0, 1, 44, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 195, 80, 102, 132, 96, 18},
+			},
+		},
+	},
+	{
 		in:      []byte("=button.p\\141nic.mil:1.8.7.108"),
 		outText: []byte("=button.panic.mil,1.8.7.108,86400,,"),
 		out: []MapRecord{

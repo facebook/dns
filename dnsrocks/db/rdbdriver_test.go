@@ -86,9 +86,9 @@ func TestUnpackLocation(t *testing.T) {
 		{
 			name:         "long location with marker",
 			key:          []byte{1, 2, 3},
-			value:        []byte{6, 0, 0, 0, 255, 4, 97, 108, 101, 120}, // 6 is the length of the first multi-value field, 255 is the marker, 4 is the length of the location, 'alex' is the location
+			value:        []byte{6, 0, 0, 0, 0xff, 4, 97, 108, 101, 120}, // 6 is the length of the first multi-value field, 255 is the marker, 4 is the length of the location, 'alex' is the location
 			wantErr:      false,
-			wantLocation: []byte("alex"),
+			wantLocation: []byte("\xff\x04alex"),
 			wantMask:     3,
 		},
 		{
@@ -111,7 +111,7 @@ func TestUnpackLocation(t *testing.T) {
 			key:          []byte{1, 2, 3},
 			value:        []byte{6, 0, 0, 0, 255, 4, 97, 108, 101, 120, 2, 0, 0, 0, 3, 4}, // 6 is the length of the first multi-value field, 255 is the marker, 4 is the length of the location, 'alex' is the location, 2 is the length of the second multi-value field, 3, 4 is the second location
 			wantErr:      false,
-			wantLocation: []byte("alex"),
+			wantLocation: []byte("\xff\x04alex"),
 			wantMask:     3,
 		},
 	}

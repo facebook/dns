@@ -201,12 +201,15 @@ func unpackLocation(foundKey, foundVal []byte) (loc []byte, mlen uint8, err erro
 			loc = foundVal
 			return loc, mlen, nil
 		}
-		locLen, foundVal := foundVal[1], foundVal[2:]
-		if int(locLen) > int(valLen) {
+		locLen := int(foundVal[1])
+		if 2+locLen > int(valLen) {
 			err = fmt.Errorf("invalid location length byte %d > %d", locLen, valLen)
 			return nil, 0, err
 		}
-		loc = foundVal[:locLen]
+
+		// keep the [ff, n] prefix of the long IDs -
+		// would have to reinject on lookups otherwise
+		loc = foundVal[:2+locLen]
 		return loc, mlen, nil
 	}
 }

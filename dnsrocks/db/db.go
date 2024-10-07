@@ -35,6 +35,7 @@ type DBI interface {
 	ForEach(key []byte, f func(value []byte) error, context Context) error
 	FreeContext(Context)
 	FindMap(domain, mtype []byte, context Context) ([]byte, error)
+	// GetLocationByMap returns the location ID, including the 2-byte header for long IDs.
 	GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Context) ([]byte, uint8, error)
 	Close() error
 	Reload(path string) (DBI, error)

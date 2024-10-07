@@ -182,8 +182,6 @@ func (r *sortedDataReader) find(
 	key := make([]byte, len(q)+max(len(loc.LocID), len(EmptyLocation.LocID))+len(dnsdata.ResourceRecordsKeyMarker))
 	copy(key, []byte(dnsdata.ResourceRecordsKeyMarker))
 
-	// assumption is that both provided location AND empty location have same length
-	locationLength := len(loc.LocID)
 	domainNameStart := len(dnsdata.ResourceRecordsKeyMarker)
 
 	copy(key[domainNameStart:], reversedQName)
@@ -199,8 +197,7 @@ func (r *sortedDataReader) find(
 		// mark domain name end. we can avoid re-copying as we are cutting labels from the end
 		key[locationStart-1] = 0x00
 
-		copy(key[locationStart:], loc.LocID[:])
-		key = key[:locationStart+locationLength]
+		key = append(key[:locationStart], loc.LocID...)
 
 		// new key that is equal to what we asked for, or less than it.
 		// This new key can be very different from what we requested, i.e.
@@ -216,11 +213,8 @@ func (r *sortedDataReader) find(
 		// zone cut for different location exists -> check default location
 		if !loc.IsEmpty() &&
 			// empty location override might exists as only location part is different in found key
-			len(key) == len(k) &&
-			bytes.Equal(
-				key[:len(key)-locationLength], k[:len(key)-locationLength],
-			) {
-			copy(key[locationStart:], EmptyLocation.LocID[:])
+			bytes.HasPrefix(k, key[:locationStart]) {
+			key = append(key[:locationStart], EmptyLocation.LocID...)
 
 			k, err = r.TryForEach(key, parseResult)
 			if err != nil {
@@ -243,14 +237,12 @@ func (r *sortedDataReader) find(
 			break
 		}
 
-		// strip out prefix and location
-		foundLabel := k[domainNameStart : len(k)-locationLength]
-
-		// ignore end length as it will be \0 for foundLabel and most probably non \0 for current name
-		if bytes.Equal(reversedQName[:qLength-1], foundLabel[:len(foundLabel)-1]) {
+		// Peel off one or more labels from reversedQName until
+		// the remainder matches k.
+		priorQLength := qLength
+		qLength = findCommonLongestPrefix(reversedQName[:qLength-1], k[domainNameStart:]) + 1
+		if qLength == priorQLength {
 			qLength = getLengthWithoutLastLabel(reversedQName, qLength)
-		} else {
-			qLength = findCommonLongestPrefix(reversedQName, foundLabel) + 1 // +1 for terminating \0
 		}
 	}
 }

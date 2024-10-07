@@ -63,41 +63,60 @@ func dnsLabelWildsafe(q []byte) bool {
 
 // ExtractRRFromRow extracts a ResourceRecord from a DB row.
 // A DB row contains data ResourceRecord information:
-// qtype (2) ch (1) recordloc (2)? ttl (4) ttd (8) weight (4)? rdata (vlen)
+// qtype (2) ch (1) recordloc (2+)? ttl (4) ttd (8) weight (4)? rdata (vlen)
 // recordloc is present only if ch == '+' + 1 or ch == '*' + 1
 // weight is only present if qtype is A or AAAA
 // It returns a pointer to a ResourceRecord, nil when not a proper match.
 // nil is returned when the row is not matching the specific filters (e.g
 // Location or wildcard).
 func ExtractRRFromRow(row []byte, wildcard bool) (rr ResourceRecord, err error) {
-	dpos := 0
-	rr.Qtype = binary.BigEndian.Uint16(row[dpos : dpos+2])
-	dpos += 2
-	ch := row[dpos]
-	dpos++
+	r := bytes.NewReader(row)
+	if err = binary.Read(r, binary.BigEndian, &rr.Qtype); err != nil {
+		return
+	}
+	ch, err := r.ReadByte()
+	if err != nil {
+		return
+	}
 
 	// Only handle wildcard records when in wildcard mode.
 	if wildcard != (ch == '*' || ch == '*'+1) {
 		return rr, ErrWildcardMismatch
 	}
 
-	// If location based record, skip location offset.
+	// If location based record, skip location ID.
 	if (ch == '='+1) || (ch == '*'+1) {
-		dpos += 2
+		firstLocByte, err := r.ReadByte()
+		if err != nil {
+			return rr, err
+		}
+		secondLocByte, err := r.ReadByte()
+		if err != nil {
+			return rr, err
+		}
+		if firstLocByte == 0xff {
+			// Long ID.  Skip the remainder.
+			if _, err = r.Seek(int64(secondLocByte), io.SeekCurrent); err != nil {
+				return rr, err
+			}
+		}
 	}
 
-	rr.TTL = binary.BigEndian.Uint32(row[dpos : dpos+4])
-	dpos += 4
+	if err = binary.Read(r, binary.BigEndian, &rr.TTL); err != nil {
+		return
+	}
 
 	// the next 8 bytes contains `ttd` TAI timestamp, which we do not use... skip.
-	dpos += 8
-
-	rr.Offset = dpos
+	if _, err = r.Seek(8, io.SeekCurrent); err != nil {
+		return
+	}
 	// Only A and AAAA records have a weight.
 	if rr.Qtype == dns.TypeAAAA || rr.Qtype == dns.TypeA {
-		rr.Weight = binary.BigEndian.Uint32(row[dpos : dpos+4])
-		rr.Offset += 4
+		if err = binary.Read(r, binary.BigEndian, &rr.Weight); err != nil {
+			return
+		}
 	}
+	rr.Offset = int(r.Size()) - r.Len()
 
 	return rr, nil
 }
@@ -174,6 +193,7 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 		// rr will be used to construct temporary ResourceRecords
 		rr  dns.RR
 		rrs []dns.RR
+		key = make([]byte, len(q)+len(loc.LocID))
 	)
 
 	parseResult := func(result []byte) error {
@@ -212,15 +232,17 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 	for {
 		// Add location prefix to qname
 		if !loc.IsEmpty() {
-			localQ := append(loc.LocID[:], q[:]...)
-			err = r.ForEach(localQ, parseResult)
+			key = append(key[:0], loc.LocID...)
+			key = append(key[:len(loc.LocID)], q...)
+			err = r.ForEach(key, parseResult)
 			if err != nil {
 				glog.Errorf("%v", err)
 			}
 		}
 
-		nonLocalQ := append(EmptyLocation.LocID[:], q[:]...)
-		err = r.ForEach(nonLocalQ, parseResult)
+		key = append(key[:0], EmptyLocation.LocID...)
+		key = append(key, q...)
+		err = r.ForEach(key, parseResult)
 		if err != nil {
 			glog.Errorf("%v", err)
 		}
