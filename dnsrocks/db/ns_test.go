@@ -47,7 +47,7 @@ func BenchmarkGetNs(b *testing.B) {
 				for n := 0; n < b.N; n++ {
 					offset, err := dns.PackDomainName(bm, packedQName, 0, nil, false)
 					require.Nilf(b, err, "Could not pack domain %s", bm)
-					_, err = GetNs(r, packedQName[:offset], bm, dns.ClassINET, loc)
+					_, err = GetNs(r, packedQName[:offset], bm, dns.ClassINET, loc.LocID)
 					if err != nil {
 						b.Fatalf("%v", err)
 					}
@@ -64,25 +64,25 @@ func TestGetNs(t *testing.T) {
 
 	testCases := []struct {
 		qname         string
-		location      Location
+		locID         ID
 		expectedCount int
 	}{
 		{
 			// example.com has NS records
 			qname:         "example.com.",
-			location:      Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
+			locID:         []byte{0, 0},
 			expectedCount: 2,
 		},
 		{
 			// nonauth.example.com has NS records
 			qname:         "nonauth.example.com.",
-			location:      Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
+			locID:         []byte{0, 0},
 			expectedCount: 2,
 		},
 		{
 			// doesnotexist.example.com does not have ns records but matches wildcard
 			qname:         "doesnotexist.example.com.",
-			location:      Location{MapID: []byte{0, 0}, Mask: 0, LocID: []byte{0, 0}},
+			locID:         []byte{0, 0},
 			expectedCount: 0,
 		},
 		{
@@ -90,7 +90,7 @@ func TestGetNs(t *testing.T) {
 			// return the non localized records when we provide a location and there
 			// is a location matching the client.
 			qname:         "example.com.",
-			location:      Location{MapID: []byte{'e', 'c'}, Mask: 120, LocID: []byte{0, 2}},
+			locID:         []byte{0, 2},
 			expectedCount: 2,
 		},
 	}
@@ -105,7 +105,7 @@ func TestGetNs(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/%v", config.Driver, tc), func(t *testing.T) {
 				offset, err := dns.PackDomainName(tc.qname, q, 0, nil, false)
 				require.Nilf(t, err, "Failed at packing domain %s: %v", tc.qname)
-				rrs, err := GetNs(r, q[:offset], tc.qname, dns.ClassINET, &tc.location)
+				rrs, err := GetNs(r, q[:offset], tc.qname, dns.ClassINET, tc.locID)
 				require.Nil(t, err)
 				require.Equal(t, tc.expectedCount, len(rrs))
 			})

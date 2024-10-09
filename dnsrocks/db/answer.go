@@ -37,9 +37,6 @@ var (
 	// ErrWildcardMismatch is returned if the record is a wildcard but we are not
 	// looking for wildcard
 	ErrWildcardMismatch = errors.New("Wildcard mismatch")
-
-	// EmptyLocation is used to index (prefix) non-location aware qnames for RR's
-	EmptyLocation = Location{MapID: []byte{0, 0}, LocID: []byte{0, 0}}
 )
 
 // dnsLabelWildsafe checks that a label contains only characters that can be
@@ -130,7 +127,7 @@ func ExtractRRFromRow(row []byte, wildcard bool) (rr ResourceRecord, err error) 
 //
 // If `ns` is True and `auth` is False: this is a delegation.
 // If `ns` and `auth` are True, we are authoritative.
-func (r *DataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, auth bool, zoneCut []byte, err error) {
+func (r *DataReader) IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zoneCut []byte, err error) {
 	zoneCut = q
 
 	parseResult := func(result []byte) error {
@@ -149,18 +146,22 @@ func (r *DataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, auth boo
 		return nil
 	}
 
+	key := make([]byte, len(locID)+len(q))
+
 	for {
-		if !loc.IsEmpty() {
-			localQ := append(loc.LocID[:], zoneCut...)
-			err := r.ForEach(localQ, parseResult)
+		if !locID.IsZero() {
+			key = append(key[:0], locID...)
+			key = append(key, zoneCut...)
+			err := r.ForEach(key, parseResult)
 			if err != nil {
 				return false, false, zoneCut, err
 			}
 		}
 
 		if !(auth && ns) {
-			nonLocalQ := append(EmptyLocation.LocID[:], zoneCut...)
-			err := r.ForEach(nonLocalQ, parseResult)
+			key = append(key[:0], ZeroID...)
+			key = append(key, zoneCut...)
+			err := r.ForEach(key, parseResult)
 			if err != nil {
 				return false, false, zoneCut, err
 			}
@@ -182,7 +183,7 @@ func (r *DataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, auth boo
 }
 
 // FindAnswer will find answers for a given query q
-func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, loc *Location, a *dns.Msg, maxAnswer int) (bool, bool) {
+func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, bool) {
 	var (
 		wrs         = Wrs{MaxAnswers: maxAnswer}
 		err         error
@@ -193,7 +194,7 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 		// rr will be used to construct temporary ResourceRecords
 		rr  dns.RR
 		rrs []dns.RR
-		key = make([]byte, len(q)+len(loc.LocID))
+		key = make([]byte, len(q)+len(locID))
 	)
 
 	parseResult := func(result []byte) error {
@@ -231,16 +232,16 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 
 	for {
 		// Add location prefix to qname
-		if !loc.IsEmpty() {
-			key = append(key[:0], loc.LocID...)
-			key = append(key[:len(loc.LocID)], q...)
+		if !locID.IsZero() {
+			key = append(key[:0], locID...)
+			key = append(key[:len(locID)], q...)
 			err = r.ForEach(key, parseResult)
 			if err != nil {
 				glog.Errorf("%v", err)
 			}
 		}
 
-		key = append(key[:0], EmptyLocation.LocID...)
+		key = append(key[:0], ZeroID...)
 		key = append(key, q...)
 		err = r.ForEach(key, parseResult)
 		if err != nil {
@@ -278,7 +279,7 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 }
 
 // FindSOA find SOA record and set it into the Authority section of the message.
-func FindSOA(r Reader, zoneCut []byte, zoneCutString string, loc *Location, a *dns.Msg) {
+func FindSOA(r Reader, zoneCut []byte, zoneCutString string, locID ID, a *dns.Msg) {
 	var (
 		// rr will be used to construct temporary ResourceRecords
 		rr dns.RR
@@ -300,7 +301,7 @@ func FindSOA(r Reader, zoneCut []byte, zoneCutString string, loc *Location, a *d
 		return nil
 	}
 
-	err := r.ForEachResourceRecord(zoneCut, loc, parseResult)
+	err := r.ForEachResourceRecord(zoneCut, locID, parseResult)
 	if err != nil {
 		glog.Errorf("%v", err)
 	}

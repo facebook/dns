@@ -24,7 +24,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, loc *Location, a *dns.Msg, maxAnswer int) (bool, bool) {
+func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, bool) {
 	var (
 		wrs         = Wrs{MaxAnswers: maxAnswer}
 		err         error
@@ -125,12 +125,12 @@ func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname 
 		return true
 	}
 
-	r.find(q, loc, parseResult, preIterationCheck, postIterationCheck)
+	r.find(q, locID, parseResult, preIterationCheck, postIterationCheck)
 
 	return wrs.WeightedAnswer(), recordFound
 }
 
-func (r *sortedDataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, auth bool, zoneCut []byte, err error) {
+func (r *sortedDataReader) IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zoneCut []byte, err error) {
 	parseResult := func(result []byte) error {
 		rec, err := ExtractRRFromRow(result, false)
 		if err != nil {
@@ -159,7 +159,7 @@ func (r *sortedDataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, au
 		return !ns
 	}
 
-	r.find(q, loc, parseResult, preIterationCheck, postIterationCheck)
+	r.find(q, locID, parseResult, preIterationCheck, postIterationCheck)
 
 	zoneCut = q[len(q)-zoneCutLength:]
 
@@ -168,7 +168,7 @@ func (r *sortedDataReader) IsAuthoritative(q []byte, loc *Location) (ns bool, au
 
 func (r *sortedDataReader) find(
 	q []byte,
-	loc *Location,
+	locID ID,
 	parseResult func(value []byte) error,
 	preIterationCheck func(qName []byte, currentLength int) bool,
 	postIterationCheck func() bool,
@@ -179,7 +179,7 @@ func (r *sortedDataReader) find(
 
 	qLength := len(reversedQName)
 
-	key := make([]byte, len(q)+max(len(loc.LocID), len(EmptyLocation.LocID))+len(dnsdata.ResourceRecordsKeyMarker))
+	key := make([]byte, len(q)+max(len(locID), len(ZeroID))+len(dnsdata.ResourceRecordsKeyMarker))
 	copy(key, []byte(dnsdata.ResourceRecordsKeyMarker))
 
 	domainNameStart := len(dnsdata.ResourceRecordsKeyMarker)
@@ -197,7 +197,7 @@ func (r *sortedDataReader) find(
 		// mark domain name end. we can avoid re-copying as we are cutting labels from the end
 		key[locationStart-1] = 0x00
 
-		key = append(key[:locationStart], loc.LocID...)
+		key = append(key[:locationStart], locID...)
 
 		// new key that is equal to what we asked for, or less than it.
 		// This new key can be very different from what we requested, i.e.
@@ -211,10 +211,10 @@ func (r *sortedDataReader) find(
 		}
 
 		// zone cut for different location exists -> check default location
-		if !loc.IsEmpty() &&
+		if !locID.IsZero() &&
 			// empty location override might exists as only location part is different in found key
 			bytes.HasPrefix(k, key[:locationStart]) {
-			key = append(key[:locationStart], EmptyLocation.LocID...)
+			key = append(key[:locationStart], ZeroID...)
 
 			k, err = r.TryForEach(key, parseResult)
 			if err != nil {

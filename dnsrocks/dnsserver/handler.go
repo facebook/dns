@@ -273,7 +273,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	// Check if we are authoritative for this domain or if at least we know about
 	// its name servers. The domain returned is the one for which we found
 	// matching SOA or NS
-	ns, auth, zoneCut, err := reader.IsAuthoritative(packedQName, loc)
+	ns, auth, zoneCut, err := reader.IsAuthoritative(packedQName, loc.LocID)
 
 	if err != nil {
 		h.stats.IncrementCounter("DNS_error.is_authoritative")
@@ -303,7 +303,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	// https://tools.ietf.org/html/rfc3658#section-2.2.1.1
 	// https://lists.isc.org/pipermail/bind-users/2018-September/100668.html
 	if !auth && state.QType() == dns.TypeDS {
-		_, auth, zoneCut, err = reader.IsAuthoritative(packedQName[packedQName[0]+1:], loc)
+		_, auth, zoneCut, err = reader.IsAuthoritative(packedQName[packedQName[0]+1:], loc.LocID)
 		if err != nil {
 			h.stats.IncrementCounter("DNS_error.is_authoritative")
 			dns.HandleFailed(w, r)
@@ -327,7 +327,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 			maxAns = DefaultMaxAnswer
 			// log something
 		}
-		weighted, recordFound = reader.FindAnswer(packedQName, zoneCut, state.QName(), state.QType(), loc, a, maxAns)
+		weighted, recordFound = reader.FindAnswer(packedQName, zoneCut, state.QName(), state.QType(), loc.LocID, a, maxAns)
 		if len(a.Answer) == 0 && !recordFound {
 			a.Rcode = dns.RcodeNameError
 		}
@@ -347,9 +347,9 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	// Add NS RRset to Authority section if we don't have NS RRset in Answer
 	// section.
 	if auth && len(a.Answer) == 0 {
-		db.FindSOA(reader, zoneCut, unpackedControlDomain, loc, a)
+		db.FindSOA(reader, zoneCut, unpackedControlDomain, loc.LocID, a)
 	} else if !auth && !db.HasRecord(a, unpackedControlDomain, dns.TypeNS) {
-		ns, err := db.GetNs(reader, zoneCut, unpackedControlDomain, state.QClass(), loc)
+		ns, err := db.GetNs(reader, zoneCut, unpackedControlDomain, state.QClass(), loc.LocID)
 		if err != nil {
 			glog.Errorf("%v", err)
 		}
@@ -359,8 +359,8 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	}
 
 	// Additional section
-	weighted = db.AdditionalSectionForRecords(reader, a, loc, state.QClass(), a.Answer) || weighted
-	weighted = db.AdditionalSectionForRecords(reader, a, loc, state.QClass(), a.Ns) || weighted
+	weighted = db.AdditionalSectionForRecords(reader, a, loc.LocID, state.QClass(), a.Answer) || weighted
+	weighted = db.AdditionalSectionForRecords(reader, a, loc.LocID, state.QClass(), a.Ns) || weighted
 
 	if h.cacheConfig.Enabled {
 		// Cache answer before we add ECS/options

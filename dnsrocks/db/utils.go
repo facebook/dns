@@ -42,7 +42,7 @@ func HasRecord(msg *dns.Msg, record string, qtype uint16) bool {
 // AdditionalSectionForRecords given a list of records and a reader, add the
 // required records to the Extra (additional) section.
 // returns wether or not a weighted record was added to the additional section.
-func AdditionalSectionForRecords(r Reader, a *dns.Msg, loc *Location, qclass uint16, records []dns.RR) (weighted bool) {
+func AdditionalSectionForRecords(r Reader, a *dns.Msg, locID ID, qclass uint16, records []dns.RR) (weighted bool) {
 	var offset int
 	var err error
 	for _, x := range records {
@@ -82,7 +82,7 @@ func AdditionalSectionForRecords(r Reader, a *dns.Msg, loc *Location, qclass uin
 				return nil
 			}
 
-			err = r.ForEachResourceRecord(packedName[:offset], loc, parseRecord)
+			err = r.ForEachResourceRecord(packedName[:offset], locID, parseRecord)
 			if err != nil {
 				glog.Errorf("Failed at parse records %v", err)
 			}

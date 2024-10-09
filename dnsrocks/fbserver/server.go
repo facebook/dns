@@ -87,7 +87,6 @@ const connectionKey = "dns.connection"
 // record id.data.test for location \000\000 (e.g no location). We store a TXT
 // record with the timestamp of when the DB was generated.
 var dbTimestampName = []byte{2, 'i', 'd', 4, 'd', 'a', 't', 'a', 4, 't', 'e', 's', 't', 0}
-var dbTimestampLocation = db.EmptyLocation
 
 type anyMetricsExporter interface {
 	ConsumeStats(category string, stats *metrics.Stats) error
@@ -486,7 +485,7 @@ func (srv *Server) getDBTimestamp() error {
 		srv.stats.IncrementCounter(DBTimestampDBReadError)
 		return err
 	}
-	err = reader.ForEachResourceRecord(dbTimestampName, &dbTimestampLocation, parseResult)
+	err = reader.ForEachResourceRecord(dbTimestampName, db.ZeroID, parseResult)
 	reader.Close()
 	if err != nil {
 		srv.stats.IncrementCounter(DBTimestampKeySearchError)

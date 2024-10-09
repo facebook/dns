@@ -194,7 +194,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 			qtype         uint16
 			rr            []dns.RR
 			section       int
-			location      Location
+			locID         ID
 			expectInExtra []dns.RR
 		}{
 			{ // When we have a NS record in Ns section, we search A/AAAA when missing.
@@ -211,8 +211,8 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 						Ns: "b.ns.example.com.",
 					},
 				},
-				section:  NsSection,
-				location: Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
+				section: NsSection,
+				locID:   []byte{0, 3},
 				expectInExtra: []dns.RR{
 					&dns.A{
 						Hdr: dns.RR_Header{
@@ -250,8 +250,8 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 						Preference: 30,
 					},
 				},
-				section:  AnswerSection,
-				location: Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
+				section: AnswerSection,
+				locID:   []byte{0, 3},
 				expectInExtra: []dns.RR{
 					&dns.A{
 						Hdr: dns.RR_Header{
@@ -290,7 +290,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 					},
 				},
 				section:       AnswerSection,
-				location:      Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
+				locID:         []byte{0, 3},
 				expectInExtra: []dns.RR{},
 			},
 			{ // When we have a CNAME record in Answer section, AdditionalSectionForRecords
@@ -309,7 +309,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 					},
 				},
 				section:       AnswerSection,
-				location:      Location{MapID: []byte{'c', 0}, Mask: 120, LocID: []byte{0, 3}},
+				locID:         []byte{0, 3},
 				expectInExtra: []dns.RR{},
 			},
 		}
@@ -329,7 +329,7 @@ func TestAdditionalSectionForRecord(t *testing.T) {
 				}
 
 				*section = append(*section, tc.rr...)
-				w := AdditionalSectionForRecords(reader, a, &tc.location, dns.ClassINET, *section)
+				w := AdditionalSectionForRecords(reader, a, tc.locID, dns.ClassINET, *section)
 				require.Falsef(t, w, "Did not expect a weighted result")
 				RRSliceMatchSubsetf(t, a.Extra, tc.expectInExtra, "Failed at finding %s in answer %v", tc.expectInExtra, a)
 			})

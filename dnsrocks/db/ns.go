@@ -20,7 +20,7 @@ import (
 // GetNs will find and return the authoritative NS for
 // a specific domain `q`. `q` is in wire-format.
 // This is not expecting that `q` is the actual qname which has NS records.
-func GetNs(r Reader, q []byte, zonename string, class uint16, loc *Location) (ns []dns.RR, err error) {
+func GetNs(r Reader, q []byte, zonename string, class uint16, locID ID) (ns []dns.RR, err error) {
 	var rr dns.RR
 
 	parseResult := func(result []byte) error {
@@ -42,7 +42,7 @@ func GetNs(r Reader, q []byte, zonename string, class uint16, loc *Location) (ns
 		return nil
 	}
 
-	err = r.ForEachResourceRecord(q, loc, parseResult)
+	err = r.ForEachResourceRecord(q, locID, parseResult)
 	if err != nil {
 		return nil, err
 	}

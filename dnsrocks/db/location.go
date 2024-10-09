@@ -52,35 +52,41 @@ func init() {
 	}
 }
 
+// ID is an alias for []byte, used for Map IDs and Location IDs.
+// It is always at least 2 bytes long.  For long IDs, it contains
+// the header and contents.
+type ID []byte
+
+var (
+	// ZeroID is the value used to represent an empty Map ID or Location ID
+	ZeroID ID = []byte{0, 0}
+
+	// EmptyLocation is used to index (prefix) non-location aware qnames for RR's
+	EmptyLocation = Location{MapID: ZeroID, LocID: ZeroID}
+)
+
+// IsZero is true when its LocID is ZeroID.
+func (id ID) IsZero() bool {
+	return bytes.Equal(id, ZeroID)
+}
+
+// Contents are the ID bytes minus any long-ID header.
+func (id ID) Contents() []byte {
+	if len(id) <= 2 {
+		return id
+	}
+	return id[2:]
+}
+
 // Location is a native representation of a DNS location representation.
 // It holds:
 // the MapID it belongs to
 // For ECS MapID, the associated mask.
 // The LocID, the location ID used to find matching records.
 type Location struct {
-	MapID []byte // The map in which we found the name.
-	Mask  uint8  // The subnet mask we found a match for. Used for ECS.
-	LocID []byte // The location ID, including the 2-byte header for long IDs.
-}
-
-// Equal checks whether the two locations have same LocID
-func (l Location) Equal(b Location) bool {
-	return bytes.Equal(l.LocID[:], b.LocID[:])
-}
-
-// IsEmpty is true when its LocID is the same as EmptyLocation's, {0, 0}.
-func (l Location) IsEmpty() bool {
-	return l.Equal(EmptyLocation)
-}
-
-// IsZero is true when its LocID is {0, 0}.
-func (l Location) IsZero() bool {
-	return bytes.Equal(l.LocID[:], []byte{0, 0})
-}
-
-// IsZeroMap is true when its MapID is {0, 0}.
-func (l Location) IsZeroMap() bool {
-	return bytes.Equal(l.MapID[:], []byte{0, 0})
+	MapID ID    // The map in which we found the name.
+	Mask  uint8 // The subnet mask we found a match for. Used for ECS.
+	LocID ID    // The location ID.
 }
 
 // FindECS finds a EDNS0_SUBNET option in a DNS Msg.
@@ -126,7 +132,7 @@ func (r *DataReader) FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns
 		}
 	}
 	// resolver location lookup if we did not find any Client subnet match.
-	if loc == nil || loc.IsZero() {
+	if loc == nil || loc.LocID.IsZero() {
 		loc, err = r.ResolverLocation(qname, ip)
 	}
 	return ecs, loc, err
@@ -197,11 +203,11 @@ func (r *DataReader) EcsLocation(q []byte, ecs *dns.EDNS0_SUBNET) (*Location, er
 		return nil, err
 	}
 	// There is no mapping for this qname
-	if loc.IsZeroMap() {
+	if loc.MapID.IsZero() {
 		return nil, nil
 	}
 	// We found a match
-	if !loc.IsZero() {
+	if !loc.LocID.IsZero() {
 		ecs.SourceScope = loc.Mask
 		if ecs.Family == 1 {
 			ecs.SourceScope -= 96

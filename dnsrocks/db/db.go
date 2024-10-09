@@ -70,15 +70,15 @@ type DB struct {
 // It wraps DB to carry query context and properly count reference count to DB
 type Reader interface {
 	FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns.EDNS0_SUBNET, loc *Location, err error)
-	IsAuthoritative(q []byte, loc *Location) (ns bool, auth bool, zoneCut []byte, err error)
-	FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, loc *Location, a *dns.Msg, maxAnswer int) (bool, bool)
+	IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zoneCut []byte, err error)
+	FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, bool)
 
 	EcsLocation(q []byte, ecs *dns.EDNS0_SUBNET) (*Location, error)
 	ResolverLocation(q []byte, ip string) (*Location, error)
 	findLocation(q []byte, mtype []byte, ipnet *net.IPNet) (*Location, error)
 
 	ForEach(key []byte, f func(value []byte) error) (err error)
-	ForEachResourceRecord(domainName []byte, loc *Location, parseRecord func(result []byte) error) error
+	ForEachResourceRecord(domainName []byte, locID ID, parseRecord func(result []byte) error) error
 
 	Close()
 }
@@ -305,20 +305,24 @@ func (r *DataReader) Close() {
 }
 
 // ForEachResourceRecord calls parseRecord for each RR record in DB in provided AND default location
-func (r *DataReader) ForEachResourceRecord(domainName []byte, loc *Location, parseRecord func(result []byte) error) error {
+func (r *DataReader) ForEachResourceRecord(domainName []byte, locID ID, parseRecord func(result []byte) error) error {
 	var err error
 
-	if !loc.IsEmpty() {
-		localPackedName := append(loc.LocID[:], domainName...)
-		err = r.ForEach(localPackedName, parseRecord)
+	key := make([]byte, len(locID)+len(domainName))
+
+	if !locID.IsZero() {
+		key = append(key[:0], locID...)
+		key = append(key, domainName...)
+		err = r.ForEach(key, parseRecord)
 		if err != nil {
 			glog.Errorf("Error %v", err)
 			return err
 		}
 	}
 
-	nonLocalPackedName := append(EmptyLocation.LocID[:], domainName...)
-	err = r.ForEach(nonLocalPackedName, parseRecord)
+	key = append(key[:0], ZeroID...)
+	key = append(key, domainName...)
+	err = r.ForEach(key, parseRecord)
 	if err != nil {
 		glog.Errorf("Error %v", err)
 		return err
@@ -328,18 +332,18 @@ func (r *DataReader) ForEachResourceRecord(domainName []byte, loc *Location, par
 }
 
 // ForEachResourceRecord calls parseRecord for each RR record in DB in provided AND default location
-func (r *sortedDataReader) ForEachResourceRecord(domainName []byte, loc *Location, parseRecord func(result []byte) error) error {
+func (r *sortedDataReader) ForEachResourceRecord(domainName []byte, locID ID, parseRecord func(result []byte) error) error {
 	var err error
 
-	key := make([]byte, len(domainName)+max(len(loc.LocID), len(EmptyLocation.LocID))+len(dnsdata.ResourceRecordsKeyMarker))
+	key := make([]byte, len(domainName)+max(len(locID), len(ZeroID))+len(dnsdata.ResourceRecordsKeyMarker))
 	copy(key, []byte(dnsdata.ResourceRecordsKeyMarker))
 
 	reverseZoneNameToBuffer(domainName, key[len(dnsdata.ResourceRecordsKeyMarker):])
 
 	locationIndex := len(dnsdata.ResourceRecordsKeyMarker) + len(domainName)
 
-	if !loc.IsEmpty() {
-		copy(key[locationIndex:], loc.LocID[:])
+	if !locID.IsZero() {
+		copy(key[locationIndex:], locID)
 		err = r.ForEach(key, parseRecord)
 		if err != nil {
 			glog.Errorf("Error %v", err)
@@ -347,7 +351,7 @@ func (r *sortedDataReader) ForEachResourceRecord(domainName []byte, loc *Locatio
 		}
 	}
 
-	copy(key[locationIndex:], EmptyLocation.LocID[:])
+	copy(key[locationIndex:], ZeroID)
 	err = r.ForEach(key, parseRecord)
 	if err != nil {
 		glog.Errorf("Error %v", err)
