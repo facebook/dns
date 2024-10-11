@@ -15,8 +15,6 @@ package db
 
 import (
 	"bytes"
-	"errors"
-	"io"
 
 	"github.com/facebook/dns/dnsrocks/dnsdata"
 
@@ -26,49 +24,15 @@ import (
 
 func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, bool) {
 	var (
-		wrs         = Wrs{MaxAnswers: maxAnswer}
-		err         error
-		recordFound = false
-		wildcard    = false
-		// resource record pointer used during record lookups
-		rec ResourceRecord
-		// rr will be used to construct temporary ResourceRecords
-		rr  dns.RR
 		rrs []dns.RR
+		err error
+		rp  = &recordProcessor{
+			msg:   a,
+			wrs:   Wrs{MaxAnswers: maxAnswer},
+			qname: qname,
+			qtype: qtype,
+		}
 	)
-
-	parseResult := func(result []byte) error {
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
-
-		if rec, err = ExtractRRFromRow(result, wildcard); err != nil {
-			// Not a location match
-			// nolint: nilerr
-			return nil
-		}
-		recordFound = true
-		if rec.Qtype == dns.TypeCNAME || rec.Qtype == qtype || qtype == dns.TypeANY {
-			// When dealing with A/AAAA we may have weighted round-robin records
-			// Compute the weight and update wrr4/wrr6 with the current winner.
-			// When we are done looping, we will add the record to the answer.
-			if rec.Qtype == dns.TypeA || rec.Qtype == dns.TypeAAAA {
-				if err := wrs.Add(rec, result); err != nil {
-					glog.Errorf("Failed in adding record to WRS: %v", err)
-				}
-				// For other records, we append them to the answer.
-			} else {
-				hdr := dns.RR_Header{Name: qname, Rrtype: rec.Qtype, Class: dns.ClassINET, Ttl: rec.TTL, Rdlength: uint16(len(result[rec.Offset:]))}
-				rr, _, err = dns.UnpackRRWithHeader(hdr, result, rec.Offset)
-				if err != nil {
-					glog.Errorf("Failed to create resource record %v %d, %d, qname: %s", err, hdr.Rdlength, len(result[rec.Offset:]), qname)
-					return err
-				}
-				a.Answer = append(a.Answer, rr)
-			}
-		}
-		return nil
-	}
 
 	var lastLength = len(q)
 
@@ -105,29 +69,29 @@ func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname 
 
 	postIterationCheck := func() bool {
 		// append A/AAAA records with the selected RR record
-		if rrs, err = wrs.ARecord(qname, dns.ClassINET); err != nil {
+		if rrs, err = rp.wrs.ARecord(qname, dns.ClassINET); err != nil {
 			glog.Errorf("%v", err)
 		} else {
 			a.Answer = append(a.Answer, rrs...)
 		}
-		if rrs, err = wrs.AAAARecord(qname, dns.ClassINET); err != nil {
+		if rrs, err = rp.wrs.AAAARecord(qname, dns.ClassINET); err != nil {
 			glog.Errorf("%v", err)
 		} else {
 			a.Answer = append(a.Answer, rrs...)
 		}
 
-		if recordFound {
+		if rp.recordFound {
 			return false
 		}
 
-		wildcard = true
+		rp.wildcard = true
 
 		return true
 	}
 
-	r.find(q, locID, parseResult, preIterationCheck, postIterationCheck)
+	r.find(q, locID, rp.parseResult, preIterationCheck, postIterationCheck)
 
-	return wrs.WeightedAnswer(), recordFound
+	return rp.wrs.WeightedAnswer(), rp.recordFound
 }
 
 func (r *sortedDataReader) IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zoneCut []byte, err error) {

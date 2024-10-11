@@ -14,6 +14,7 @@ limitations under the License.
 package db
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -447,5 +448,84 @@ func TestExtractRRFromRow_Invalid(t *testing.T) {
 	for i := 0; i < len(row)-4; i++ {
 		_, err := ExtractRRFromRow(row[:i], false)
 		require.Error(t, err)
+	}
+}
+
+func TestParseResult(t *testing.T) {
+	testCases := []struct {
+		name        string
+		result      []byte
+		qtype       uint16
+		answer      []dns.RR
+		wrsV4Count  uint32
+		recordFound bool
+		err         error
+	}{
+
+		{
+			name:        "Malformed input",
+			result:      []byte{'e', 'r', 'r'},
+			qtype:       dns.TypeA,
+			answer:      []dns.RR(nil),
+			wrsV4Count:  0,
+			recordFound: false,
+			err:         errors.New("EOF"),
+		},
+		{
+			name:        "Integer overflow",
+			result:      make([]byte, 65551),
+			qtype:       dns.TypeANY,
+			answer:      []dns.RR(nil),
+			wrsV4Count:  0,
+			recordFound: true,
+			err:         errors.New("integer overflow for uint16 RR_Header.Rdlength"),
+		},
+		{
+			name:        "Add to Wrs",
+			result:      []byte{0, 1, 62, 0xa, 0xb, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 192, 0, 2, 1},
+			qtype:       dns.TypeA,
+			answer:      []dns.RR(nil),
+			wrsV4Count:  1,
+			recordFound: true,
+			err:         nil,
+		},
+		{
+			name:   "Add to Answer",
+			result: []byte{0, 5, 61, 0, 0, 14, 16, 0, 0, 0, 0, 0, 0, 0, 0, 3, 'w', 'w', 'w', 7, 'n', 'o', 'n', 'a', 'u', 't', 'h', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 3, 'c', 'o', 'm', 0},
+			qtype:  dns.TypeCNAME,
+			answer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:     "www.example.com.",
+						Rrtype:   dns.TypeCNAME,
+						Class:    dns.ClassINET,
+						Ttl:      3600,
+						Rdlength: 25,
+					},
+					Target: "www.nonauth.example.com.",
+				},
+			},
+			wrsV4Count:  0,
+			recordFound: true,
+			err:         nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rp := &recordProcessor{
+				msg:   new(dns.Msg),
+				wrs:   Wrs{MaxAnswers: 10},
+				qname: "www.example.com.",
+				qtype: tc.qtype,
+			}
+
+			err := rp.parseResult(tc.result)
+			require.Equal(t, tc.answer, rp.msg.Answer)
+			require.Equal(t, tc.wrsV4Count, rp.wrs.V4Count)
+			require.Equal(t, tc.recordFound, rp.recordFound)
+			require.Equal(t, tc.err, err)
+
+		})
 	}
 }

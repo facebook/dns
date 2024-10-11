@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"math"
 
 	"github.com/golang/glog"
 	"github.com/miekg/dns"
@@ -38,6 +39,64 @@ var (
 	// looking for wildcard
 	ErrWildcardMismatch = errors.New("Wildcard mismatch")
 )
+
+// recordProcessor holds the parameters for parseResult. It enables us to
+// deduplicate code for parseResult without changing any function signatures.
+type recordProcessor struct {
+	msg         *dns.Msg
+	wrs         Wrs
+	recordFound bool
+	wildcard    bool
+	qname       string
+	qtype       uint16
+}
+
+func (rp *recordProcessor) parseResult(result []byte) error {
+	var (
+		// resource record pointer used during record lookups
+		rec ResourceRecord
+		// rr will be used to construct temporary ResourceRecords
+		rr  dns.RR
+		err error
+	)
+
+	if rec, err = ExtractRRFromRow(result, rp.wildcard); err != nil {
+		if errors.Is(err, ErrWildcardMismatch) {
+			// ignore wildcard mismatch errors to stay consistent with existing system behavior
+			// nolint: nilerr
+			return nil
+		}
+		glog.Errorf("Failed to extract rr from row: %v", err)
+		return err
+	}
+	rp.recordFound = true
+	if rec.Qtype == dns.TypeCNAME || rec.Qtype == rp.qtype || rp.qtype == dns.TypeANY {
+		// When dealing with A/AAAA we may have weighted round-robin records
+		// Compute the weight and update wrr4/wrr6 with the current winner.
+		// When we are done looping, we will add the record to the answer.
+		if rec.Qtype == dns.TypeA || rec.Qtype == dns.TypeAAAA {
+			if err := rp.wrs.Add(rec, result); err != nil {
+				glog.Errorf("Failed in adding record to WRS: %v", err)
+			}
+			// For other records, we append them to the answer.
+		} else {
+			rdlength := len(result[rec.Offset:])
+			if rdlength > math.MaxUint16 {
+				err = errors.New("integer overflow for uint16 RR_Header.Rdlength")
+				glog.Errorf("Failed to create RR_Header: %v, max value is %d, tried assigning %d", err, math.MaxUint16, rdlength)
+				return err
+			}
+			hdr := dns.RR_Header{Name: rp.qname, Rrtype: rec.Qtype, Class: dns.ClassINET, Ttl: rec.TTL, Rdlength: uint16(rdlength)}
+			rr, _, err = dns.UnpackRRWithHeader(hdr, result, rec.Offset)
+			if err != nil {
+				glog.Errorf("Failed to create resource record %v %d, %d, qname: %s", err, hdr.Rdlength, len(result[rec.Offset:]), rp.qname)
+				return err
+			}
+			rp.msg.Answer = append(rp.msg.Answer, rr)
+		}
+	}
+	return nil
+}
 
 // dnsLabelWildsafe checks that a label contains only characters that can be
 // used in a wildcard record match.
@@ -185,57 +244,23 @@ func (r *DataReader) IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zo
 // FindAnswer will find answers for a given query q
 func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, bool) {
 	var (
-		wrs         = Wrs{MaxAnswers: maxAnswer}
-		err         error
-		recordFound = false
-		wildcard    = false
-		// resource record pointer used during record lookups
-		rec ResourceRecord
-		// rr will be used to construct temporary ResourceRecords
-		rr  dns.RR
 		rrs []dns.RR
+		err error
 		key = make([]byte, len(q)+len(locID))
+		rp  = &recordProcessor{
+			msg:   a,
+			wrs:   Wrs{MaxAnswers: maxAnswer},
+			qname: qname,
+			qtype: qtype,
+		}
 	)
-
-	parseResult := func(result []byte) error {
-		if errors.Is(err, io.EOF) {
-			return nil
-		}
-
-		if rec, err = ExtractRRFromRow(result, wildcard); err != nil {
-			// Not a location match
-			// nolint:nilerr
-			return nil
-		}
-		recordFound = true
-		if rec.Qtype == dns.TypeCNAME || rec.Qtype == qtype || qtype == dns.TypeANY {
-			// When dealing with A/AAAA we may have weighted round-robin records
-			// Compute the weight and update wrr4/wrr6 with the current winner.
-			// When we are done looping, we will add the record to the answer.
-			if rec.Qtype == dns.TypeA || rec.Qtype == dns.TypeAAAA {
-				if err := wrs.Add(rec, result); err != nil {
-					glog.Errorf("Failed in adding record to WRS: %v", err)
-				}
-				// For other records, we append them to the answer.
-			} else {
-				hdr := dns.RR_Header{Name: qname, Rrtype: rec.Qtype, Class: dns.ClassINET, Ttl: rec.TTL, Rdlength: uint16(len(result[rec.Offset:]))}
-				rr, _, err = dns.UnpackRRWithHeader(hdr, result, rec.Offset)
-				if err != nil {
-					glog.Errorf("Failed to convert from tinydns format %v %d, %d", err, hdr.Rdlength, len(result[rec.Offset:]))
-					return err
-				}
-				a.Answer = append(a.Answer, rr)
-			}
-		}
-		return nil
-	}
 
 	for {
 		// Add location prefix to qname
 		if !locID.IsZero() {
 			key = append(key[:0], locID...)
 			key = append(key[:len(locID)], q...)
-			err = r.ForEach(key, parseResult)
+			err = r.ForEach(key, rp.parseResult)
 			if err != nil {
 				glog.Errorf("%v", err)
 			}
@@ -243,24 +268,24 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 
 		key = append(key[:0], ZeroID...)
 		key = append(key, q...)
-		err = r.ForEach(key, parseResult)
+		err = r.ForEach(key, rp.parseResult)
 		if err != nil {
 			glog.Errorf("%v", err)
 		}
 
 		// append A/AAAA records with the selected RR record
-		if rrs, err = wrs.ARecord(qname, dns.ClassINET); err != nil {
+		if rrs, err = rp.wrs.ARecord(qname, dns.ClassINET); err != nil {
 			glog.Errorf("%v", err)
 		} else {
 			a.Answer = append(a.Answer, rrs...)
 		}
-		if rrs, err = wrs.AAAARecord(qname, dns.ClassINET); err != nil {
+		if rrs, err = rp.wrs.AAAARecord(qname, dns.ClassINET); err != nil {
 			glog.Errorf("%v", err)
 		} else {
 			a.Answer = append(a.Answer, rrs...)
 		}
 
-		if recordFound {
+		if rp.recordFound {
 			break
 		}
 		if bytes.Equal(q, packedControlName) {
@@ -273,9 +298,9 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 			break
 		}
 		q = q[q[0]+1:]
-		wildcard = true
+		rp.wildcard = true
 	}
-	return wrs.WeightedAnswer(), recordFound
+	return rp.wrs.WeightedAnswer(), rp.recordFound
 }
 
 // FindSOA find SOA record and set it into the Authority section of the message.
