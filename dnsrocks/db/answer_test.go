@@ -525,7 +525,6 @@ func TestParseResult(t *testing.T) {
 			require.Equal(t, tc.wrsV4Count, rp.wrs.V4Count)
 			require.Equal(t, tc.recordFound, rp.recordFound)
 			require.Equal(t, tc.err, err)
-
 		})
 	}
 }
