@@ -343,7 +343,7 @@ func (r *sortedDataReader) ForEachResourceRecord(domainName []byte, locID ID, pa
 	locationIndex := len(dnsdata.ResourceRecordsKeyMarker) + len(domainName)
 
 	if !locID.IsZero() {
-		copy(key[locationIndex:], locID)
+		key = append(key[:locationIndex], locID...)
 		err = r.ForEach(key, parseRecord)
 		if err != nil {
 			glog.Errorf("Error %v", err)
@@ -351,7 +351,7 @@ func (r *sortedDataReader) ForEachResourceRecord(domainName []byte, locID ID, pa
 		}
 	}
 
-	copy(key[locationIndex:], ZeroID)
+	key = append(key[:locationIndex], ZeroID...)
 	err = r.ForEach(key, parseRecord)
 	if err != nil {
 		glog.Errorf("Error %v", err)

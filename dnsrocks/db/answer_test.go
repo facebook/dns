@@ -145,6 +145,22 @@ func getFindAnswerTestCases() []findAnswerTestCase {
 			expectedRecords:  false,
 			expectedNXDomain: false, // we have the records for other types (MX), so return NOERROR
 		},
+		{
+			qname:            "long.example.com.",
+			qtype:            dns.TypeA,
+			locID:            []byte("\xff\x05other"),
+			authdomain:       "example.com.",
+			expectedRecords:  true,
+			expectedNXDomain: false,
+		},
+		{
+			qname:            "long.example.com.",
+			qtype:            dns.TypeSRV,
+			locID:            []byte("\xff\x05other"),
+			authdomain:       "example.com.",
+			expectedRecords:  false,
+			expectedNXDomain: false,
+		},
 	}
 }
 
@@ -333,26 +349,34 @@ func TestDBFindSOA(t *testing.T) {
 
 	testCases := []struct {
 		zoneCutString  string
+		locID          ID
 		expectedLength int
 	}{
 		// matching SOA for zone cut
 		{
 			zoneCutString:  "example.com.",
+			locID:          ZeroID,
 			expectedLength: 1,
 		},
 		// matching SOA for zone cut but we assume all lowercase.
 		{
 			zoneCutString:  "eXample.com.",
+			locID:          ZeroID,
 			expectedLength: 0,
 		},
 		// no matching SOa for zone cut
 		{
 			zoneCutString:  "foo.example.com.",
+			locID:          ZeroID,
 			expectedLength: 0,
 		},
+		// matching SOA for zone cut with long locID
+		{
+			zoneCutString:  "example.com.",
+			locID:          []byte("\xff\x05other"),
+			expectedLength: 1,
+		},
 	}
-
-	locID := []byte{0, 0}
 
 	for _, config := range testaid.TestDBs {
 		db, err = Open(config.Path, config.Driver)
@@ -365,7 +389,7 @@ func TestDBFindSOA(t *testing.T) {
 					a := new(dns.Msg)
 					offset, err := dns.PackDomainName(tc.zoneCutString, zoneCut, 0, nil, false)
 					require.Nilf(t, err, "Failed at packing zoneCut %s", tc.zoneCutString)
-					FindSOA(r, zoneCut[:offset], tc.zoneCutString, locID, a)
+					FindSOA(r, zoneCut[:offset], tc.zoneCutString, tc.locID, a)
 					require.Equalf(t, tc.expectedLength, len(a.Ns),
 						"Expected authoritative section length %d, got %d",
 						tc.expectedLength, len(a.Ns))
