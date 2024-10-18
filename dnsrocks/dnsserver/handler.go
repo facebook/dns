@@ -180,7 +180,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	h.stats.IncrementCounter(typeToStatsKey(state.QType()))
 
 	// Check if this is a supported edns version
-	if a, err := edns.Version(r); err != nil { // Wrong EDNS version, return at once.
+	if a, err := edns.Version(state.Req); err != nil { // Wrong EDNS version, return at once.
 		return h.writeAndLog(state, a, ecs, loc)
 	}
 
@@ -188,26 +188,24 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	if err != nil {
 		h.stats.IncrementCounter("DNS_error.pack_domain_fail")
 		glog.Errorf("could not pack domain %s", state.Name())
-		dns.HandleFailed(w, r)
-		h.logger.LogFailed(state, r, ecs, loc)
+		dns.HandleFailed(state.W, state.Req)
+		h.logger.LogFailed(state, ecs, loc)
 		// nolint: nilerr
 		return dns.RcodeServerFailure, nil
 	}
 
 	packedQName = packedQName[:offset]
 
-	if ecs, loc, err = reader.FindLocation(packedQName, r, state.IP()); err != nil {
+	if ecs, loc, err = reader.FindLocation(packedQName, state.Req, state.IP()); err != nil {
 		glog.Errorf("%s: failed to find location: %v", state.Name(), err)
-		//dns.HandleFailed(w, r)
-		h.logger.LogFailed(state, r, ecs, loc)
+		h.logger.LogFailed(state, ecs, loc)
 		return dns.RcodeServerFailure, nil
 	}
 
 	if loc == nil {
 		// We could not find a location, not even the default one... potentially a bogus DB.
-		// dns.HandleFailed(w, r)
 		glog.Errorf("%s: nil location", state.Name())
-		h.logger.LogFailed(state, r, ecs, loc)
+		h.logger.LogFailed(state, ecs, loc)
 		return dns.RcodeServerFailure, nil
 	}
 
@@ -244,9 +242,9 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 				resp := v.(cacheEntry).response.Copy()
 				// SetReply sets rcode to RcodeSuccess...
 				rcode := resp.Rcode
-				resp.SetReply(r)
+				resp.SetReply(state.Req)
 				resp.Rcode = rcode
-				if r.IsEdns0() != nil {
+				if state.Req.IsEdns0() != nil {
 					o = new(dns.OPT)
 					o.Hdr.Name = "."
 					o.Hdr.Rrtype = dns.TypeOPT
@@ -266,7 +264,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 
 	// Set default answer payload
 	a := new(dns.Msg)
-	a.SetReply(r)
+	a.SetReply(state.Req)
 	a.Compress = true
 	a.Authoritative = true
 
@@ -277,17 +275,17 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 
 	if err != nil {
 		h.stats.IncrementCounter("DNS_error.is_authoritative")
-		dns.HandleFailed(w, r)
+		dns.HandleFailed(state.W, state.Req)
 		return dns.RcodeServerFailure, err
 	}
 
 	if !ns && !auth {
 		h.stats.IncrementCounter("DNS_response.refused")
 		m := new(dns.Msg)
-		m.SetRcode(r, dns.RcodeRefused)
+		m.SetRcode(state.Req, dns.RcodeRefused)
 		// We can use Extended DNS Errors to indicate that the server is not authoritative for certain Query
 		// instead of just returning a REFUSED
-		if r.IsEdns0() != nil {
+		if state.Req.IsEdns0() != nil {
 			m.SetEdns0(4096, true)
 			ede := dns.EDNS0_EDE{InfoCode: dns.ExtendedErrorCodeNotAuthoritative}
 			m.IsEdns0().Option = append(m.IsEdns0().Option, &ede)
@@ -306,7 +304,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		_, auth, zoneCut, err = reader.IsAuthoritative(packedQName[packedQName[0]+1:], loc.LocID)
 		if err != nil {
 			h.stats.IncrementCounter("DNS_error.is_authoritative")
-			dns.HandleFailed(w, r)
+			dns.HandleFailed(state.W, state.Req)
 			return dns.RcodeServerFailure, err
 		}
 	}
@@ -331,8 +329,8 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	unpackedControlDomain, _, err := dns.UnpackDomainName(zoneCut, 0)
 	if err != nil {
 		glog.Errorf("Failed to unpack control domain name %s", err)
-		dns.HandleFailed(w, r)
-		h.logger.Log(state, r, ecs, loc)
+		dns.HandleFailed(state.W, state.Req)
+		h.logger.Log(state, state.Req, ecs, loc)
 		return dns.RcodeServerFailure, nil
 	}
 
@@ -370,7 +368,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		}
 	}
 
-	if r.IsEdns0() != nil {
+	if state.Req.IsEdns0() != nil {
 		o = new(dns.OPT)
 		o.Hdr.Name = "."
 		o.Hdr.Rrtype = dns.TypeOPT
