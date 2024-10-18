@@ -71,7 +71,7 @@ type DB struct {
 type Reader interface {
 	FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns.EDNS0_SUBNET, loc *Location, err error)
 	IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zoneCut []byte, err error)
-	FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, bool)
+	FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, int)
 
 	EcsLocation(q []byte, ecs *dns.EDNS0_SUBNET) (*Location, error)
 	ResolverLocation(q []byte, ip string) (*Location, error)

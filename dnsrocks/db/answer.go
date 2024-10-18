@@ -44,6 +44,7 @@ var (
 // deduplicate code for parseResult without changing any function signatures.
 type recordProcessor struct {
 	msg         *dns.Msg
+	seenError   bool
 	wrs         Wrs
 	recordFound bool
 	wildcard    bool
@@ -75,7 +76,8 @@ func (rp *recordProcessor) parseResult(result []byte) error {
 		// Compute the weight and update wrr4/wrr6 with the current winner.
 		// When we are done looping, we will add the record to the answer.
 		if rec.Qtype == dns.TypeA || rec.Qtype == dns.TypeAAAA {
-			if err := rp.wrs.Add(rec, result); err != nil {
+			if err = rp.wrs.Add(rec, result); err != nil {
+				rp.seenError = true
 				glog.Errorf("Failed in adding record to WRS: %v", err)
 			}
 			// For other records, we append them to the answer.
@@ -96,6 +98,22 @@ func (rp *recordProcessor) parseResult(result []byte) error {
 		}
 	}
 	return nil
+}
+
+func (rp *recordProcessor) responseCode() int {
+	// If any records are returned, we suppress most errors. This ensures that we don't
+	// drop a potentially useful response. However, if no records are returned and an error
+	// occurred, we return SERVFAIL. This increases the chances that clients can recover
+	// from localized errors by retrying to a working instance.
+	if len(rp.msg.Answer) == 0 && rp.seenError {
+		return dns.RcodeServerFailure
+	}
+
+	if !rp.recordFound {
+		return dns.RcodeNameError
+	}
+
+	return dns.RcodeSuccess
 }
 
 // dnsLabelWildsafe checks that a label contains only characters that can be
@@ -242,7 +260,7 @@ func (r *DataReader) IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zo
 }
 
 // FindAnswer will find answers for a given query q
-func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, bool) {
+func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, int) {
 	var (
 		rrs []dns.RR
 		err error
@@ -262,6 +280,7 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 			key = append(key[:len(locID)], q...)
 			err = r.ForEach(key, rp.parseResult)
 			if err != nil {
+				rp.seenError = true
 				glog.Errorf("%v", err)
 			}
 		}
@@ -270,21 +289,25 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 		key = append(key, q...)
 		err = r.ForEach(key, rp.parseResult)
 		if err != nil {
+			rp.seenError = true
 			glog.Errorf("%v", err)
 		}
 
 		// append A/AAAA records with the selected RR record
 		if rrs, err = rp.wrs.ARecord(qname, dns.ClassINET); err != nil {
+			rp.seenError = true
 			glog.Errorf("%v", err)
 		} else {
 			a.Answer = append(a.Answer, rrs...)
 		}
 		if rrs, err = rp.wrs.AAAARecord(qname, dns.ClassINET); err != nil {
+			rp.seenError = true
 			glog.Errorf("%v", err)
 		} else {
 			a.Answer = append(a.Answer, rrs...)
 		}
 
+		// recordFound is modified by recordProcessor's parseResult
 		if rp.recordFound {
 			break
 		}
@@ -300,7 +323,8 @@ func (r *DataReader) FindAnswer(q []byte, packedControlName []byte, qname string
 		q = q[q[0]+1:]
 		rp.wildcard = true
 	}
-	return rp.wrs.WeightedAnswer(), rp.recordFound
+
+	return rp.wrs.WeightedAnswer(), rp.responseCode()
 }
 
 // FindSOA find SOA record and set it into the Authority section of the message.

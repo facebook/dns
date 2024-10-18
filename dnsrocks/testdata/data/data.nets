@@ -107,6 +107,8 @@ Cwww.example.com,www.nonauth.example.com,3600,,
 Cwww2.example.com,foo.example.com,3600,,
 Cwww3.example.com,bar.example.com,3600,,
 
+Cinvalid-target.example.com,longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong.com,3600,,
+
 Hfoo.example.com,.,7200,,1,alpn=h3|h2|http/1.1
 Hfoo.example.com,fallback.foo.example.com,7200,,2,alpn=h3|h2|http/1.1
 +foo.example.com,1.1.1.1,180,,\000\001,1
