@@ -22,7 +22,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, bool) {
+func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, int) {
 	var (
 		rrs []dns.RR
 		err error
@@ -70,11 +70,13 @@ func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname 
 	postIterationCheck := func() bool {
 		// append A/AAAA records with the selected RR record
 		if rrs, err = rp.wrs.ARecord(qname, dns.ClassINET); err != nil {
+			rp.seenError = true
 			glog.Errorf("%v", err)
 		} else {
 			a.Answer = append(a.Answer, rrs...)
 		}
 		if rrs, err = rp.wrs.AAAARecord(qname, dns.ClassINET); err != nil {
+			rp.seenError = true
 			glog.Errorf("%v", err)
 		} else {
 			a.Answer = append(a.Answer, rrs...)
@@ -89,9 +91,12 @@ func (r *sortedDataReader) FindAnswer(q []byte, packedControlName []byte, qname 
 		return true
 	}
 
-	r.find(q, locID, rp.parseResult, preIterationCheck, postIterationCheck)
+	err = r.find(q, locID, rp.parseResult, preIterationCheck, postIterationCheck)
+	if err != nil {
+		rp.seenError = true
+	}
 
-	return rp.wrs.WeightedAnswer(), rp.recordFound
+	return rp.wrs.WeightedAnswer(), rp.responseCode()
 }
 
 func (r *sortedDataReader) IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zoneCut []byte, err error) {
@@ -123,7 +128,7 @@ func (r *sortedDataReader) IsAuthoritative(q []byte, locID ID) (ns bool, auth bo
 		return !ns
 	}
 
-	r.find(q, locID, parseResult, preIterationCheck, postIterationCheck)
+	_ = r.find(q, locID, parseResult, preIterationCheck, postIterationCheck)
 
 	zoneCut = q[len(q)-zoneCutLength:]
 
@@ -136,7 +141,7 @@ func (r *sortedDataReader) find(
 	parseResult func(value []byte) error,
 	preIterationCheck func(qName []byte, currentLength int) bool,
 	postIterationCheck func() bool,
-) {
+) error {
 	var err error
 
 	reversedQName := reverseZoneName(q)
@@ -169,7 +174,6 @@ func (r *sortedDataReader) find(
 		// which doesn't guaranteed to even start with com.example, it can be com.examnle.foo for what we know
 		var k []byte
 		k, err = r.TryForEach(key, parseResult)
-
 		if err != nil {
 			break
 		}
@@ -209,6 +213,7 @@ func (r *sortedDataReader) find(
 			qLength = getLengthWithoutLastLabel(reversedQName, qLength)
 		}
 	}
+	return err
 }
 
 // cut out exactly one label from the end

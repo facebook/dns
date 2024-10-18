@@ -249,13 +249,15 @@ func (c *cdbdriver) ForEach(key []byte, f func(value []byte) error, context Cont
 
 	c.FindStart(context)
 	for {
-		v, err := c.FindNext(key, context)
+		// only return non-EOF errors
+		v, findNextErr := c.FindNext(key, context)
 
 		// No more row
-		if errors.Is(err, io.EOF) {
+		if errors.Is(findNextErr, io.EOF) {
 			break
 		}
-		if err != nil {
+		if findNextErr != nil {
+			err = findNextErr
 			break
 		}
 		if err = f(v); err != nil {
