@@ -27,7 +27,7 @@ import (
 // Logger is an interface for logging messages
 type Logger interface {
 	// LogFailed logs a message when we could not construct an answer
-	LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location)
+	LogFailed(state request.Request, ecs *dns.EDNS0_SUBNET, loc *db.Location)
 	// Log logs a DNS response
 	Log(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location)
 }
@@ -45,9 +45,9 @@ func (l *TextLogger) Log(state request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET,
 }
 
 // LogFailed is used to log failures
-func (l *TextLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location) {
+func (l *TextLogger) LogFailed(state request.Request, ecs *dns.EDNS0_SUBNET, loc *db.Location) {
 	m := new(dns.Msg)
-	m.SetRcode(r, dns.RcodeServerFailure)
+	m.SetRcode(state.Req, dns.RcodeServerFailure)
 	l.Log(state, m, ecs, loc)
 }
 
@@ -58,5 +58,5 @@ type DummyLogger struct{}
 func (l *DummyLogger) Log(_ request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET, _ *db.Location) {}
 
 // LogFailed is used to log failures
-func (l *DummyLogger) LogFailed(_ request.Request, _ *dns.Msg, _ *dns.EDNS0_SUBNET, _ *db.Location) {
+func (l *DummyLogger) LogFailed(_ request.Request, _ *dns.EDNS0_SUBNET, _ *db.Location) {
 }

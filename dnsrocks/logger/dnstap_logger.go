@@ -160,8 +160,8 @@ func (l *DNSTapLogger) Log(state request.Request, r *dns.Msg, _ *dns.EDNS0_SUBNE
 }
 
 // LogFailed is used to log failures
-func (l *DNSTapLogger) LogFailed(state request.Request, r *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location) {
+func (l *DNSTapLogger) LogFailed(state request.Request, ecs *dns.EDNS0_SUBNET, loc *db.Location) {
 	m := new(dns.Msg)
-	m.SetRcode(r, dns.RcodeServerFailure)
+	m.SetRcode(state.Req, dns.RcodeServerFailure)
 	l.Log(state, m, ecs, loc)
 }
