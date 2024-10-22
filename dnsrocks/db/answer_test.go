@@ -95,71 +95,87 @@ func getAuthTestCases() []isAuthTestCase {
 }
 
 type findAnswerTestCase struct {
-	qname            string
-	qtype            uint16
-	locID            ID
-	authdomain       string
-	expectedRecords  bool
-	expectedNXDomain bool
+	qname           string
+	qtype           uint16
+	locID           ID
+	authdomain      string
+	expectedRecords bool
+	expectedRcode   int
 }
 
 func getFindAnswerTestCases() []findAnswerTestCase {
 	return []findAnswerTestCase{
 		{
-			qname:            "www.example.com.", // This is a CNAME
-			qtype:            dns.TypeCNAME,
-			locID:            []byte{0, 1},
-			authdomain:       "example.com.",
-			expectedRecords:  true,
-			expectedNXDomain: false,
+			qname:           "www.example.com.", // This is a CNAME
+			qtype:           dns.TypeCNAME,
+			locID:           []byte{0, 1},
+			authdomain:      "example.com.",
+			expectedRecords: true,
+			expectedRcode:   dns.RcodeSuccess,
 		},
 		{
-			qname:            "wildcard.example.com.", // This is a CNAME
-			qtype:            dns.TypeCNAME,
-			locID:            []byte{0, 1},
-			authdomain:       "example.com.",
-			expectedRecords:  true,
-			expectedNXDomain: false,
+			qname:           "wildcard.example.com.", // This is a CNAME
+			qtype:           dns.TypeCNAME,
+			locID:           []byte{0, 1},
+			authdomain:      "example.com.",
+			expectedRecords: true,
+			expectedRcode:   dns.RcodeSuccess,
 		},
 		{
-			qname:            "foo.example.com.", // This is a A Record
-			qtype:            dns.TypeA,
-			locID:            []byte{0, 1},
-			authdomain:       "example.com.",
-			expectedRecords:  true,
-			expectedNXDomain: false,
+			qname:           "foo.example.com.", // This is a A Record
+			qtype:           dns.TypeA,
+			locID:           []byte{0, 1},
+			authdomain:      "example.com.",
+			expectedRecords: true,
+			expectedRcode:   dns.RcodeSuccess,
 		},
 		{
-			qname:            "example.com.",
-			qtype:            dns.TypeMX,
-			locID:            []byte{0, 1},
-			authdomain:       "example.com.",
-			expectedRecords:  true,
-			expectedNXDomain: false,
+			qname:           "example.com.",
+			qtype:           dns.TypeMX,
+			locID:           []byte{0, 1},
+			authdomain:      "example.com.",
+			expectedRecords: true,
+			expectedRcode:   dns.RcodeSuccess,
 		},
 		{
-			qname:            "example.com.",
-			qtype:            dns.TypeA,
-			locID:            []byte{0, 1},
-			authdomain:       "example.com.",
-			expectedRecords:  false,
-			expectedNXDomain: false, // we have the records for other types (MX), so return NOERROR
+			qname:           "example.com.",
+			qtype:           dns.TypeA,
+			locID:           []byte{0, 1},
+			authdomain:      "example.com.",
+			expectedRecords: false,
+			expectedRcode:   dns.RcodeSuccess, // we have the records for other types (MX), so return NOERROR
 		},
 		{
-			qname:            "long.example.com.",
-			qtype:            dns.TypeA,
-			locID:            []byte("\xff\x05other"),
-			authdomain:       "example.com.",
-			expectedRecords:  true,
-			expectedNXDomain: false,
+			qname:           "invalid.com.",
+			qtype:           dns.TypeA,
+			locID:           []byte{0, 1},
+			authdomain:      "example.com.",
+			expectedRecords: false,
+			expectedRcode:   dns.RcodeNameError,
 		},
 		{
-			qname:            "long.example.com.",
-			qtype:            dns.TypeSRV,
-			locID:            []byte("\xff\x05other"),
-			authdomain:       "example.com.",
-			expectedRecords:  false,
-			expectedNXDomain: false,
+			qname:           "invalid-target.example.com.",
+			qtype:           dns.TypeCNAME,
+			locID:           []byte{0, 1},
+			authdomain:      "example.com.",
+			expectedRecords: false,
+			expectedRcode:   dns.RcodeServerFailure,
+		},
+		{
+			qname:           "long.example.com.",
+			qtype:           dns.TypeA,
+			locID:           []byte("\xff\x05other"),
+			authdomain:      "example.com.",
+			expectedRecords: true,
+			expectedRcode:   dns.RcodeSuccess,
+		},
+		{
+			qname:           "long.example.com.",
+			qtype:           dns.TypeSRV,
+			locID:           []byte("\xff\x05other"),
+			authdomain:      "example.com.",
+			expectedRecords: false,
+			expectedRcode:   dns.RcodeSuccess,
 		},
 	}
 }
@@ -283,13 +299,9 @@ func TestDBFindAnswer(t *testing.T) {
 				a.Compress = true
 				a.Authoritative = true
 
-				weighted, recordFound := r.FindAnswer(q[:offset], controlName[:controlOffset], tc.qname, tc.qtype, tc.locID, a, 10)
+				weighted, rcode := r.FindAnswer(q[:offset], controlName[:controlOffset], tc.qname, tc.qtype, tc.locID, a, 10)
 				require.False(t, weighted)
-				if tc.expectedNXDomain {
-					require.False(t, recordFound)
-				} else {
-					require.True(t, recordFound)
-				}
+				require.Equal(t, tc.expectedRcode, rcode)
 
 				if tc.expectedRecords {
 					require.Equalf(t, 1, len(a.Answer), "expect %v to have at least one record", a.Answer)
@@ -332,8 +344,8 @@ func BenchmarkFindAnswer(b *testing.B) {
 				a.Compress = true
 				a.Authoritative = true
 				for i := 0; i < b.N; i++ {
-					_, recordFound := r.FindAnswer(packedQName[:offset], controlName[:controlOffset], bm.qname, bm.qtype, bm.locID, a, 10)
-					if bm.expectedNXDomain && recordFound {
+					_, rcode := r.FindAnswer(packedQName[:offset], controlName[:controlOffset], bm.qname, bm.qtype, bm.locID, a, 10)
+					if bm.expectedRcode == dns.RcodeNameError && rcode != dns.RcodeNameError {
 						b.Fatal("unexpectedly found missing record")
 					}
 				}

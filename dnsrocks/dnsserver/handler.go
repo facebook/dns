@@ -318,8 +318,6 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		a.Authoritative = false
 		h.stats.IncrementCounter("DNS_response.not_authoritative")
 	} else {
-		// For NXDOMAIN
-		recordFound := false
 		h.stats.IncrementCounter("DNS_response.authoritative")
 
 		maxAns, ok := GetMaxAnswer(ctx)
@@ -327,10 +325,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 			maxAns = DefaultMaxAnswer
 			// log something
 		}
-		weighted, recordFound = reader.FindAnswer(packedQName, zoneCut, state.QName(), state.QType(), loc.LocID, a, maxAns)
-		if len(a.Answer) == 0 && !recordFound {
-			a.Rcode = dns.RcodeNameError
-		}
+		weighted, a.Rcode = reader.FindAnswer(packedQName, zoneCut, state.QName(), state.QType(), loc.LocID, a, maxAns)
 	}
 
 	unpackedControlDomain, _, err := dns.UnpackDomainName(zoneCut, 0)
