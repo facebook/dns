@@ -32,8 +32,9 @@ import (
 
 const (
 	// TypeToStatsPrefix is the prefix used for creating stats keys
-	TypeToStatsPrefix              = "DNS_query"
-	maxAnswer         maxAnswerKey = "maxans"
+	TypeToStatsPrefix                 = "DNS_query"
+	maxAnswer         maxAnswerKey    = "maxans"
+	cnameChasing      cnameChasingKey = "cname_chasing"
 	// DefaultMaxAnswer is the default number of answer returned for A\AAAA query
 	DefaultMaxAnswer = 1
 
@@ -52,6 +53,8 @@ type cacheEntry struct {
 
 type maxAnswerKey string
 
+type cnameChasingKey string
+
 // WithMaxAnswer set max ans in context
 func WithMaxAnswer(ctx context.Context, masAns int) context.Context {
 	return context.WithValue(ctx, maxAnswer, masAns)
@@ -61,6 +64,17 @@ func WithMaxAnswer(ctx context.Context, masAns int) context.Context {
 func GetMaxAnswer(ctx context.Context) (int, bool) {
 	maxAns, ok := ctx.Value(maxAnswer).(int)
 	return maxAns, ok
+}
+
+// WithCNAMEChasing sets if CNAME chasing is enabled in context
+func WithCNAMEChasing(ctx context.Context, enableCNAMEChasing bool) context.Context {
+	return context.WithValue(ctx, cnameChasing, enableCNAMEChasing)
+}
+
+// GetCNAMEChasing is used to get if CNAME chasing is enabled in context
+func GetCNAMEChasing(ctx context.Context) (bool, bool) {
+	isCNAMEChasingEnabled, ok := ctx.Value(cnameChasing).(bool)
+	return isCNAMEChasingEnabled, ok
 }
 
 func init() {
@@ -324,6 +338,14 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 			// log something
 		}
 		weighted, a.Rcode = reader.FindAnswer(packedQName, zoneCut, state.QName(), state.QType(), loc.LocID, a, maxAns)
+
+		isCNAMEChasingEnabled, ok := GetCNAMEChasing(ctx)
+		if !ok {
+			isCNAMEChasingEnabled = false
+		}
+		if isCNAMEChasingEnabled {
+			glog.Info("CNAME chasing is enabled")
+		}
 	}
 
 	unpackedControlDomain, _, err := dns.UnpackDomainName(zoneCut, 0)
