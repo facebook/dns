@@ -207,15 +207,16 @@ func (srv *Server) listenConf() net.ListenConfig {
 // errors.
 func (srv *Server) Start() (err error) {
 	var (
-		defaultHandler   plugin.Handler = srv.db
-		maxAnswerHandler *maxAnswerHandler
-		whoamiHandler    *whoami.Handler
-		dotTLSAHandler   *dotTLSAHandler
-		anyHandler       *anyHandler
-		nsidHandler      *nsid.Handler
-		throttleHandler  *throttle.Handler
-		throttleLimiter  *throttle.Limiter
-		numListeners     = srv.conf.ReusePort
+		defaultHandler      plugin.Handler = srv.db
+		maxAnswerHandler    *maxAnswerHandler
+		whoamiHandler       *whoami.Handler
+		dotTLSAHandler      *dotTLSAHandler
+		anyHandler          *anyHandler
+		nsidHandler         *nsid.Handler
+		throttleHandler     *throttle.Handler
+		throttleLimiter     *throttle.Limiter
+		cnameChasingHandler *cnameChasingHandler
+		numListeners        = srv.conf.ReusePort
 	)
 
 	// We have at least 1 listener
@@ -291,6 +292,18 @@ func (srv *Server) Start() (err error) {
 		}
 
 		go throttle.Monitor(throttleLimiter, srv.stats, time.Second)
+	}
+
+	// Only add cnameChasingHandler to the plugin chain if it is enabled.
+	if srv.conf.CNAMEChasing {
+		glog.Infof("Enabling CNAME chasing")
+		if cnameChasingHandler, err = newCNAMEChasingHandler(); err != nil {
+			return fmt.Errorf("failed to initialize cnameChasingHandler: %w", err)
+		}
+		cnameChasingHandler.Next = defaultHandler
+		defaultHandler = cnameChasingHandler
+	} else {
+		glog.Infof("-cname-chasing was not specified, disabling CNAME chasing")
 	}
 
 	// For each configured IP, we may start a number of DNS servers for each
