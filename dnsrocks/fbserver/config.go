@@ -48,6 +48,7 @@ type ServerConfig struct {
 	DNSSECConfig   DNSSECConfig
 	NSID           bool
 	PrivateInfo    bool
+	CNAMEChasing   bool
 }
 
 type ipAns map[string]int

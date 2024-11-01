@@ -151,6 +151,7 @@ Currently two types of trigger files are supported:
 	pprofconf := cliflags.String("pprof", "", "Address to have the profiler listen on, disabled if empty.")
 	cpu := cliflags.String("cpu", "1", "CPU cap. Accepts percentage or integer.")
 	cliflags.IntVar(&serverConfig.MaxConcurrency, "max-concurrency", -1, "Maximum number of concurrent queries per CPU (default: unlimited)")
+	cliflags.BoolVar(&serverConfig.CNAMEChasing, "cname-chasing", false, "Whether or not to do CNAME chasing. (default: disabled)")
 	logPrefix := cliflags.String("log-prefix", "", "Prefix to use in logger")
 	dnsRecordKeyToValidate := cliflags.String("record-key-to-validate", "", "DNS record key expected to present in DB file.")
 
