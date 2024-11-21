@@ -80,13 +80,15 @@ func main() {
 		// Without ECS
 		req := makeDNSPacket(fqdn, dns.TypeA)
 
-		if _, resolverLoc, err = reader.FindLocation(packedQName[:offset], req, s[0]); err != nil {
+		ecs := db.FindECS(req)
+		if resolverLoc, err = reader.FindLocation(packedQName[:offset], ecs, s[0]); err != nil {
 			log.Fatalf("Failed to find location without ECS set: %v", err)
 		}
 
 		// With ECS
 		setECS(req, s[1])
-		if _, ecsLoc, err = reader.FindLocation(packedQName[:offset], req, s[0]); err != nil {
+		ecs = db.FindECS(req)
+		if ecsLoc, err = reader.FindLocation(packedQName[:offset], ecs, s[0]); err != nil {
 			log.Fatalf("Failed to find location with ECS set: %v", err)
 		}
 		resultTotal++

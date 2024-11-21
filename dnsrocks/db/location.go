@@ -110,7 +110,7 @@ func FindECS(m *dns.Msg) *dns.EDNS0_SUBNET {
 // Then, it tries to find a matching location for a resolver IP.
 // return nil for Location if no location were found.
 // error will be set on error.
-func (r *DataReader) FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns.EDNS0_SUBNET, loc *Location, err error) {
+func (r *DataReader) FindLocation(qname []byte, ecs *dns.EDNS0_SUBNET, ip string) (loc *Location, err error) {
 	// This defer block is used to catch bad DB and recover the panic that
 	// used to be handled in db.find.
 	defer func() {
@@ -122,20 +122,19 @@ func (r *DataReader) FindLocation(qname []byte, m *dns.Msg, ip string) (ecs *dns
 	}()
 
 	// Check if there is ECS option and look for a matching location
-
-	if ecs = FindECS(m); ecs != nil {
+	if ecs != nil {
 		// ECS location lookup and set Scope accordingly
 		loc, err = r.EcsLocation(qname, ecs)
 		if err != nil {
 			glog.Errorf("Failed to lookup ECS location %s", err)
-			return nil, nil, err
+			return nil, err
 		}
 	}
 	// resolver location lookup if we did not find any Client subnet match.
 	if loc == nil || loc.LocID.IsZero() {
 		loc, err = r.ResolverLocation(qname, ip)
 	}
-	return ecs, loc, err
+	return loc, err
 }
 
 // findLocation finds the `Location` in mtype maps that matches the `ipnet`, and returns Location.

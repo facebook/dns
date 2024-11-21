@@ -196,7 +196,8 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 
 	packedQName = packedQName[:offset]
 
-	if ecs, loc, err = reader.FindLocation(packedQName, state.Req, state.IP()); err != nil {
+	ecs = db.FindECS(state.Req)
+	if loc, err = reader.FindLocation(packedQName, ecs, state.IP()); err != nil {
 		glog.Errorf("%s: failed to find location: %v", state.Name(), err)
 		h.logger.LogFailed(state, ecs, loc)
 		return dns.RcodeServerFailure, nil
