@@ -92,6 +92,8 @@ const (
 type HandlerConfig struct {
 	// Controls whether responses are always compressed not depending on response buffer size
 	AlwaysCompress bool
+	// Controls whether CNAME chasing is enabled/disabled
+	CNAMEChasing bool
 }
 
 // FBDNSDB is the DNS DB handler.

@@ -324,6 +324,12 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 			// log something
 		}
 		weighted, a.Rcode = reader.FindAnswer(packedQName, zoneCut, state.QName(), state.QType(), loc.LocID, a, maxAns)
+
+		if h.handlerConfig.CNAMEChasing {
+			glog.Info("CNAME chasing is enabled")
+		} else {
+			glog.Info("CNAME chasing is disabled")
+		}
 	}
 
 	unpackedControlDomain, _, err := dns.UnpackDomainName(zoneCut, 0)
