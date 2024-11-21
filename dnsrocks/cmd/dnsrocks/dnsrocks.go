@@ -103,6 +103,7 @@ func main() {
 	// Handler Config
 	cliflags.BoolVar(&serverConfig.HandlerConfig.AlwaysCompress, "alwaysCompress", false, "Enable unconditional compression of labels in server responses")
 	cliflags.BoolVar(&serverConfig.HandlerConfig.CNAMEChasing, "cname-chasing", false, "Whether or not to do CNAME chasing. (default: disabled)")
+	cliflags.IntVar(&serverConfig.HandlerConfig.MaxCNAMEHops, "max-cname-hops", 10, "Max number of hops to take while CNAME chasing. (default: 10)")
 
 	// DB config
 	cliflags.IntVar(&serverConfig.DBConfig.ReloadInterval, "reloadtime", 10, "Time between each CDB reload")

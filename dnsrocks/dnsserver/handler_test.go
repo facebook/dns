@@ -777,6 +777,288 @@ func TestDNSDBForHTTPSRecord(t *testing.T) {
 	}
 }
 
+func TestCNAMEchasing(t *testing.T) {
+	testCases := []struct {
+		qname          string
+		qtype          uint16
+		expectedCode   int
+		expectedAnswer []dns.RR
+		resolver       string
+		ecs            string
+		expectedExtra  []dns.RR
+	}{
+		// Multiple hops of CNAME chaining should be followed
+		{
+			qname:        "longchain.example.com.",
+			qtype:        dns.TypeAAAA,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "longchain.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "cnamemap.example.com.",
+				},
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "cnamemap.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "foo.example.com.",
+				},
+				&dns.AAAA{
+					Hdr: dns.RR_Header{
+						Name:   "foo.example.com.",
+						Rrtype: dns.TypeAAAA,
+						Class:  dns.ClassINET,
+						Ttl:    180,
+					},
+					AAAA: net.ParseIP("fd24:7859:f076:2a21::2"),
+				},
+			},
+			resolver: "1.1.1.1", // resolver for locID 2
+		},
+		// CNAME cycle to self
+		{
+			qname:          "cycle.example.com.",
+			qtype:          dns.TypeA,
+			expectedCode:   dns.RcodeServerFailure,
+			expectedAnswer: nil,
+			resolver:       "1.1.1.1", // resolver for locID 2
+		},
+		// Non-trivial CNAME cycle
+		{
+			qname:          "a.example.com.",
+			qtype:          dns.TypeA,
+			expectedCode:   dns.RcodeServerFailure,
+			expectedAnswer: nil,
+			resolver:       "1.1.1.1", // resolver for locID 2
+		},
+		// CNAME target not present
+		{
+			qname:        "wildcard.test.example.com.",
+			qtype:        dns.TypeA,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "wildcard.test.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    1800,
+					},
+					Target: "some-other.domain.",
+				},
+			},
+			resolver: "1.1.1.1", // resolver for locID 2
+		},
+		// Syntactically invalid CNAME target
+		{
+			qname:          "invalid-target.example.com.",
+			qtype:          dns.TypeA,
+			expectedCode:   dns.RcodeServerFailure,
+			expectedAnswer: nil,
+			resolver:       "1.1.1.1", // resolver for locID 2
+		},
+		// Queries of type CNAME don't chase
+		{
+			qname:        "cnamemap.example.com.",
+			qtype:        dns.TypeCNAME,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "cnamemap.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "foo.example.com.",
+				},
+			},
+			resolver: "1.1.1.1", // resolver for locID 2
+		},
+		// Queries of type ANY don't chase
+		{
+			qname:        "cnamemap.example.com.",
+			qtype:        dns.TypeANY,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "cnamemap.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "foo.example.com.",
+				},
+			},
+			resolver: "1.1.1.1", // resolver for locID 2
+		},
+		// Location aware + Non-Location aware CNAME RRs working together
+		{
+			qname:        "wildcard.twohops.example.com.",
+			qtype:        dns.TypeA,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						// non-location aware CNAME
+						Name:   "wildcard.twohops.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    1800,
+					},
+					Target: "cnamemap.example.com.",
+				},
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						// location aware CNAME
+						Name:   "cnamemap.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "foo.example.com.",
+				},
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:   "foo.example.com.",
+						Rrtype: dns.TypeA,
+						Class:  dns.ClassINET,
+						Ttl:    180,
+					},
+					A: net.ParseIP("1.1.1.2"),
+				},
+			},
+			resolver: "1.1.1.1", // resolver for locID 2
+		},
+		// Different Location IDs in CNAME chain.
+		// ECS prefix lengths are set to most restrictive location mask.
+		{
+			qname:        "longchain.example.com.",
+			qtype:        dns.TypeA,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						// location mask for this qname + ecs is 16
+						Name:   "longchain.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "foo.example.com.",
+				},
+				&dns.A{
+					Hdr: dns.RR_Header{
+						// location mask for this qname + ecs is 24
+						Name:   "foo.example.com.",
+						Rrtype: dns.TypeA,
+						Class:  dns.ClassINET,
+						Ttl:    180,
+					},
+					A: net.ParseIP("1.1.1.10"),
+				},
+			},
+			resolver: "1.1.1.1", // resolver for locID 2
+			ecs:      "4.0.0.0/25",
+			expectedExtra: []dns.RR{
+				&dns.OPT{
+					Hdr: dns.RR_Header{
+						Name:   ".",
+						Rrtype: dns.TypeOPT,
+					},
+					Option: []dns.EDNS0{
+						&dns.EDNS0_SUBNET{
+							Code:          dns.EDNS0SUBNET,
+							Family:        1,
+							Address:       net.ParseIP("4.0.0.0").To4(),
+							SourceNetmask: 25,
+							// 24 is the more restrictive mask
+							SourceScope: 24,
+						},
+					},
+				},
+			},
+		},
+		// Max hop count is respected
+		{
+			qname:        "one.example.com.",
+			qtype:        dns.TypeA,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "one.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "two.example.com.",
+				},
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "two.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "three.example.com.",
+				},
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "three.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "four.example.com.",
+				},
+			},
+			resolver: "1.1.1.1", // resolver for locID 2
+		},
+	}
+	for _, db := range testaid.TestDBs {
+		th := OpenDbForTesting(t, &db)
+		defer th.Close()
+		th.handlerConfig.CNAMEChasing = true
+		th.handlerConfig.MaxCNAMEHops = 2
+		for _, tc := range testCases {
+			t.Run(fmt.Sprintf("%s/%v", db.Driver, tc), func(t *testing.T) {
+				req := new(dns.Msg)
+				req.SetQuestion(dns.Fqdn(tc.qname), tc.qtype)
+				if tc.ecs != "" {
+					o, err := MakeOPTWithECS(tc.ecs)
+
+					require.Nilf(t, err, "failed to generate ECS option for %s", tc.ecs)
+					req.Extra = append(req.Extra, []dns.RR{o}...)
+				}
+
+				rec := dnstest.NewRecorder(&test.ResponseWriterCustomRemote{RemoteIP: tc.resolver})
+				ctx := CreateTestContext(1)
+				code, _ := th.ServeDNSWithRCODE(ctx, rec, req)
+				require.Equalf(t, tc.expectedCode, code, "expected status code %d", tc.expectedCode)
+
+				if tc.expectedAnswer != nil {
+					require.NotNil(t, rec.Msg)
+					require.NotNil(t, rec.Msg.Answer)
+					RRSliceMatch(t, tc.expectedAnswer, rec.Msg.Answer)
+					if tc.ecs != "" {
+						RRSliceMatch(t, tc.expectedExtra, rec.Msg.Extra)
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestResolverBasedResponse(t *testing.T) {
 	testCases := []struct {
 		qname          string

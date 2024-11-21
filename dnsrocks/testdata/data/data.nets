@@ -39,6 +39,8 @@
 %\000\004,fd8f:a2ea:9f4b::/56,ec
 %\000\005,fd48:6525:66bd::/56,ec
 
+%\000\007,4.0.0.0/16,cc
+
 # Fake resolvers/ECS maps purely for testing
 M*.a.b.c.example.org,Ma
 Md.a.b.c.d.example.org,Mb
@@ -54,6 +56,7 @@ Mexample.com,c\000
 Mfoo.example.com,c\000
 Mnonlocationawarewithmap.example.com,c\000
 Mcnamemap.example.com,c\000
+Mlongchain.example.com,c\000
 
 Mexample.net,c\000
 Mfoo.example.net,c\000
@@ -67,6 +70,7 @@ Mcnamemap.example.net,c\000
 8example.com,ec
 8foo.example.com,ec
 8cnamemap.example.com,ec
+8longchain.example.com,cc
 
 8example.net,ec
 8foo.example.net,ec
@@ -107,6 +111,18 @@ Cwww.example.com,www.nonauth.example.com,3600,,
 Cwww2.example.com,foo.example.com,3600,,
 Cwww3.example.com,bar.example.com,3600,,
 
+# CNAME chasing tests
+
+Clongchain.example.com,cnamemap.example.com,3600,,\000\002
+Clongchain.example.com,foo.example.com,3600,,\000\007
+C*.benchmark.example.com,foo.example.com,1800,,
+C*.twohops.example.com,cnamemap.example.com,1800,,
+Ccycle.example.com,cycle.example.com,3600,,
+Ca.example.com,b.example.com,3600,,
+Cb.example.com,a.example.com,3600,,
+Cone.example.com,two.example.com,3600,,
+Ctwo.example.com,three.example.com,3600,,
+Cthree.example.com,four.example.com,3600,,
 Cinvalid-target.example.com,longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong.com,3600,,
 
 Hfoo.example.com,.,7200,,1,alpn=h3|h2|http/1.1
@@ -121,6 +137,7 @@ Hfoo.example.com,fallback.foo.example.com,7200,,2,alpn=h3|h2|http/1.1
 +foo.example.com,fd24:7859:f076:2a21::4,180,,\000\004,1
 +foo.example.com,1.1.1.5,180,,\000\005,1
 +foo.example.com,fd24:7859:f076:2a21::5,180,,\000\005,1
++foo.example.com,1.1.1.10,180,,\000\010,1
 
 # records with "interesting" location identifiers
 +foo.example.com,9.9.9.0,180,,\000\054,1

@@ -140,6 +140,61 @@ func (h *FBDNSDB) writeAndLog(state request.Request, resp *dns.Msg, ecs *dns.EDN
 	return rcode, nil
 }
 
+func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAns int, a *dns.Msg, ecs *dns.EDNS0_SUBNET) ([]dns.RR, bool, error) {
+	var (
+		packedQName = make([]byte, 255)
+		// the location matching this requestor and target
+		loc *db.Location
+	)
+
+	offset, err := dns.PackDomainName(localState.Name(), packedQName, 0, nil, false)
+	if err != nil {
+		h.stats.IncrementCounter("DNS_cname_chasing.pack_domain_fail")
+		glog.Errorf("could not pack cname domain %s", localState.Name())
+		dns.HandleFailed(localState.W, localState.Req)
+		h.logger.LogFailed(localState, nil, nil)
+		return nil, false, err
+	}
+
+	packedQName = packedQName[:offset]
+
+	if loc, err = reader.FindLocation(packedQName, ecs, localState.IP()); err != nil {
+		glog.Errorf("%s: failed to find location: %v", localState.Name(), err)
+		h.logger.LogFailed(localState, ecs, loc)
+		return nil, false, err
+	}
+
+	if loc == nil {
+		// We could not find a location, not even the default one... potentially a bogus DB.
+		h.stats.IncrementCounter("DNS_cname_chasing.location.nil")
+		glog.Errorf("%s: nil location", localState.Name())
+		h.logger.LogFailed(localState, ecs, loc)
+		return nil, false, fmt.Errorf("no location found, not even default one")
+	}
+
+	_, auth, zoneCut, err := reader.IsAuthoritative(packedQName, loc.LocID)
+	if err != nil {
+		h.stats.IncrementCounter("DNS_cname_chasing.is_authoritative.error")
+		dns.HandleFailed(localState.W, localState.Req)
+		return nil, false, err
+	}
+
+	if !auth {
+		h.stats.IncrementCounter("DNS_cname_chasing.not_authoritative")
+		// nolint: nilerr
+		return nil, false, nil
+	}
+
+	answerSizeBefore := len(a.Answer)
+	weighted, _ := reader.FindAnswer(packedQName, zoneCut, localState.QName(), localState.QType(), loc.LocID, a, maxAns)
+
+	newRecords := a.Answer[answerSizeBefore:]
+	if len(newRecords) == 0 {
+		h.stats.IncrementCounter("DNS_cname_chasing.qtype.not_found")
+	}
+	return newRecords, weighted, nil
+}
+
 // ServeDNSWithRCODE handles a dns query and with return the RCODE and eventual
 // error that happen during processing.
 func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
@@ -205,6 +260,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 
 	if loc == nil {
 		// We could not find a location, not even the default one... potentially a bogus DB.
+		h.stats.IncrementCounter("DNS_location.nil")
 		glog.Errorf("%s: nil location", state.Name())
 		h.logger.LogFailed(state, ecs, loc)
 		return dns.RcodeServerFailure, nil
@@ -326,10 +382,47 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		}
 		weighted, a.Rcode = reader.FindAnswer(packedQName, zoneCut, state.QName(), state.QType(), loc.LocID, a, maxAns)
 
-		if h.handlerConfig.CNAMEChasing {
-			glog.Info("CNAME chasing is enabled")
-		} else {
-			glog.Info("CNAME chasing is disabled")
+		// CNAME chasing doesn't apply to queries of type CNAME or ANY
+		if h.handlerConfig.CNAMEChasing && state.QType() != dns.TypeCNAME && state.QType() != dns.TypeANY {
+			newRecords := a.Answer
+			var (
+				iterCount    = 0
+				maxCNAMEHops = h.handlerConfig.MaxCNAMEHops
+			)
+
+			for len(newRecords) == 1 && newRecords[0].Header().Rrtype == dns.TypeCNAME {
+				if iterCount == maxCNAMEHops {
+					h.stats.IncrementCounter("DNS_cname_chasing.max_hops")
+					glog.Errorf("Max hops (%d) reached for CNAME chasing for qname: %s", maxCNAMEHops, state.Name())
+					break
+				}
+
+				iterCount++
+				target := newRecords[0].(*dns.CNAME).Target
+
+				// CNAME cycle detection.
+				// a.Answer contains all records we've seen until now. So by comparing target
+				// with all records in a.Answer, we ensure that *any* CNAME cycle will be detected.
+				for _, record := range a.Answer {
+					if record.Header().Name == target {
+						h.stats.IncrementCounter("DNS_cname_chasing.cname_cycle")
+						glog.Errorf("CNAME cycle detected: %s", target)
+						return dns.RcodeServerFailure, nil
+					}
+				}
+
+				updatedState := state.NewWithQuestion(target, state.QType())
+				newRecords, weighted, err = h.chaseCNAME(reader, updatedState, maxAns, a, ecs)
+				if err != nil {
+					glog.Errorf("Failed to chase CNAME for domain: %s, target: %s, error: %v", state.Name(), target, err)
+					break
+				}
+			}
+			// only increment counters if we did CNAME chasing
+			if iterCount > 0 {
+				h.stats.IncrementCounter("DNS_cname_chasing.queries")
+				h.stats.AddSample("DNS_cname_chasing.hop_count", int64(iterCount))
+			}
 		}
 	}
 

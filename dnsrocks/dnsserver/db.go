@@ -94,6 +94,8 @@ type HandlerConfig struct {
 	AlwaysCompress bool
 	// Controls whether CNAME chasing is enabled/disabled
 	CNAMEChasing bool
+	// Controls the number of max hops we do for CNAME chasing
+	MaxCNAMEHops int
 }
 
 // FBDNSDB is the DNS DB handler.

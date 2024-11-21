@@ -538,9 +538,8 @@ func TestThrottleJamming(t *testing.T) {
 	require.Equal(t, "some-other.domain.", cname)
 }
 
-func sprayUDP(conn *net.UDPConn, limit int) {
-	qname := "0123456789.example.com."
-	msg := (&dns.Msg{}).SetQuestion(qname, dns.TypeA)
+func sprayUDP(conn *net.UDPConn, limit int, qname string, qtype uint16) {
+	msg := (&dns.Msg{}).SetQuestion(qname, qtype)
 	buf, _ := msg.Pack()
 	for i := range limit {
 		// Cache busting for the QNAME, which falls on a wildcard.
@@ -574,7 +573,7 @@ func BenchmarkSpray(b *testing.B) {
 	defer conn.Close()
 
 	b.ResetTimer()
-	sprayUDP(conn, b.N)
+	sprayUDP(conn, b.N, "0123456789.example.com.", dns.TypeA)
 	b.StopTimer()
 
 	seconds := b.Elapsed().Seconds()
@@ -586,52 +585,143 @@ func BenchmarkSpray(b *testing.B) {
 // Measure the goodput of the server over UDP in answers/sec.
 // Queries have randomized QNAME and ECS subnet to avoid caching.
 func BenchmarkUDP(b *testing.B) {
-	for _, maxConcurrency := range []int{-1, 1, 10, 100, 1000} {
-		b.Run(fmt.Sprintf("maxConcurrency=%d", maxConcurrency), func(b *testing.B) {
-			config := makeTestServerConfig(false, false)
-			config.MaxConcurrency = maxConcurrency
-			portMap, srv := makeTestServer(b, config)
-			defer srv.Shutdown()
+	testCases := []struct {
+		name           string
+		qtype          uint16
+		qname          string
+		cnameChasing   bool
+		maxConcurrency []int
+	}{
+		// A query with cname chasing disabled
+		{
+			name:           "TypeA",
+			qtype:          dns.TypeA,
+			qname:          "0123456789.example.com.",
+			cnameChasing:   false,
+			maxConcurrency: []int{-1, 1, 10, 100, 1000}},
+		// A query with one hop
+		{
+			name:           "TypeA-OneHop",
+			qtype:          dns.TypeA,
+			qname:          "0123456789.benchmark.example.com.",
+			cnameChasing:   true,
+			maxConcurrency: []int{-1, 1, 10, 100, 1000},
+		},
+		// A query with two hops
+		{
+			name:           "TypeA-TwoHops",
+			qtype:          dns.TypeA,
+			qname:          "0123456789.twohops.example.com.",
+			cnameChasing:   true,
+			maxConcurrency: []int{-1, 1, 10, 100, 1000},
+		},
+		// AAAA query with cname chasing disabled
+		{
+			name:           "TypeAAAA",
+			qtype:          dns.TypeAAAA,
+			qname:          "0123456789.example.com.",
+			cnameChasing:   false,
+			maxConcurrency: []int{-1, 1, 10, 100, 1000}},
+		// AAAA query with one hop
+		{
+			name:           "TypeAAAA-OneHop",
+			qtype:          dns.TypeAAAA,
+			qname:          "0123456789.benchmark.example.com.",
+			cnameChasing:   true,
+			maxConcurrency: []int{-1, 1, 10, 100, 1000},
+		},
+		// AAAA query with two hops
+		{
+			name:           "TypeAAAA-TwoHops",
+			qtype:          dns.TypeAAAA,
+			qname:          "0123456789.twohops.example.com.",
+			cnameChasing:   true,
+			maxConcurrency: []int{-1, 1, 10, 100, 1000},
+		},
+		// CNAME query with cname chasing disabled
+		{
+			name:           "TypeCNAME",
+			qtype:          dns.TypeCNAME,
+			qname:          "0123456789.benchmark.example.com.",
+			cnameChasing:   false,
+			maxConcurrency: []int{1},
+		},
+		// CNAME query with cname chasing enabled
+		{
+			name:           "TypeCNAME-CNAMEChasing",
+			qtype:          dns.TypeCNAME,
+			qname:          "0123456789.benchmark.example.com.",
+			cnameChasing:   true,
+			maxConcurrency: []int{1},
+		},
+		// ANY query with cname chasing disabled
+		{
+			name:           "TypeANY",
+			qtype:          dns.TypeANY,
+			qname:          "0123456789.benchmark.example.com.",
+			cnameChasing:   false,
+			maxConcurrency: []int{1},
+		},
+		// ANY query with cname chasing enabled
+		{
+			name:           "TypeANY-CNAMEChasing",
+			qtype:          dns.TypeANY,
+			qname:          "0123456789.benchmark.example.com.",
+			cnameChasing:   true,
+			maxConcurrency: []int{1},
+		},
+	}
 
-			addr := portMap["udp"]
-			host, port, err := net.SplitHostPort(addr)
-			require.Nil(b, err)
-			portNum, err := strconv.Atoi(port)
-			require.Nil(b, err)
-			udpAddr := net.UDPAddr{
-				IP:   net.ParseIP(host),
-				Port: portNum,
-			}
-			conn, err := net.DialUDP("udp", nil, &udpAddr)
-			require.Nil(b, err, "Error connecting to server")
-			defer conn.Close()
+	for _, tc := range testCases {
+		for _, maxConcurrency := range tc.maxConcurrency {
+			b.Run(fmt.Sprintf("%s-maxConcurrency=%d", tc.name, maxConcurrency), func(b *testing.B) {
+				config := makeTestServerConfig(false, false)
+				config.MaxConcurrency = maxConcurrency
+				config.HandlerConfig.CNAMEChasing = tc.cnameChasing
+				config.HandlerConfig.MaxCNAMEHops = 10
+				portMap, srv := makeTestServer(b, config)
+				defer srv.Shutdown()
 
-			// Strategy: Spray DNS packets as fast as possible,
-			// accepting that many or most will be lost.
-			// Only count replies.
-
-			b.ResetTimer()
-			go sprayUDP(conn, math.MaxInt)
-			readBuf := make([]byte, 65536)
-			n := 0
-			for range b.N {
-				n, err = conn.Read(readBuf)
+				addr := portMap["udp"]
+				host, port, err := net.SplitHostPort(addr)
 				require.Nil(b, err)
-			}
-			b.StopTimer()
-			// Terminate the spraying thread.
-			conn.Close()
+				portNum, err := strconv.Atoi(port)
+				require.Nil(b, err)
+				udpAddr := net.UDPAddr{
+					IP:   net.ParseIP(host),
+					Port: portNum,
+				}
+				conn, err := net.DialUDP("udp", nil, &udpAddr)
+				require.Nil(b, err, "Error connecting to server")
+				defer conn.Close()
 
-			lastResponse := dns.Msg{}
-			err = lastResponse.Unpack(readBuf[:n])
-			require.NoError(b, err)
-			// To confirm response content, uncomment:
-			// b.Logf("%v", lastResponse)
+				// Strategy: Spray DNS packets as fast as possible,
+				// accepting that many or most will be lost.
+				// Only count replies.
 
-			seconds := b.Elapsed().Seconds()
-			b.ReportMetric(float64(b.N)/seconds, "responses/sec")
-			// This metric is less meaningful than QPS, so we can hide it.
-			b.ReportMetric(0, "ns/op")
-		})
+				b.ResetTimer()
+				go sprayUDP(conn, math.MaxInt, tc.qname, tc.qtype)
+				readBuf := make([]byte, 65536)
+				n := 0
+				for range b.N {
+					n, err = conn.Read(readBuf)
+					require.Nil(b, err)
+				}
+				b.StopTimer()
+				// Terminate the spraying thread.
+				conn.Close()
+
+				lastResponse := dns.Msg{}
+				err = lastResponse.Unpack(readBuf[:n])
+				require.NoError(b, err)
+				// To confirm response content, uncomment:
+				// b.Logf("%v", lastResponse)
+
+				seconds := b.Elapsed().Seconds()
+				b.ReportMetric(float64(b.N)/seconds, "responses/sec")
+				// This metric is less meaningful than QPS, so we can hide it.
+				b.ReportMetric(0, "ns/op")
+			})
+		}
 	}
 }

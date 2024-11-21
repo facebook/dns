@@ -207,7 +207,9 @@ func (r *DataReader) EcsLocation(q []byte, ecs *dns.EDNS0_SUBNET) (*Location, er
 	}
 	// We found a match
 	if !loc.LocID.IsZero() {
-		ecs.SourceScope = loc.Mask
+		if loc.Mask > ecs.SourceScope {
+			ecs.SourceScope = loc.Mask
+		}
 		if ecs.Family == 1 {
 			ecs.SourceScope -= 96
 		}
