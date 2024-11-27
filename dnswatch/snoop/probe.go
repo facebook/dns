@@ -27,7 +27,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/facebook/dns/dnswatch/snoop/bccsymcache"
+	"github.com/facebook/dns/dnswatch/snoop/blazesym"
 
 	"github.com/aquasecurity/libbpfgo"
 	log "github.com/sirupsen/logrus"
@@ -51,9 +51,6 @@ var pidToCommCache map[uint32][commLength]byte
 
 // used to cache pid to CmdLine translation
 var pidToCmdLineCache map[uint32][cmdlineLength]byte
-
-// used to cache stacktrace symbol resolver cache
-var pidToSymbolCache map[uint32]*bccsymcache.Cache
 
 // fnIDToFnName maps FnID to kernel function name
 var fnIDToFnName = map[FnID]string{
@@ -182,7 +179,6 @@ func (p *Probe) loadAndAttachProbes() (*libbpfgo.Module, error) {
 	}
 	err = bpfModule.BPFLoadObject()
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	for _, kernelFnName := range fnIDToFnName {
@@ -208,12 +204,6 @@ func (p *Probe) loadAndAttachProbes() (*libbpfgo.Module, error) {
 func (p *Probe) Run(ch chan<- *ProbeDTO) error {
 	pidToCommCache = make(map[uint32][commLength]byte)
 	pidToCmdLineCache = make(map[uint32][cmdlineLength]byte)
-	pidToSymbolCache = make(map[uint32]*bccsymcache.Cache)
-	defer func() {
-		for _, cache := range pidToSymbolCache {
-			cache.Free()
-		}
-	}()
 
 	bpfModule, err := p.loadAndAttachProbes()
 	if err != nil {
@@ -358,25 +348,29 @@ func getProcStacktrace(pid uint32, stackSize int32, stack []uint64) ([]string, e
 	if pid == 0 {
 		return nil, errors.New("pid is 0")
 	}
-	var cache *bccsymcache.Cache
-	cache, found := pidToSymbolCache[pid]
-	if !found {
-		cache = bccsymcache.New(int(pid))
-		pidToSymbolCache[pid] = cache
+	symbolizer, err := blazesym.NewSymbolizer()
+	results := []string{}
+	defer symbolizer.Close()
+	if err != nil {
+		return nil, err
 	}
-
-	result := []string{}
-
-	for _, addr := range stack {
-		if addr == 0 {
-			break
-		}
-		sym, err := cache.ResolveAddr(addr)
-		if err != nil {
-			return result, err
-		}
-		n := fmt.Sprintf("%s+%d (%s)", sym.DemangleName, sym.Offset, sym.Module)
-		result = append(result, n)
+	symbols, err := symbolizer.Symbolize(pid, stack)
+	if err != nil {
+		return results, err
 	}
-	return result, nil
+	for _, symbol := range symbols {
+		res := fmt.Sprintf("%s+%d", symbol.Name, symbol.Offset)
+		extra := ""
+		if symbol.Dir != "" {
+			extra = symbol.Dir
+		}
+		if symbol.File != "" {
+			extra += fmt.Sprintf(": %s", symbol.File)
+		}
+		if extra != "" {
+			res = fmt.Sprintf("%s (%s)", res, extra)
+		}
+		results = append(results, res)
+	}
+	return results, nil
 }
