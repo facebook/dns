@@ -1,0 +1,3 @@
+[submodule "dnswatch/blazesym"]
+	path = dnswatch/blazesym
+	url = https://github.com/libbpf/blazesym.git

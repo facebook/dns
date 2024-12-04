@@ -14,13 +14,13 @@ jobs:
         with:
           go-version: 1.22.3
       - name: "Install deps"
-        run: sudo apt-get update; sudo apt-get install -y libpcap0.8 libpcap0.8-dev make clang  gcc-multilib libbpfcc-dev
+        run: sudo apt-get update; sudo apt-get install -y make clang  gcc-multilib libsystemd-dev libcap-dev libpcap-dev
       - name: "Install libbpf-1"
         run: sudo bash .github/scripts/install_libbpf1.sh
       - name: "Build all"
-        run: cd dnswatch; make
+        run: cd dnswatch; git submodule update --init --recursive; make
       - name: Test
-        run: cd dnswatch;  make test
+        run: cd dnswatch; git submodule update --init --recursive;  make test
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
