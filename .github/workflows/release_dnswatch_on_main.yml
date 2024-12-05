@@ -1,0 +1,39 @@
+name: Release dnswatch binary
+on: push
+
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.3
+      - name: "Install deps"
+        run: sudo apt-get update; sudo apt-get install -y make clang  gcc-multilib libsystemd-dev libcap-dev libpcap-dev
+      - name: "Install libbpf-1"
+        run: sudo bash .github/scripts/install_libbpf1.sh
+      - name: "Build all"
+        run: cd dnswatch; git submodule update --init --recursive; make
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - name: Release snapshot
+        id: release-snapshot
+        uses: actions/create-release@latest
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.date.outputs.date }}
+          release_name: ${{ steps.date.outputs.date }}
+          draft: false
+          prerelease: false
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          files: dnswatch/dnswatch
+          tag_name: ${{ steps.date.outputs.date }}

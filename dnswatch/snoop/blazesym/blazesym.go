@@ -16,7 +16,7 @@ package blazesym
 
 /*
 // @fb-only: #include "blazesym/blazesym.h" // @manual=fbsource//third-party/rust:blazesym-c-cxx
-#include "blazesym_c/blazesym_c.h" // @oss-only
+#include "blazesym.h" // @oss-only
 // HACK
 // The generated struct in cgo does not contain syms for blazesym result
 // see:
@@ -86,7 +86,7 @@ type Symbol struct {
 }
 
 // UnknownSymbol returns a symbol representing an unknown symbol.
-var UnknownSymbol Symbol = Symbol{Name: unknownSymbol}
+var UnknownSymbol = Symbol{Name: unknownSymbol}
 
 func stackToPtr(stack []uint64) (*C.uint64_t, C.size_t) {
 	var result *C.uint64_t
