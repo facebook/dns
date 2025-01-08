@@ -95,6 +95,13 @@ func NewOptions() *Options {
 	}
 }
 
+// SetDisableAutoCompactions enables/disables automatic compactions. Manual compactions can still
+// be issued on this column family
+func (options *Options) SetDisableAutoCompactions(v bool) {
+	// default is False
+	C.rocksdb_options_set_disable_auto_compactions(options.cOptions, C.int(BoolToChar(v)))
+}
+
 // EnableStatistics enables collecting and exporting statistics
 // https://github.com/facebook/rocksdb/wiki/Statistics
 func (options *Options) EnableStatistics() {
