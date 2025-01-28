@@ -7,7 +7,7 @@ require (
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/eclesh/welford v0.0.0-20150116075914-eec62615b1f0
 	github.com/fsnotify/fsnotify v1.5.1
-	github.com/golang/glog v1.2.0
+	github.com/golang/glog v1.2.4
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/miekg/dns v1.1.61
