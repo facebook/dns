@@ -107,7 +107,7 @@ func MakeOPTWithECS(s string) (*dns.OPT, error) {
 }
 
 // writeAndLog writes the response to the network as well as log and bump stats
-func (h *FBDNSDB) writeAndLog(state request.Request, resp *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location) (int, error) {
+func (h *FBDNSDB) writeAndLog(state request.Request, resp *dns.Msg, ecs *dns.EDNS0_SUBNET, loc *db.Location, startTime time.Time) (int, error) {
 	rcode := resp.Rcode
 
 	state.SizeAndDo(resp)
@@ -123,7 +123,7 @@ func (h *FBDNSDB) writeAndLog(state request.Request, resp *dns.Msg, ecs *dns.EDN
 	if err != nil {
 		return dns.RcodeServerFailure, err
 	}
-	h.logger.Log(state, resp, ecs, loc)
+	h.logger.Log(state, resp, ecs, loc, time.Since(startTime).Microseconds())
 	if !resp.Authoritative {
 		h.stats.IncrementCounter("DNS_queries_notauthoritative")
 	}
@@ -152,7 +152,6 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 		h.stats.IncrementCounter("DNS_cname_chasing.pack_domain_fail")
 		glog.Errorf("could not pack cname domain %s", localState.Name())
 		dns.HandleFailed(localState.W, localState.Req)
-		h.logger.LogFailed(localState, nil, nil)
 		return nil, false, err
 	}
 
@@ -160,7 +159,6 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 
 	if loc, err = reader.FindLocation(packedQName, ecs, localState.IP()); err != nil {
 		glog.Errorf("%s: failed to find location: %v", localState.Name(), err)
-		h.logger.LogFailed(localState, ecs, loc)
 		return nil, false, err
 	}
 
@@ -168,7 +166,6 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 		// We could not find a location, not even the default one... potentially a bogus DB.
 		h.stats.IncrementCounter("DNS_cname_chasing.location.nil")
 		glog.Errorf("%s: nil location", localState.Name())
-		h.logger.LogFailed(localState, ecs, loc)
 		return nil, false, fmt.Errorf("no location found, not even default one")
 	}
 
@@ -199,6 +196,7 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 // error that happen during processing.
 func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	var (
+		startTime = time.Now() // for measuring response time
 		// the location matching this requestor
 		loc *db.Location
 		// EDNS Client subnet option
@@ -236,7 +234,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 
 	// Check if this is a supported edns version
 	if a, err := edns.Version(state.Req); err != nil { // Wrong EDNS version, return at once.
-		return h.writeAndLog(state, a, ecs, loc)
+		return h.writeAndLog(state, a, ecs, loc, startTime)
 	}
 
 	offset, err := dns.PackDomainName(state.Name(), packedQName, 0, nil, false)
@@ -244,7 +242,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		h.stats.IncrementCounter("DNS_error.pack_domain_fail")
 		glog.Errorf("could not pack domain %s", state.Name())
 		dns.HandleFailed(state.W, state.Req)
-		h.logger.LogFailed(state, ecs, loc)
+		h.logger.LogFailed(state, ecs, loc, time.Since(startTime).Microseconds())
 		// nolint: nilerr
 		return dns.RcodeServerFailure, nil
 	}
@@ -254,7 +252,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	ecs = db.FindECS(state.Req)
 	if loc, err = reader.FindLocation(packedQName, ecs, state.IP()); err != nil {
 		glog.Errorf("%s: failed to find location: %v", state.Name(), err)
-		h.logger.LogFailed(state, ecs, loc)
+		h.logger.LogFailed(state, ecs, loc, time.Since(startTime).Microseconds())
 		return dns.RcodeServerFailure, nil
 	}
 
@@ -262,7 +260,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		// We could not find a location, not even the default one... potentially a bogus DB.
 		h.stats.IncrementCounter("DNS_location.nil")
 		glog.Errorf("%s: nil location", state.Name())
-		h.logger.LogFailed(state, ecs, loc)
+		h.logger.LogFailed(state, ecs, loc, time.Since(startTime).Microseconds())
 		return dns.RcodeServerFailure, nil
 	}
 
@@ -312,7 +310,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 
 					resp.Extra = append([]dns.RR{o}, resp.Extra...)
 				}
-				return h.writeAndLog(state, resp, ecs, loc)
+				return h.writeAndLog(state, resp, ecs, loc, startTime)
 			}
 		} else {
 			h.stats.IncrementCounter("DNS_cache.missed")
@@ -348,7 +346,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 			m.IsEdns0().Option = append(m.IsEdns0().Option, &ede)
 		}
 		// does not matter if this write fails
-		return h.writeAndLog(state, m, ecs, loc)
+		return h.writeAndLog(state, m, ecs, loc, startTime)
 	}
 
 	// Not authoritative but we have NS (implicit or we would not have passed the
@@ -430,7 +428,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	if err != nil {
 		glog.Errorf("Failed to unpack control domain name %s", err)
 		dns.HandleFailed(state.W, state.Req)
-		h.logger.Log(state, state.Req, ecs, loc)
+		h.logger.Log(state, state.Req, ecs, loc, time.Since(startTime).Microseconds())
 		return dns.RcodeServerFailure, nil
 	}
 
@@ -480,7 +478,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		a.Extra = append([]dns.RR{o}, a.Extra...)
 	}
 
-	return h.writeAndLog(state, a, ecs, loc)
+	return h.writeAndLog(state, a, ecs, loc, startTime)
 }
 
 // ServeDNS implements the plugin.Handler interface.
