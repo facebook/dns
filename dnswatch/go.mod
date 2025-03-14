@@ -1,6 +1,8 @@
 module github.com/facebook/dns/dnswatch
 
-go 1.22.3
+go 1.23.0
+
+toolchain go1.23.5
 
 require (
 	github.com/aquasecurity/libbpfgo v0.4.6-libbpf-1.1.0
@@ -12,8 +14,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/net v0.33.0
-	golang.org/x/sys v0.28.0
+	golang.org/x/net v0.37.0
+	golang.org/x/sys v0.31.0
 )
 
 require (
