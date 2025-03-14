@@ -161,7 +161,7 @@ var ErrInvalidLocation = errors.New("location should be either nil or exactly 2 
 func copyLocID(locID []byte) ([]byte, error) {
 	var x = make([]byte, len(locID))
 
-	if locID == nil || len(locID) < 2 {
+	if len(locID) < 2 {
 		return x, fmt.Errorf("%w. location value '%v'", ErrInvalidLocation, locID)
 	}
 	copy(x, locID)
