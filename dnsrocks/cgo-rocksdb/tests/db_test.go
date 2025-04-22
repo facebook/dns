@@ -489,7 +489,7 @@ func fillValues(keyFmt, valFmt string, count int) error {
 	}
 
 	if err := db.ExecuteBatch(batch, writeOptions); err != nil {
-		return fmt.Errorf("Error executing write batch in fillValues: %s", err.Error())
+		return fmt.Errorf("error executing write batch in fillValues: %s", err.Error())
 	}
 	return nil
 }

@@ -66,7 +66,7 @@ func Test_QTypeStrToDNSQtype(t *testing.T) {
 func Test_ProcessQueryInputFile(t *testing.T) {
 	tf, err := os.CreateTemp("", "*")
 	require.NoError(t, err)
-	defer os.Remove(tf.Name())
+	defer func() { _ = os.Remove(tf.Name()) }()
 	rows := []byte("facebook.com\tAAAA\ntest.com\tCNAME")
 	err = os.WriteFile(tf.Name(), rows, 0644)
 	require.NoError(t, err)

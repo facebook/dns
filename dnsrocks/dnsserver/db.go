@@ -183,7 +183,7 @@ func getNewDBPath(path string) (string, error) {
 	newPath = strings.TrimSpace(string(b))
 	_, err = os.Stat(newPath)
 	if os.IsNotExist(err) {
-		return newPath, fmt.Errorf("New path %s doesn't exist", newPath)
+		return newPath, fmt.Errorf("new path %s doesn't exist", newPath)
 	}
 	return newPath, nil
 }
@@ -262,7 +262,7 @@ func (h *FBDNSDB) cleanupSignalFile(s ReloadSignal) error {
 	case PartialReload:
 		p = path.Join(h.dbConfig.ControlPath, ControlFilePartialReload)
 	default:
-		return fmt.Errorf("Unknown reload signal %v", s)
+		return fmt.Errorf("unknown reload signal %v", s)
 	}
 	return os.RemoveAll(p)
 }
@@ -341,7 +341,7 @@ func (h *FBDNSDB) Reload(s ReloadSignal) (err error) {
 	switch s.Kind {
 	case FullReload:
 		if s.Payload == "" {
-			return fmt.Errorf("Asked for full reload but no path provided")
+			return fmt.Errorf("asked for full reload but no path provided")
 		}
 		newPath = s.Payload
 	case PartialReload:

@@ -96,5 +96,5 @@ func TestHandlerValidRequestNonTxt(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, rec.Rcode, dns.RcodeSuccess, "RcodeSuccess was expected to be returned.")
 	require.Equal(t, len(rec.Msg.Answer), 0, "No answers in the answer section.")
-	require.Equal(t, req.MsgHdr.Id, rec.Msg.MsgHdr.Id, "Request and response IDs should match.")
+	require.Equal(t, req.Id, rec.Msg.Id, "Request and response IDs should match.")
 }

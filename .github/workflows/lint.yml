@@ -15,7 +15,7 @@ jobs:
           go-version: 1.23
       - name: "Install RocksDB"
         run: sudo bash .github/scripts/install_rocks_head.sh
-      - uses: golangci/golangci-lint-action@v3
+      - uses: golangci/golangci-lint-action@v7
         with:
           working-directory: dnsrocks
       - run: |

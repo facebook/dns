@@ -33,7 +33,7 @@ func RawDecoderByType(pktType string) (RawDecoder, error) {
 	case "dns":
 		return &DNSDecoder{}, nil
 	default:
-		return nil, fmt.Errorf("No Decoder associated with this type of packet")
+		return nil, fmt.Errorf("no decoder associated with this type of packet")
 	}
 }
 

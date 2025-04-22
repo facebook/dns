@@ -124,7 +124,7 @@ func Open(name string, driver string) (*DB, error) {
 // NewReader returns a new DB reader to be used to perform DNS record search in DB.
 func NewReader(db *DB) (Reader, error) {
 	if db == nil {
-		return &DataReader{}, fmt.Errorf("Cannot create new reader, DB is not initialized")
+		return &DataReader{}, fmt.Errorf("cannot create new reader, DB is not initialized")
 	}
 	db.l.Lock()
 	defer db.l.Unlock()

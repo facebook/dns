@@ -93,25 +93,25 @@ func Run(m *testing.M, relativePath string) int {
 
 	// temporarily suppress output to make test suite happy
 	// (otherwise any output from CompileRDB() will fail the test
-	err, errDB, errPath := func() (error, string, string) {
+	errDB, errPath, err := func() (string, string, error) {
 		log.SetOutput(io.Discard)
 		defer log.SetOutput(os.Stderr)
 		// compile RDB into tempdir
 		o := rdb.CompilationOptions{}
 		_, err = rdb.CompileToSpecificRDBVersion(fullInputFileName, rdbDir, o)
 		if err != nil {
-			return err, "RDB", rdbDir
+			return "RDB", rdbDir, err
 		}
 		// compile RDB v2 into tempdir
 		o.UseV2KeySyntax = true
 		_, err = rdb.CompileToSpecificRDBVersion(fullInputFileName, rdbDirV2, o)
 		if err != nil {
-			return err, "RDBv2", rdbDirV2
+			return "RDBv2", rdbDirV2, err
 		}
 		// compile CDB into tempdir
 		creatorOptions := cdb.NewDefaultCreatorOptions()
 		_, err = cdb.CreateCDB(fullInputFileName, TestCDB.Path, creatorOptions)
-		return err, "CDB", TestCDB.Path
+		return "CDB", TestCDB.Path, err
 	}()
 	if err != nil {
 		log.Fatalf("Error compiling %s (%s) to %s: %s", inputFileName, errDB, errPath, err)

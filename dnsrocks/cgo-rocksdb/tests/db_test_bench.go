@@ -33,7 +33,7 @@ func seqFillStr(upperLimit uint64) error {
 	for i := uint64(0); i < upperLimit; i++ {
 		binary.LittleEndian.PutUint64(bKey[:], i)
 		if err := db.PutStr(writeOptions, string(bKey[:]), sValue); err != nil {
-			return fmt.Errorf("Error writing string: %s", err.Error())
+			return fmt.Errorf("error writing string: %s", err.Error())
 		}
 	}
 	return nil
@@ -45,7 +45,7 @@ func seqFillBytes(upperLimit uint64) error {
 	for i := uint64(0); i < upperLimit; i++ {
 		binary.LittleEndian.PutUint64(bKey[:], i)
 		if err := db.Put(writeOptions, bKey[:], bValue); err != nil {
-			return fmt.Errorf("Error writing bytes: %v - %s", bKey, err.Error())
+			return fmt.Errorf("error writing bytes: %v - %s", bKey, err.Error())
 		}
 	}
 	return nil

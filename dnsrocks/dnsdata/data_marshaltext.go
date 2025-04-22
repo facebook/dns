@@ -67,13 +67,13 @@ func (r *Rns) MarshalText() (text []byte, err error) {
 	w.WriteString(string(prefixNS))
 	putdomtext(w, r.Rns1.dom)
 	w.Write(NSEP)
-	b, err := r.Raddr.ip.MarshalText()
+	b, err := r.ip.MarshalText()
 	if err != nil {
 		return nil, err
 	}
 	w.Write(b)
 	w.Write(NSEP)
-	putdomtext(w, r.Rns1.ns)
+	putdomtext(w, r.ns)
 	w.Write(NSEP)
 	fmt.Fprintf(w, "%d", r.Rns1.ttl)
 	w.Write(NSEP)
@@ -323,7 +323,7 @@ func (r *Rdot) MarshalText() (text []byte, err error) {
 	w.WriteString(string(prefixDot))
 	putdomtext(w, r.Rns1.dom)
 	w.Write(NSEP)
-	b, err := r.Raddr.ip.MarshalText()
+	b, err := r.ip.MarshalText()
 	if err != nil {
 		return nil, err
 	}

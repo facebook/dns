@@ -215,7 +215,7 @@ func (b *Builder) saveBuckets() ([]string, error) {
 		bucketItems := b.values[bucket.startOffset:bucket.endOffset]
 		g.Go(func() error {
 			if len(bucketItems) == 0 {
-				return fmt.Errorf("Assertion failed: bucket %d is empty", bucketNo)
+				return fmt.Errorf("assertion failed: bucket %d is empty", bucketNo)
 			}
 			writerName := fmt.Sprintf("w#%d", bucketNo)
 			filePath := fmt.Sprintf(templateSSTFileName, b.path, bucketNo)

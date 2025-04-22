@@ -252,7 +252,7 @@ func main() {
 		log.Info("Finished running all connections")
 		close(sigStop)
 	}()
-	select { // nolint: gosimple
+	select { // nolint: staticcheck
 	case <-sigStop:
 		log.Infof("No more requests will be sent")
 		close(periodicReporterStop)

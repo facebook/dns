@@ -194,7 +194,7 @@ func unpackLocation(foundKey, foundVal []byte) (loc []byte, mlen uint8, err erro
 		return loc, mlen, nil
 	default:
 		if valLen < 3 {
-			err = fmt.Errorf("Invalid location length %d, value %v", len(foundVal), foundVal)
+			err = fmt.Errorf("invalid location length %d, value %v", len(foundVal), foundVal)
 			return nil, 0, err
 		}
 		if foundVal[0] != 0xff {

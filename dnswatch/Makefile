@@ -18,7 +18,7 @@ build: snoop/out/dnswatch_bpf_probe_core.o $(LIBBLAZESYM_SRC)/target/release/lib
 test: snoop/out/dnswatch_bpf_probe_core.o $(LIBBLAZESYM_SRC)/target/release/libblazesym_c.a
 	CGO_LDFLAGS=" -I $(LIBBLAZESYM_INC) -L /usr/lib -L $(abspath $(LIBBLAZESYM_SRC)/target/release) -lsystemd -lcap -lblazesym_c -libverbs -lnl-route-3 -lnl-3 -lzstd -lbpf -ldbus-1 -static " CGO_CFLAGS="-I /usr/include/bpf -I /usr/include/pcap -I $(LIBBLAZESYM_INC) -L /usr/lib -L $(abspath $(LIBBLAZESYM_SRC)/target/release)" go test -v -coverprofile=coverage.txt -covermode=atomic ./...
 install_linter:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ~ 
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b ~ v2.1.2
 lint: snoop/out/dnswatch_bpf_probe_core.o install_linter $(LIBBLAZESYM_SRC)/target/release/libblazesym_c.a
 	CGO_LDFLAGS=" -I $(LIBBLAZESYM_INC) -L /usr/lib -L $(abspath $(LIBBLAZESYM_SRC)/target/release) -lsystemd -lcap -lblazesym_c -libverbs -lnl-route-3 -lnl-3 -lzstd -lbpf -ldbus-1 -static " CGO_CFLAGS="-I /usr/include/bpf -I /usr/include/pcap -I $(LIBBLAZESYM_INC) -L /usr/lib -L $(abspath $(LIBBLAZESYM_SRC)/target/release)" ~/golangci-lint run -v  ./...
 clean:

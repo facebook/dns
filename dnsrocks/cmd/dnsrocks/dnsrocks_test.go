@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 }
 
 func getConfig(tcp bool) fbserver.ServerConfig {
-	var serverConfig fbserver.ServerConfig = fbserver.NewServerConfig()
+	var serverConfig = fbserver.NewServerConfig()
 
 	// DNS Server config
 	serverConfig.Port = 0

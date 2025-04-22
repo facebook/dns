@@ -101,7 +101,7 @@ func OpenSecondary(name, secondaryPath string, options *Options) (*RocksDB, erro
 // from the primary database.
 func (db *RocksDB) CatchWithPrimary() error {
 	if !db.secondary {
-		return errors.New("This database is the primary database")
+		return errors.New("this database is the primary database")
 	}
 
 	var cError *C.char

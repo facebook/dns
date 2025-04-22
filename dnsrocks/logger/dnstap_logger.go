@@ -58,7 +58,7 @@ type DNSTapLogger struct {
 // NewLogger initialize a DNSTapLogger by setting the right outputs and format
 func NewLogger(config Config) (l *DNSTapLogger, err error) {
 	if config.SamplingRate < 0.0 || config.SamplingRate > 1.0 {
-		return nil, fmt.Errorf("Sampling rate should be >= 0.0 and <= 1.0. Got %f", config.SamplingRate)
+		return nil, fmt.Errorf("sampling rate should be >= 0.0 and <= 1.0. Got %f", config.SamplingRate)
 	}
 	l = &DNSTapLogger{samplingRate: config.SamplingRate}
 	switch config.Target {
@@ -79,7 +79,7 @@ func NewLogger(config Config) (l *DNSTapLogger, err error) {
 	case "tcp":
 		var tcpOutput *dnstap.FrameStreamSockOutput
 		if config.Remote == "" {
-			return nil, fmt.Errorf("No remote provided for dnstap tcp target. Refusing to start")
+			return nil, fmt.Errorf("no remote provided for dnstap tcp target. Refusing to start")
 		}
 		naddr, err := net.ResolveTCPAddr(config.Target, config.Remote)
 		if err != nil {
@@ -95,7 +95,7 @@ func NewLogger(config Config) (l *DNSTapLogger, err error) {
 	case "unix":
 		var unixSockOutput *dnstap.FrameStreamSockOutput
 		if config.Remote == "" {
-			return nil, fmt.Errorf("No unix socket provided for dnstap unix socket target. Refusing to start")
+			return nil, fmt.Errorf("no unix socket provided for dnstap unix socket target. Refusing to start")
 		}
 		naddr, err := net.ResolveUnixAddr(config.Target, config.Remote)
 		if err != nil {
