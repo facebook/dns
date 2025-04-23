@@ -22,7 +22,7 @@ jobs:
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
       - name: Release snapshot
         id: release-snapshot
-        uses: actions/create-release@latest
+        uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

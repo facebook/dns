@@ -44,7 +44,7 @@ func ParseStream(r io.Reader, codec *Codec, results chan<- []MapRecord, workers 
 		func(line []byte) error {
 			v, err := codec.ConvertLn(line)
 			if err != nil {
-				return fmt.Errorf("Conversion failed for line '%s': %w", line, err)
+				return fmt.Errorf("conversion failed for line '%s': %w", line, err)
 			}
 			results <- v
 			return nil

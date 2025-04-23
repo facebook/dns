@@ -487,12 +487,12 @@ func TestThrottleJamming(t *testing.T) {
 	require.Nil(t, err)
 
 	badOpcode := validQuery.Copy()
-	badOpcode.MsgHdr.Opcode = dns.OpcodeStatus
+	badOpcode.Opcode = dns.OpcodeStatus
 	notImplementedBuf, err := badOpcode.Pack()
 	require.Nil(t, err)
 
 	response := validQuery.Copy()
-	response.MsgHdr.Response = true
+	response.Response = true
 	ignoredBuf, err := response.Pack()
 	require.Nil(t, err)
 

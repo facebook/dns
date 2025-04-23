@@ -155,13 +155,9 @@ func (r *sortedDataReader) find(
 
 	copy(key[domainNameStart:], reversedQName)
 
-	for {
-		// intentionally passing untouched reversed QName so client can examine length changes
-		// for example for wildcard safety
-		if !preIterationCheck(reversedQName, qLength) {
-			break
-		}
-
+	// intentionally passing untouched reversed QName so client can examine length changes
+	// for example for wildcard safety
+	for preIterationCheck(reversedQName, qLength) {
 		locationStart := domainNameStart + qLength
 		// mark domain name end. we can avoid re-copying as we are cutting labels from the end
 		key[locationStart-1] = 0x00

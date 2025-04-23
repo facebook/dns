@@ -49,7 +49,7 @@ var localRand = NewRand()
 // then the existing record.
 func (w *Wrs) Add(rec ResourceRecord, data []byte) error {
 	if rec.Qtype != dns.TypeA && rec.Qtype != dns.TypeAAAA {
-		return fmt.Errorf("Unsupported type %d", rec.Qtype)
+		return fmt.Errorf("unsupported type %d", rec.Qtype)
 	}
 
 	key := math.Pow(float64(localRand.Uint32())*float64(1.0/math.MaxUint32), 1.0/float64(rec.Weight))
@@ -110,7 +110,7 @@ func (w *Wrs) record(name string, class uint16, qtype uint16) (rrs []dns.RR, err
 	case dns.TypeAAAA:
 		items = w.V6
 	default:
-		return nil, fmt.Errorf("Unsupported type %d", qtype)
+		return nil, fmt.Errorf("unsupported type %d", qtype)
 	}
 	localRand.Shuffle(len(items), func(i, j int) {
 		items[i], items[j] = items[j], items[i]

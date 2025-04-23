@@ -34,10 +34,10 @@ type ResourceRecord struct {
 
 var (
 	// ErrLocationMismatch is returned if the record is not matching the location
-	ErrLocationMismatch = errors.New("Location mismatch")
+	ErrLocationMismatch = errors.New("location mismatch")
 	// ErrWildcardMismatch is returned if the record is a wildcard but we are not
 	// looking for wildcard
-	ErrWildcardMismatch = errors.New("Wildcard mismatch")
+	ErrWildcardMismatch = errors.New("wildcard mismatch")
 )
 
 // recordProcessor holds the parameters for parseResult. It enables us to
@@ -235,7 +235,7 @@ func (r *DataReader) IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zo
 			}
 		}
 
-		if !(auth && ns) {
+		if !auth || !ns {
 			key = append(key[:0], ZeroID...)
 			key = append(key, zoneCut...)
 			err := r.ForEach(key, parseResult)

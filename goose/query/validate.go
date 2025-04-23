@@ -26,7 +26,7 @@ type ValidateResponse func(response *dns.Msg) error
 // TODO pcullen make this better
 func CheckResponse(response *dns.Msg) error {
 	if len(response.Answer) != 1 {
-		return fmt.Errorf("DNS request: no reply received")
+		return fmt.Errorf("DNS request: no reply received") //nolint: staticcheck
 	}
 	return nil
 }

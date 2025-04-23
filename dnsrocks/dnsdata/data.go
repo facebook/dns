@@ -844,7 +844,7 @@ func (r *Rdot) UnmarshalText(text []byte) error {
 	if err := ns.UnmarshalText(text); err != nil {
 		return err
 	}
-	ns1 := &r.Rns.Rns1
+	ns1 := &r.Rns1
 	soa.loadDefaults()
 	if ns1.ttl == 0 {
 		soa.ttl = 0
@@ -967,7 +967,7 @@ func (r *Rns) DerivedRecords() []Record {
 	records := make([]Record, 0, 2)
 	records = append(records, &r.Rns1)
 
-	if r.Raddr.ip != nil {
+	if r.ip != nil {
 		records = append(records, &r.Raddr)
 	}
 
@@ -1156,7 +1156,7 @@ func (r *Rmx) DerivedRecords() []Record {
 	records := make([]Record, 0, 2)
 	records = append(records, &r.Rmx1)
 
-	if r.Raddr.ip != nil {
+	if r.ip != nil {
 		records = append(records, &r.Raddr)
 	}
 
@@ -1254,7 +1254,7 @@ func (r *Rsrv) DerivedRecords() []Record {
 	records := make([]Record, 0, 2)
 	records = append(records, &r.Rsrv1)
 
-	if r.Raddr.ip != nil {
+	if r.ip != nil {
 		records = append(records, &r.Raddr)
 	}
 

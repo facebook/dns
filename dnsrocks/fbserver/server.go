@@ -493,7 +493,7 @@ func (srv *Server) getDBTimestamp() error {
 	}
 	if !timestampFound {
 		srv.stats.IncrementCounter(DBTimestampKeyNotFound)
-		return fmt.Errorf("Timestamp key not found")
+		return fmt.Errorf("timestamp key not found")
 	}
 	srv.stats.ResetCounterTo(DBTimestamp, timestamp)
 

@@ -49,10 +49,10 @@ func doWork(dbConfig dnsserver.DBConfig, nets []*net.IPNet, workers int, qType, 
 	)
 	jobs := make(chan bool, workers)
 	if tdb, err = dnsserver.NewFBDNSDB(handlerConfig, dbConfig, cacheConfig, &dnsserver.DummyLogger{}, &stats.DummyStats{}); err != nil {
-		return fmt.Errorf("Failed to instantiate DB: %w", err)
+		return fmt.Errorf("failed to instantiate DB: %w", err)
 	}
 	if err = tdb.Load(); err != nil {
-		return fmt.Errorf("Failed to load DB: %s %w", dbConfig.Path, err)
+		return fmt.Errorf("failed to load DB: %s %w", dbConfig.Path, err)
 	}
 	defer tdb.Close()
 	var g errgroup.Group

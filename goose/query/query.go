@@ -68,7 +68,7 @@ func ProcessQueryInputFile(path string) ([]string, []dns.Type, error) {
 	if err != nil {
 		return qnames, qtypes, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
@@ -121,7 +121,7 @@ func monitorPort(port int, host string) error {
 		}
 		return fmt.Errorf("connection to Monitor Port failed with error: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 	return nil
 }
 

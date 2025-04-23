@@ -195,7 +195,7 @@ func (c *cdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 		}
 
 		if len(locID) < 2 {
-			err = fmt.Errorf("Invalid location length %d, value %v", len(locID), locID)
+			err = fmt.Errorf("invalid location length %d, value %v", len(locID), locID)
 			return nil, 0, err
 		}
 		if locID[0] != 0xff {
