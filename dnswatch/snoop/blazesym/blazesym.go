@@ -63,7 +63,7 @@ const (
 )
 
 func (e BlazeErr) Error() error {
-	return errors.New(C.GoString(C.blaze_err_str(C.enum_blaze_err(e))))
+	return errors.New(C.GoString(C.blaze_err_str(C.blaze_err(e))))
 }
 
 // NewSymbolizer returns a new Blazesym symbolizer.
@@ -104,7 +104,7 @@ func (s *Symbolizer) Symbolize(pid uint32, stack []uint64) ([]Symbol, error) {
 	symSrcProcess.type_size = C.ulong(unsafe.Sizeof(symSrcProcess))
 	symSrcProcess.pid = C.uint32_t(pid)
 	symSrcProcess.debug_syms = C.bool(true)
-	symSrcProcess.map_files = C.bool(true)
+	symSrcProcess.no_map_files = C.bool(false)
 	syms := C.blaze_symbolize_process_abs_addrs(s.s, &symSrcProcess, caddr, clen)
 	lastErr := BlazeErr(C.blaze_err_last())
 	if lastErr != blazeErrOk {
