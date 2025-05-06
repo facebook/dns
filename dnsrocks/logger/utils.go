@@ -21,19 +21,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-const (
-
-	// Header.Bits
-	_QR = 1 << 15 // query/response (response=1)
-	_AA = 1 << 10 // authoritative
-	_TC = 1 << 9  // truncated
-	_RD = 1 << 8  // recursion desired
-	_RA = 1 << 7  // recursion available
-	_Z  = 1 << 6  // Z
-	_AD = 1 << 5  // authenticated data
-	_CD = 1 << 4  // checking disabled
-)
-
 // TLSVersionStrings is a map of TLS version IDs to their string representation.
 var TLSVersionStrings = map[uint16]string{
 	tls.VersionTLS13: "TLS1.3",
@@ -95,35 +82,34 @@ func RequestProtocol(state request.Request) string {
 	return strings.ToUpper(proto)
 }
 
-// computeDNSFlag return a uint to represent flags set in dns message header
-func computeDNSFlag(r *dns.Msg) uint16 {
-	// https://www.freesoft.org/CIE/RFC/2065/40.htm for format
-
-	var dnsFlags = uint16(r.Opcode)<<11 | uint16(r.Rcode&0xF)
+// CollectDNSFlags returns a space-separated string with all flags set in the DNS message header
+// This is similar to dig's output but uppercase.
+func CollectDNSFlags(r *dns.Msg) string {
+	// See https://www.ietf.org/rfc/rfc1035.html#section-4.1.1
+	flagNames := []string{}
 	if r.Response {
-		dnsFlags |= _QR
+		flagNames = append(flagNames, "QR")
 	}
 	if r.Authoritative {
-		dnsFlags |= _AA
+		flagNames = append(flagNames, "AA")
 	}
 	if r.Truncated {
-		dnsFlags |= _TC
+		flagNames = append(flagNames, "TC")
 	}
 	if r.RecursionDesired {
-		dnsFlags |= _RD
+		flagNames = append(flagNames, "RD")
 	}
 	if r.RecursionAvailable {
-		dnsFlags |= _RA
+		flagNames = append(flagNames, "RA")
 	}
 	if r.Zero {
-		dnsFlags |= _Z
+		flagNames = append(flagNames, "Z")
 	}
 	if r.AuthenticatedData {
-		dnsFlags |= _AD
+		flagNames = append(flagNames, "AD")
 	}
 	if r.CheckingDisabled {
-		dnsFlags |= _CD
+		flagNames = append(flagNames, "CD")
 	}
-
-	return dnsFlags
+	return strings.Join(flagNames, " ")
 }
