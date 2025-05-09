@@ -21,8 +21,8 @@ import (
 
 	"github.com/facebook/dns/dnsrocks/testaid"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 var (

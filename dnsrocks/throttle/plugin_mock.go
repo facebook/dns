@@ -21,8 +21,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
 	dns "github.com/miekg/dns"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockHandler is a mock of Handler interface.

@@ -22,8 +22,8 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "github.com/golang/mock/gomock"
 	dns "github.com/miekg/dns"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockPacketConnReader is a mock of PacketConnReader interface.

@@ -21,8 +21,8 @@ import (
 	net "net"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
 	dns "github.com/miekg/dns"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockDBI is a mock of DBI interface
