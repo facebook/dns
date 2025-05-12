@@ -15,8 +15,7 @@ limitations under the License.
 package blazesym
 
 /*
-// @fb-only: #include "blazesym/blazesym.h" // @manual=fbsource//third-party/rust:blazesym-c-cxx
-#include "blazesym.h" // @oss-only
+#include "blazesym.h" // @manual=fbsource//third-party/rust:blazesym-c-cxx
 // HACK
 // The generated struct in cgo does not contain syms for blazesym result
 // see:
