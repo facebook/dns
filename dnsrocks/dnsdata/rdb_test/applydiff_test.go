@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package rdb_test
+package rdb
 
 import (
 	"os"
