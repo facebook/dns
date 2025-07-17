@@ -129,8 +129,6 @@ Currently two types of trigger files are supported:
 	cliflags.IntVar(&serverConfig.TLSConfig.Port, "tls-port", 8853, "Port to run DNS-over-TLS on.")
 	cliflags.StringVar(&serverConfig.TLSConfig.CertFile, "tls-cert-file", "", "Path to TLS cert file")
 	cliflags.StringVar(&serverConfig.TLSConfig.KeyFile, "tls-key-file", "", "Path to TLS key file")
-	cliflags.StringVar(&serverConfig.TLSConfig.CryptoSSL.Tier, "tls-cryptossl-tier", "", "Name of CryptoSSL tier.")
-	cliflags.StringVar(&serverConfig.TLSConfig.CryptoSSL.CertName, "tls-cryptossl-cert-name", "", "Name of certificate to use.")
 	cliflags.StringVar(&serverConfig.TLSConfig.SessionTicketKeys.SeedFile, "tls-seed-file", "", "Path to the file containing TLS tickets seeds.")
 	cliflags.IntVar(&serverConfig.TLSConfig.SessionTicketKeys.SeedFileReloadInterval, "tls-seed-file-reload-interval", 60, "Interval at which to reload TLS Session Ticket Keys seeds.")
 	cliflags.BoolVar(&serverConfig.TLSConfig.DoTTLSAEnabled, "tls-tlsa-record", false, "Whether or not to enable the handler to distribute TLS SPKI using DANE/TLSA")

@@ -20,12 +20,6 @@ import (
 	"crypto/tls"
 )
 
-// CryptoSSLConfig contains config specific to Crypto SSL
-type CryptoSSLConfig struct {
-	CertName string
-	Tier     string
-}
-
 // SessionTicketKeysConfig contains the config for handling session resumption
 type SessionTicketKeysConfig struct {
 	SeedFile               string
@@ -37,7 +31,6 @@ type TLSConfig struct {
 	Port              int
 	CertFile          string
 	KeyFile           string
-	CryptoSSL         CryptoSSLConfig
 	SessionTicketKeys SessionTicketKeysConfig
 	DoTTLSAEnabled    bool
 	DoTTLSATtl        uint32 // TTL of the TLSA record. Note that a value of 0 will make the record default to defaultTLSATtl
