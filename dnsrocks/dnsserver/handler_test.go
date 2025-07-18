@@ -904,6 +904,123 @@ func TestCNAMEchasing(t *testing.T) {
 			},
 			resolver: "1.1.1.1", // resolver for locID 2
 		},
+		// Queries with ECS where scope prefix length != 0 don't chase
+		{
+			qname:        "longchain.example.com.", // scope is /24
+			qtype:        dns.TypeA,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "longchain.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "cnamemap.example.com.",
+				},
+			},
+			resolver: "1.1.1.1",    // resolver for locID 2
+			ecs:      "1.1.1.0/24", // ecs for locID 2
+			expectedExtra: []dns.RR{
+				&dns.OPT{
+					Hdr: dns.RR_Header{
+						Name:   ".",
+						Rrtype: dns.TypeOPT,
+					},
+					Option: []dns.EDNS0{
+						&dns.EDNS0_SUBNET{
+							Code:          dns.EDNS0SUBNET,
+							Family:        1,
+							Address:       net.ParseIP("1.1.1.0").To4(),
+							SourceNetmask: 24,
+							SourceScope:   24,
+						},
+					},
+				},
+			},
+		},
+		// Queries with ECS where scope prefix length changes stop chasing
+		{
+			qname:        "wildcard.benchmark.example.com.", // scope is /0
+			qtype:        dns.TypeA,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "wildcard.benchmark.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    1800,
+					},
+					Target: "foo.example.com.", // scope is /24
+				},
+			},
+			resolver: "1.1.1.1",    // resolver for locID 2
+			ecs:      "1.1.1.0/24", // ecs for locID 2
+			expectedExtra: []dns.RR{
+				&dns.OPT{
+					Hdr: dns.RR_Header{
+						Name:   ".",
+						Rrtype: dns.TypeOPT,
+					},
+					Option: []dns.EDNS0{
+						&dns.EDNS0_SUBNET{
+							Code:          dns.EDNS0SUBNET,
+							Family:        1,
+							Address:       net.ParseIP("1.1.1.0").To4(),
+							SourceNetmask: 24,
+							SourceScope:   0,
+						},
+					},
+				},
+			},
+		},
+		// Queries with ECS where scope prefix length == 0 in the whole chain do chase
+		{
+			qname:        "www3.example.com.",
+			qtype:        dns.TypeA,
+			expectedCode: dns.RcodeSuccess,
+			expectedAnswer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:   "www3.example.com.",
+						Rrtype: dns.TypeCNAME,
+						Class:  dns.ClassINET,
+						Ttl:    3600,
+					},
+					Target: "bar.example.com.",
+				},
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:   "bar.example.com.",
+						Rrtype: dns.TypeA,
+						Class:  dns.ClassINET,
+						Ttl:    180,
+					},
+					A: net.ParseIP("1.1.1.1"),
+				},
+			},
+			resolver: "1.1.1.1",    // resolver for locID 2
+			ecs:      "1.1.1.0/24", // ecs for locID 2
+			expectedExtra: []dns.RR{
+				&dns.OPT{
+					Hdr: dns.RR_Header{
+						Name:   ".",
+						Rrtype: dns.TypeOPT,
+					},
+					Option: []dns.EDNS0{
+						&dns.EDNS0_SUBNET{
+							Code:          dns.EDNS0SUBNET,
+							Family:        1,
+							Address:       net.ParseIP("1.1.1.0").To4(),
+							SourceNetmask: 24,
+							SourceScope:   0,
+						},
+					},
+				},
+			},
+		},
 		// Location aware + Non-Location aware CNAME RRs working together
 		{
 			qname:        "wildcard.twohops.example.com.",
@@ -942,54 +1059,34 @@ func TestCNAMEchasing(t *testing.T) {
 			},
 			resolver: "1.1.1.1", // resolver for locID 2
 		},
-		// Different Location IDs in CNAME chain.
-		// ECS prefix lengths are set to most restrictive location mask.
+		// Different Location IDs in CNAME chain
 		{
-			qname:        "longchain.example.com.",
+			qname:        "longchain.example.net.",
 			qtype:        dns.TypeA,
 			expectedCode: dns.RcodeSuccess,
 			expectedAnswer: []dns.RR{
 				&dns.CNAME{
 					Hdr: dns.RR_Header{
-						// location mask for this qname + ecs is 16
-						Name:   "longchain.example.com.",
+						// locID for this qname + resolver is 4
+						Name:   "longchain.example.net.",
 						Rrtype: dns.TypeCNAME,
 						Class:  dns.ClassINET,
 						Ttl:    3600,
 					},
-					Target: "foo.example.com.",
+					Target: "foo.example.net.",
 				},
 				&dns.A{
 					Hdr: dns.RR_Header{
-						// location mask for this qname + ecs is 24
-						Name:   "foo.example.com.",
+						// locID for this qname + resolver is 3
+						Name:   "foo.example.net.",
 						Rrtype: dns.TypeA,
 						Class:  dns.ClassINET,
 						Ttl:    180,
 					},
-					A: net.ParseIP("1.1.1.10"),
+					A: net.ParseIP("1.1.1.3"),
 				},
 			},
-			resolver: "1.1.1.1", // resolver for locID 2
-			ecs:      "4.0.0.0/25",
-			expectedExtra: []dns.RR{
-				&dns.OPT{
-					Hdr: dns.RR_Header{
-						Name:   ".",
-						Rrtype: dns.TypeOPT,
-					},
-					Option: []dns.EDNS0{
-						&dns.EDNS0_SUBNET{
-							Code:          dns.EDNS0SUBNET,
-							Family:        1,
-							Address:       net.ParseIP("4.0.0.0").To4(),
-							SourceNetmask: 25,
-							// 24 is the more restrictive mask
-							SourceScope: 24,
-						},
-					},
-				},
-			},
+			resolver: "2.2.2.2",
 		},
 		// Max hop count is respected
 		{

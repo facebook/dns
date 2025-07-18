@@ -160,6 +160,11 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 
 	packedQName = packedQName[:offset]
 
+	var prevScopePrefixLen uint8
+	if ecs != nil {
+		prevScopePrefixLen = ecs.SourceScope
+	}
+
 	if loc, err = reader.FindLocation(packedQName, ecs, localState.IP()); err != nil {
 		glog.Errorf("%s: failed to find location: %v", localState.Name(), err)
 		return nil, false, err
@@ -170,6 +175,15 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 		h.stats.IncrementCounter("DNS_cname_chasing.location.nil")
 		glog.Errorf("%s: nil location", localState.Name())
 		return nil, false, fmt.Errorf("no location found, not even default one")
+	}
+
+	// Stop CNAME chasing if scope prefix length changes
+	if ecs != nil && ecs.SourceScope != prevScopePrefixLen {
+		glog.Errorf("ECS scope prefix length changed from %d to %d during CNAME chasing %s", prevScopePrefixLen, ecs.SourceScope, localState.Name())
+		h.stats.IncrementCounter("DNS_cname_chasing.ecs_scope_changed")
+		// Restore scope prefix length from previous RR
+		ecs.SourceScope = prevScopePrefixLen
+		return nil, false, fmt.Errorf("ecs scope prefix length changed")
 	}
 
 	_, auth, zoneCut, err := reader.IsAuthoritative(packedQName, loc.LocID)
@@ -383,8 +397,10 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 		}
 		weighted, a.Rcode = reader.FindAnswer(packedQName, zoneCut, state.QName(), state.QType(), loc.LocID, a, maxAns)
 
-		// CNAME chasing doesn't apply to queries of type CNAME or ANY
-		if h.handlerConfig.CNAMEChasing && state.QType() != dns.TypeCNAME && state.QType() != dns.TypeANY {
+		// Don't do CNAME chasing for ECS queries (https://fburl.com/8lamzlu1) or queries
+		// of type CNAME or ANY: https://datatracker.ietf.org/doc/html/rfc1034#section-3.6.2.
+		// An exception for ECS queries is if the ECS scope prefix length is 0 (denoting global).
+		if h.handlerConfig.CNAMEChasing && (ecs == nil || ecs.SourceScope == 0) && state.QType() != dns.TypeCNAME && state.QType() != dns.TypeANY {
 			newRecords := a.Answer
 			var (
 				iterCount    = 0

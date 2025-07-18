@@ -1,6 +1,7 @@
 # IPMap for resolver
 %\000\002,1.1.1.1/32,c\000
 %\000\003,2.2.2.0/24,c\000
+%\000\004,2.2.2.2/32,c\001
 %\000\003,fd58:6525:66bd:a::/64,c\000
 %\000\002,fd58:6525:66bd::/56,c\000
 %\000\004,fd8f:a2ea:9f4b::/56,c\000
@@ -39,8 +40,6 @@
 %\000\004,fd8f:a2ea:9f4b::/56,ec
 %\000\005,fd48:6525:66bd::/56,ec
 
-%\000\007,4.0.0.0/16,cc
-
 # Fake resolvers/ECS maps purely for testing
 M*.a.b.c.example.org,Ma
 Md.a.b.c.d.example.org,Mb
@@ -61,6 +60,7 @@ Mlongchain.example.com,c\000
 Mexample.net,c\000
 Mfoo.example.net,c\000
 Mcnamemap.example.net,c\000
+Mlongchain.example.net,c\001
 
 # ECS map
 8example.org,ec
@@ -70,7 +70,7 @@ Mcnamemap.example.net,c\000
 8example.com,ec
 8foo.example.com,ec
 8cnamemap.example.com,ec
-8longchain.example.com,cc
+8longchain.example.com,ec
 
 8example.net,ec
 8foo.example.net,ec
@@ -114,7 +114,7 @@ Cwww3.example.com,bar.example.com,3600,,
 # CNAME chasing tests
 
 Clongchain.example.com,cnamemap.example.com,3600,,\000\002
-Clongchain.example.com,foo.example.com,3600,,\000\007
+Clongchain.example.net,foo.example.net,3600,,\000\004
 C*.benchmark.example.com,foo.example.com,1800,,
 C*.twohops.example.com,cnamemap.example.com,1800,,
 Ccycle.example.com,cycle.example.com,3600,,
