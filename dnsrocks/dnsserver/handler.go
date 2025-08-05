@@ -179,11 +179,11 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 
 	// Stop CNAME chasing if scope prefix length changes
 	if ecs != nil && ecs.SourceScope != prevScopePrefixLen {
-		glog.Errorf("ECS scope prefix length changed from %d to %d during CNAME chasing %s", prevScopePrefixLen, ecs.SourceScope, localState.Name())
 		h.stats.IncrementCounter("DNS_cname_chasing.ecs_scope_changed")
 		// Restore scope prefix length from previous RR
 		ecs.SourceScope = prevScopePrefixLen
-		return nil, false, fmt.Errorf("ecs scope prefix length changed")
+		// nolint: nilerr
+		return nil, false, nil
 	}
 
 	_, auth, zoneCut, err := reader.IsAuthoritative(packedQName, loc.LocID)
