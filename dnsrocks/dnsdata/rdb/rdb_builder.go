@@ -165,26 +165,14 @@ func (b *Builder) createWriteBuckets(minBucketSize, maxBucketNum int) {
 	var bucketEnd int
 	log.Println("Creating buckets no smaller than", minBucketSize, "items each, and no more than", maxBucketNum, "buckets total")
 	b.buckets = make([]bucket, 0, maxBucketNum)
-	minInt := func(a, b int) int {
-		if a < b {
-			return a
-		}
-		return b
-	}
-	maxInt := func(a, b int) int {
-		if a > b {
-			return a
-		}
-		return b
-	}
-	bucketSize := maxInt(minBucketSize, len(b.values)/maxBucketNum)
+	bucketSize := max(minBucketSize, len(b.values)/maxBucketNum)
 	bucketStart := 0
 	for i := 0; i < maxBucketNum; i++ {
 		if i+1 == maxBucketNum {
 			// last bucket should cover until everything until the very end of the dataset
 			bucketEnd = len(b.values)
 		} else {
-			for bucketEnd = minInt(bucketStart+bucketSize, len(b.values)); bucketEnd < len(b.values); bucketEnd++ {
+			for bucketEnd = min(bucketStart+bucketSize, len(b.values)); bucketEnd < len(b.values); bucketEnd++ {
 				// find where to slice: values with the same key should always get into the same bucket
 				if !bytes.Equal(b.values[bucketEnd].Key, b.values[bucketEnd-1].Key) {
 					break
