@@ -89,7 +89,7 @@ func TestRDBappendValues(t *testing.T) {
 			},
 		},
 	}
-	for i := 0; i < len(testCases); i++ {
+	for i := range len(testCases) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			data := appendValues(testCases[i].dataBefore, testCases[i].newVals[0])
 			for _, nv := range testCases[i].newVals[1:] {
@@ -169,7 +169,7 @@ func TestRDBdelValues(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	for i := 0; i < len(testCases); i++ {
+	for i := range len(testCases) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			after, err := delValue(testCases[i].dataBefore, testCases[i].delVal)
 			require.Equal(t, testCases[i].dataAfter, after)
