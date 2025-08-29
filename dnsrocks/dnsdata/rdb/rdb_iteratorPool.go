@@ -73,7 +73,7 @@ func (pool *IteratorPool) disable() {
 
 	pool.enabled = false
 
-	for i := 0; i < NumberOfIterators; i++ {
+	for range NumberOfIterators {
 		e := <-pool.iterators
 		e.iterator.FreeIterator()
 	}
@@ -87,7 +87,7 @@ func (pool *IteratorPool) enable() {
 		return
 	}
 
-	for i := 0; i < NumberOfIterators; i++ {
+	for range NumberOfIterators {
 		entry := iteratorPoolEntry{iterator: pool.createIterator()}
 
 		pool.iterators <- entry
