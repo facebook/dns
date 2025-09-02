@@ -19,6 +19,8 @@ package quote
 import (
 	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type quoteTest struct {
@@ -40,9 +42,8 @@ var quotetests = []quoteTest{
 
 func TestBquote(t *testing.T) {
 	for _, tt := range quotetests {
-		if out := string(Bquote([]byte(tt.in))); out != tt.out {
-			t.Errorf("samples differ: %v != %v", out, tt.out)
-		}
+		out := string(Bquote([]byte(tt.in)))
+		assert.Equal(t, tt.out, out)
 	}
 }
 
@@ -69,11 +70,12 @@ func TestUnquote(t *testing.T) {
 	for _, tt := range unquotetests {
 		out, err := Unquote(tt.in)
 
-		if out != tt.out {
-			t.Errorf("samples differ: %v != %v", out, tt.out)
-		}
-		if err != tt.err && err.Error() != tt.err.Error() {
-			t.Errorf("error differ: %v != %v", err, tt.err)
+		assert.Equal(t, tt.out, out)
+		if tt.err == nil {
+			assert.NoError(t, err)
+		} else {
+			assert.Error(t, err)
+			assert.Equal(t, tt.err.Error(), err.Error())
 		}
 	}
 }
@@ -82,11 +84,12 @@ func TestBunquote(t *testing.T) {
 	for _, tt := range unquotetests {
 		out, err := Bunquote([]byte(tt.in))
 
-		if string(out) != tt.out {
-			t.Errorf("samples differ: %v != %v", out, tt.out)
-		}
-		if err != tt.err && err.Error() != tt.err.Error() {
-			t.Errorf("error differ: %T != %T", err, tt.err)
+		assert.Equal(t, tt.out, string(out))
+		if tt.err == nil {
+			assert.NoError(t, err)
+		} else {
+			assert.Error(t, err)
+			assert.Equal(t, tt.err.Error(), err.Error())
 		}
 	}
 }
@@ -100,26 +103,20 @@ func BenchmarkBquote(b *testing.B) {
 func BenchmarkUnquoteSimple(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_, err := Unquote(".001abc")
-		if err != nil {
-			b.Errorf("%v", err)
-		}
+		assert.NoError(b, err)
 	}
 }
 
 func BenchmarkUnquote(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_, err := Unquote("\\001abc")
-		if err != nil {
-			b.Errorf("%v", err)
-		}
+		assert.NoError(b, err)
 	}
 }
 
 func BenchmarkBunquote(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_, err := Bunquote([]byte("\\001abc"))
-		if err != nil {
-			b.Errorf("%v", err)
-		}
+		assert.NoError(b, err)
 	}
 }
