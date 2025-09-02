@@ -56,7 +56,7 @@ func TestConcurrencyReader(t *testing.T) {
 	})
 
 	go func() {
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			outBuf, outAddr, err := reader.(dns.PacketConnReader).ReadPacketConn(conn, 0)
 			require.NoError(t, err)
 			require.Equal(t, &buf[0], &outBuf[0])
@@ -74,7 +74,7 @@ func TestConcurrencyReader(t *testing.T) {
 		time.Sleep(time.Millisecond)
 	}
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		doWrite <- struct{}{}
 	}
 }
