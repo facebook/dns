@@ -107,7 +107,7 @@ func copyBytes(b []byte) []byte {
 func rdbStats(q string) map[string]int64 {
 	stats := make(map[string]int64)
 	var value float64
-	for _, line := range strings.Split(q, "\n") {
+	for line := range strings.SplitSeq(q, "\n") {
 		split := strings.Split(line, " ")
 		switch len(split) {
 		case 4:
