@@ -21,7 +21,7 @@ import (
 
 func TestCleanCmdline(t *testing.T) {
 	var test [120]byte
-	for i := 0; i < 120; i++ {
+	for i := range 120 {
 		test[i] = byte('c')
 	}
 	// guaranteed from kprobe
@@ -46,25 +46,25 @@ func TestCleanCmdline(t *testing.T) {
 
 	var good [120]byte
 	cont := 0
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		good[cont] = 'c'
 		cont++
 	}
 	good[cont] = ' '
 	cont++
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		good[cont] = 'c'
 		cont++
 	}
 	good[cont] = ' '
 	cont++
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		good[cont] = 'c'
 		cont++
 	}
 	good[cont] = ' '
 	cont++
-	for i := 0; i < 29; i++ {
+	for range 29 {
 		good[cont] = 'c'
 		cont++
 	}
