@@ -156,7 +156,7 @@ func verifyMaps() error {
 	// otherwise if we open DB and query all records from it really fast
 	// RocksDB eats crazy amount of ram
 	splits := int(math.Ceil(float64(total) / float64(batchSize)))
-	for i := 0; i < splits; i++ {
+	for i := range splits {
 		start := i * batchSize
 		end := (i + 1) * batchSize
 		if end > total {
