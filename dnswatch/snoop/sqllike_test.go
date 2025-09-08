@@ -25,7 +25,7 @@ func TestSqllike(t *testing.T) {
 		Orderby: "-COL2,TEST",
 		Groupby: "COL2",
 	}
-	var loadMaps []map[string]interface{}
+	loadMaps := make([]map[string]interface{}, 0)
 	for i := range 40 {
 		lMap := map[string]interface{}{
 			"LATENCY": i * 3,
