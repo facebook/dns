@@ -1,8 +1,8 @@
 module github.com/facebook/dns/goose
 
-go 1.23.0
+go 1.25.0
 
-toolchain go1.23.7
+toolchain go1.25.0
 
 require (
 	github.com/miekg/dns v1.1.61

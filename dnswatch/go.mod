@@ -1,8 +1,8 @@
 module github.com/facebook/dns/dnswatch
 
-go 1.23.0
+go 1.25.0
 
-toolchain go1.23.5
+toolchain go1.25.0
 
 require (
 	github.com/aquasecurity/libbpfgo v0.4.6-libbpf-1.1.0
