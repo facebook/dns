@@ -184,7 +184,7 @@ func (c *cdbdriver) GetLocationByMap(ipnet *net.IPNet, mapID []byte, context Con
 		// Finish creating the search key:
 		// "{key_prefix}{ipv6_subnet_bitmap}"
 		currentCIDRMask := cachedCIDRMask[mask]
-		for i := 0; i < net.IPv6len; i++ {
+		for i := range net.IPv6len {
 			k[dlen+i] &= currentCIDRMask[i]
 		}
 		k[dlen+net.IPv6len] = mask
