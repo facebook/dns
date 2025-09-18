@@ -193,7 +193,7 @@ func DefaultOptions() *rocksdb.Options {
 	options.EnableStatistics()
 
 	levels := make([]rocksdb.CompressionType, rocksdb.DefaultCompactionNumLevels)
-	for i := 0; i < rocksdb.DefaultCompactionNumLevels; i++ {
+	for i := range rocksdb.DefaultCompactionNumLevels {
 		// only compress levels >= 2
 		if i < 2 {
 			levels[i] = rocksdb.CompressionDisabled
