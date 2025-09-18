@@ -54,6 +54,11 @@ func normalizeDot(s string) string {
 	return strings.Join(toWrite, ".")
 }
 
+func replaceBadChars(s string) string {
+	// we have commas as separators, so replace them with \054 (octal for ascii comma)
+	return strings.ReplaceAll(s, ",", `\054`)
+}
+
 // order in which we output each record type
 var order = []string{
 	"A",
@@ -92,11 +97,11 @@ func processRecs(recs []dns.RR) map[string][]string {
 			results["CNAME"] = append(results["CNAME"], line)
 		case *dns.TXT:
 			// fqdn,s,ttl,timestamp,lo
-			line := fmt.Sprintf("'%s,%s,%d", normalizeDot(v.Hdr.Name), v.Txt[0], adjustTTL(v.Hdr.Ttl))
+			line := fmt.Sprintf("'%s,%s,%d", normalizeDot(v.Hdr.Name), replaceBadChars(v.Txt[0]), adjustTTL(v.Hdr.Ttl))
 			results["TXT"] = append(results["TXT"], line)
 		case *dns.SPF:
 			// fqdn,s,ttl,timestamp,lo
-			line := fmt.Sprintf("'%s,%s,%d", normalizeDot(v.Hdr.Name), v.Txt[0], adjustTTL(v.Hdr.Ttl))
+			line := fmt.Sprintf("'%s,%s,%d", normalizeDot(v.Hdr.Name), replaceBadChars(v.Txt[0]), adjustTTL(v.Hdr.Ttl))
 			results["SPF"] = append(results["SPF"], line)
 		case *dns.SRV:
 			// Sfqdn,ip,x,port,priority,weight,ttl,timestamp
