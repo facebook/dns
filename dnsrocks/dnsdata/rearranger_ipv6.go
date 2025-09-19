@@ -42,7 +42,7 @@ func ParseIP(s string) IPv6 {
 
 // Equal checks equality with another IPv6 object
 func (ip IPv6) Equal(other IPv6) bool {
-	for i := 0; i < len(ip); i++ {
+	for i := range len(ip) {
 		if ip[i] != other[i] {
 			return false
 		}
@@ -54,7 +54,7 @@ func (ip IPv6) Equal(other IPv6) bool {
 func (ip IPv6) EqualToNetIP(other net.IP) bool {
 	t := other.To16()
 
-	for i := 0; i < len(ip); i++ {
+	for i := range len(ip) {
 		if ip[i] != t[i] {
 			return false
 		}
