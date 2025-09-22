@@ -167,7 +167,7 @@ func (b *Builder) createWriteBuckets(minBucketSize, maxBucketNum int) {
 	b.buckets = make([]bucket, 0, maxBucketNum)
 	bucketSize := max(minBucketSize, len(b.values)/maxBucketNum)
 	bucketStart := 0
-	for i := 0; i < maxBucketNum; i++ {
+	for i := range maxBucketNum {
 		if i+1 == maxBucketNum {
 			// last bucket should cover until everything until the very end of the dataset
 			bucketEnd = len(b.values)
