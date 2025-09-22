@@ -125,7 +125,7 @@ ChildLoop:
 		case cTryCatchup:
 			requestKeys := make([][]byte, catchupBatchSize)
 			expectedResponses := make([][]byte, catchupBatchSize)
-			for i := 0; i < catchupBatchSize; i++ {
+			for i := range catchupBatchSize {
 				bKey, bValue := []byte(fmt.Sprintf(catchupKeyFmt, i)), []byte(fmt.Sprintf(catchupValFmt, i))
 				requestKeys[i] = bKey
 				expectedResponses[i] = bValue
@@ -142,7 +142,7 @@ ChildLoop:
 
 				// compare response and form a cleanup batch
 				nilResponses, correctResponses := 0, 0
-				for i := 0; i < catchupBatchSize; i++ {
+				for i := range catchupBatchSize {
 					if responses[i] == nil {
 						nilResponses++
 						continue
@@ -420,7 +420,7 @@ func TestBatch(t *testing.T) {
 	const batchSize = 10000
 	const keyFmt = "key%06d"
 	const valFmt = "val%06d"
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		batch.Put([]byte(fmt.Sprintf(keyFmt, i)), []byte(fmt.Sprintf(valFmt, i)))
 	}
 
@@ -440,7 +440,7 @@ func TestBatch(t *testing.T) {
 	}
 
 	// validate writes by reading, and form a Delete batch
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		sKey, sValue := fmt.Sprintf(keyFmt, i), fmt.Sprintf(valFmt, i)
 		// read as strings
 		if resStr, err := db.GetStr(readOptions, sKey); err != nil {
@@ -483,7 +483,7 @@ func TestBatch(t *testing.T) {
 func fillValues(keyFmt, valFmt string, count int) error {
 	batch := db.NewBatch()
 	defer batch.Destroy()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		bKey, bValue := []byte(fmt.Sprintf(keyFmt, i)), []byte(fmt.Sprintf(valFmt, i))
 		batch.Put(bKey, bValue)
 	}
@@ -505,7 +505,7 @@ func TestMulti(t *testing.T) {
 
 	requestKeys := make([][]byte, batchSize+1)
 	expectedResponses := make([][]byte, batchSize+1)
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		bKey, bValue := []byte(fmt.Sprintf(keyFmt, i)), []byte(fmt.Sprintf(valFmt, i))
 		requestKeys[i] = bKey
 		expectedResponses[i] = bValue
@@ -516,7 +516,7 @@ func TestMulti(t *testing.T) {
 
 	// compare response and form a cleanup batch
 	batch := db.NewBatch()
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		if !bytes.Equal(responses[i], expectedResponses[i]) {
 			t.Errorf(
 				"Byte mismatch for key %v: %v / %v",
@@ -555,7 +555,7 @@ func TestIterator(t *testing.T) {
 		iter := db.CreateIterator(readOptions)
 		defer iter.FreeIterator()
 
-		for i := 0; i < batchSize; i++ {
+		for i := range batchSize {
 			bKey, bVal := []byte(fmt.Sprintf(keyFmt, i)), []byte(fmt.Sprintf(valFmt, i))
 			switch i {
 			case 0:
@@ -652,7 +652,7 @@ func TestSnapshots(t *testing.T) {
 	expectedLatestResponses := make([][]byte, batchSize+1)
 
 	// insert test data
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		bKey, bValue := []byte(fmt.Sprintf(keyFmt, i)), []byte(fmt.Sprintf(valFmtBefore, i))
 		batch.Put(bKey, bValue)
 		requestKeys[i] = bKey
@@ -675,7 +675,7 @@ func TestSnapshots(t *testing.T) {
 	// check if the snapshot matches the expectation
 	invariant := func(options *rocksdb.ReadOptions, expectedKeys [][]byte, expectedValues [][]byte, testDescription string) {
 		responses, errors := db.GetMulti(options, expectedKeys)
-		for i := 0; i < len(expectedKeys); i++ {
+		for i := range len(expectedKeys) {
 			if !bytes.Equal(responses[i], expectedValues[i]) {
 				t.Errorf(
 					"Byte mismatch during %s test for key '%s': '%s' received, whereas '%s' expected",
@@ -694,7 +694,7 @@ func TestSnapshots(t *testing.T) {
 
 	// update the dataset, instead of 'snapval' it will contain 'latestval'
 	batch.Clear()
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		bKey, bValue := requestKeys[i], []byte(fmt.Sprintf(valFmtAfter, i))
 		batch.Put(bKey, bValue)
 		expectedLatestResponses[i] = bValue
@@ -712,7 +712,7 @@ func TestSnapshots(t *testing.T) {
 
 	// delete test data
 	batch.Clear()
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		batch.Delete(requestKeys[i])
 		expectedLatestResponses[i] = nil
 	}
@@ -771,7 +771,7 @@ func TestBackupRestore(t *testing.T) {
 	// add values
 	batch := dbSrc.NewBatch()
 	defer batch.Destroy()
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		batch.Put([]byte(fmt.Sprintf(keyFmt, i)), []byte(fmt.Sprintf(valFmt, i)))
 	}
 
@@ -790,7 +790,7 @@ func TestBackupRestore(t *testing.T) {
 	}
 
 	// backup several times
-	for i := 0; i < numBackup; i++ {
+	for i := range numBackup {
 		bKey, bValue := []byte(fmt.Sprintf(keyFmt, batchSize+i)), []byte(fmt.Sprintf(valFmt, batchSize+i))
 		if err := dbSrc.Put(writeOptions, bKey, bValue); err != nil {
 			t.Errorf("Error writing bytes: %s", err.Error())
