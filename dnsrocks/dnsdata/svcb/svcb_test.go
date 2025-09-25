@@ -18,7 +18,6 @@ package svcb
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -190,25 +189,11 @@ func TestParam(t *testing.T) {
 		err = kv.toWire(&wireout)
 		require.NoError(t, err)
 
-		if !reflect.DeepEqual(wireout.Bytes(), testcase.wire) {
-			t.Fatalf(
-				"wire format differs [input: %s] -> output: %v, expect: %v",
-				testcase.input,
-				wireout.Bytes(),
-				testcase.wire,
-			)
-		}
+		require.Equal(t, testcase.wire, wireout.Bytes(), "wire format differs [input: %s]", testcase.input)
 
 		var textout bytes.Buffer
 		kv.toText(&textout)
-		if !reflect.DeepEqual(textout.Bytes(), testcase.text) {
-			t.Fatalf(
-				"text format differs [input: %s] -> output: %s, expect: %s",
-				testcase.input,
-				textout.Bytes(),
-				testcase.text,
-			)
-		}
+		require.Equal(t, testcase.text, textout.Bytes(), "text format differs [input: %s]", testcase.input)
 	}
 }
 
@@ -221,25 +206,11 @@ func TestParamList(t *testing.T) {
 		var wireout bytes.Buffer
 		err = l.ToWire(&wireout)
 		require.NoError(t, err)
-		if !reflect.DeepEqual(wireout.Bytes(), testcase.wire) {
-			t.Fatalf(
-				"wire format differs [input: %s] -> output: %v, expect: %v",
-				testcase.input,
-				wireout.Bytes(),
-				testcase.wire,
-			)
-		}
+		require.Equal(t, testcase.wire, wireout.Bytes(), "wire format differs [input: %s]", testcase.input)
 
 		var textout bytes.Buffer
 		l.ToText(&textout)
-		if !reflect.DeepEqual(textout.Bytes(), testcase.text) {
-			t.Fatalf(
-				"text format differs [input: %s] -> output: %s, expect: %s",
-				testcase.input,
-				textout.Bytes(),
-				testcase.text,
-			)
-		}
+		require.Equal(t, testcase.text, textout.Bytes(), "text format differs [input: %s]", testcase.input)
 	}
 }
 
