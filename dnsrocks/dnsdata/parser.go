@@ -106,7 +106,7 @@ func parse(r io.Reader, process func([]byte) error, workers int) error {
 	var g errgroup.Group
 	c := make(chan []byte, workers*10) // 10 came out of experiments, allows some buffering
 
-	for i := 0; i < workers; i++ {
+	for range workers {
 		g.Go(func() error {
 			for line := range c {
 				if err := process(line); err != nil {
