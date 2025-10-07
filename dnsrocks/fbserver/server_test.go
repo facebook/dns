@@ -513,7 +513,7 @@ func TestThrottleJamming(t *testing.T) {
 	defer srv.Shutdown()
 
 	// Try to jam the throttle by sending weird (and regular) packets.
-	for i := 0; i < N*config.NumCPU; i++ {
+	for range N * config.NumCPU {
 		for _, buf := range [][]byte{acceptBuf, notImplementedBuf, ignoredBuf, rejectBuf, invalidBuf} {
 			conn, err := net.Dial("tcp", portMap["tcp"])
 			require.Nil(t, err)
