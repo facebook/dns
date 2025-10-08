@@ -84,7 +84,7 @@ func BenchmarkAdd(b *testing.B) {
 				b.RunParallel(func(pb *testing.PB) {
 					for pb.Next() {
 						w := Wrs{MaxAnswers: tc.maxAnswers}
-						for i := 0; i < tc.numAnswers; i++ {
+						for range tc.numAnswers {
 							var weight uint32 = 1
 							if weighted {
 								weight = 10 // Bypass the special case for weight=1
