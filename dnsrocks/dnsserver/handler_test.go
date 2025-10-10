@@ -2039,7 +2039,7 @@ func TestHandlerCache(t *testing.T) {
 
 	rec := dnstest.NewRecorder(&test.ResponseWriter{})
 
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		ctr.ResetCounter("DNS_queries")
 		ctr.ResetCounter("DNS_query.A")
 		ctr.ResetCounter("DNS_location.resolver")
@@ -2081,7 +2081,7 @@ func TestHandlerNoCache(t *testing.T) {
 
 	rec := dnstest.NewRecorder(&test.ResponseWriter{})
 
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		ctr.ResetCounter("DNS_queries")
 		ctr.ResetCounter("DNS_query.A")
 		ctr.ResetCounter("DNS_location.resolver")
