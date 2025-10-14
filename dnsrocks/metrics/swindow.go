@@ -55,7 +55,7 @@ func newWindow(sampleLifetime time.Duration) (*slidingWindow, error) {
 	}
 	// for N seconds, we store 60 aggregates, which allows us to
 	// have a N-second 'lookback' with natural removal of 'outdated' samples
-	for i := 0; i < secs; i++ {
+	for i := range secs {
 		sw.stats[i] = welford.New()
 	}
 
@@ -100,7 +100,7 @@ func (sw *slidingWindow) cleaner() {
 func (sw *slidingWindow) Add(v int64) {
 	sw.mutex.Lock()
 	defer sw.mutex.Unlock()
-	for i := 0; i < len(sw.stats); i++ {
+	for i := range len(sw.stats) {
 		sw.stats[i].Add(float64(v))
 	}
 }
