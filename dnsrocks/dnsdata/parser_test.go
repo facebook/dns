@@ -44,7 +44,7 @@ func genData(size int) ([]byte, []MapRecord) {
 	mapRecords := []MapRecord{}
 	c := new(Codec)
 	c.Serial = testSerial
-	for i := 0; i < size; i++ {
+	for i := range size {
 		for _, r := range genRecords(i) {
 			records = append(records, r)
 			mr, err := c.ConvertLn(r)
@@ -182,7 +182,7 @@ func TestParseParallelBrokenTricky(t *testing.T) {
 	dataset := []byte(
 		"some\nrandom\nstring\noh\nno\n",
 	)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		dataset = append(dataset, dataset...)
 	}
 	r := bytes.NewReader(dataset)
@@ -255,7 +255,7 @@ func parseRecords(r io.Reader, codec *Codec, workers int) ([]Record, error) {
 
 func BenchmarkParseLinear(b *testing.B) {
 	dataset := getDataSet()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		r := bytes.NewReader(dataset)
 		_, err := Parse(r, &Codec{Serial: testSerial}, 1)
 		require.Nil(b, err)
@@ -264,7 +264,7 @@ func BenchmarkParseLinear(b *testing.B) {
 
 func BenchmarkParseParallel(b *testing.B) {
 	dataset := getDataSet()
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		r := bytes.NewReader(dataset)
 		_, err := Parse(r, &Codec{Serial: testSerial}, 0)
 		require.Nil(b, err)
@@ -273,7 +273,7 @@ func BenchmarkParseParallel(b *testing.B) {
 
 func BenchmarkParseLinearHuge(b *testing.B) {
 	dataset, _ := genData(dataSetSize)
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		r := bytes.NewReader(dataset)
 		_, err := Parse(r, &Codec{Serial: testSerial}, 1)
 		require.Nil(b, err)
@@ -282,7 +282,7 @@ func BenchmarkParseLinearHuge(b *testing.B) {
 
 func BenchmarkParseParallelHuge(b *testing.B) {
 	dataset, _ := genData(dataSetSize)
-	for n := 0; n < b.N; n++ {
+	for range b.N {
 		r := bytes.NewReader(dataset)
 		_, err := Parse(r, &Codec{Serial: testSerial}, 0)
 		require.Nil(b, err)
