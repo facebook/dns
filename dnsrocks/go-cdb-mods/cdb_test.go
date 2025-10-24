@@ -118,7 +118,7 @@ func TestEmptyFile(t *testing.T) {
 	}
 	rb := bufio.NewReader(tmp)
 	readNum := makeNumReader(rb)
-	for i := 0; i < 256; i++ {
+	for i := range 256 {
 		_ = readNum() // table pointer
 		tableLen := readNum()
 		if tableLen != 0 {
