@@ -1,5 +1,4 @@
 //go:build ignore
-// +build ignore
 
 /*
 Copyright (c) Meta Platforms, Inc. and affiliates.
