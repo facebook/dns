@@ -16,8 +16,8 @@ require (
 	github.com/repustate/go-cdb v0.0.0-20160430174706-6a418fad95e2
 	github.com/segmentio/fasthash v1.0.3
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0
-	go.uber.org/mock v0.5.0
+	github.com/stretchr/testify v1.11.1
+	go.uber.org/mock v0.5.2
 	golang.org/x/sync v0.18.0
 	golang.org/x/sys v0.38.0
 	golang.org/x/term v0.37.0
@@ -56,7 +56,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
-	github.com/quic-go/quic-go v0.54.1 // indirect
+	github.com/quic-go/quic-go v0.57.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/mod v0.29.0 // indirect
