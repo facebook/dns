@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package rocksdbtest
+package rocksdb
 
 import (
 	"bufio"
@@ -26,15 +26,13 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
 )
 
 // primary database
 var (
-	db           *rocksdb.RocksDB
-	readOptions  *rocksdb.ReadOptions
-	writeOptions *rocksdb.WriteOptions
+	db           *RocksDB
+	readOptions  *ReadOptions
+	writeOptions *WriteOptions
 )
 
 // path for primary database, if in secondary mode
@@ -86,12 +84,12 @@ func runCatchup() {
 	defer os.RemoveAll(secLogDir)
 
 	fmt.Fprintln(os.Stdout, "Created tempdir", secLogDir)
-	options := rocksdb.NewOptions()
-	readOptions = rocksdb.NewDefaultReadOptions()
+	options := NewOptions()
+	readOptions = NewDefaultReadOptions()
 	defer readOptions.FreeReadOptions()
 
 	fmt.Fprintln(os.Stdout, "Opening", primaryDBPath, "as secondary")
-	secDB, err := rocksdb.OpenSecondary(primaryDBPath, secLogDir, options)
+	secDB, err := OpenSecondary(primaryDBPath, secLogDir, options)
 	if err != nil {
 		options.FreeOptions()
 		fmt.Fprintf(os.Stdout, "Cannot open secondary database: %s", err)
@@ -326,19 +324,19 @@ func TestMain(m *testing.M) {
 	// RemoveAll call before os.Exit()
 	defer os.RemoveAll(mainDBDir)
 
-	options := rocksdb.NewOptions()
+	options := NewOptions()
 	options.EnableCreateIfMissing()
 	options.SetParallelism(runtime.NumCPU())
 	options.OptimizeLevelStyleCompaction(0)
 	options.SetFullBloomFilter(10)
 	options.SetLRUCacheSize(32 << 20) // 32 Mb
 
-	writeOptions = rocksdb.NewDefaultWriteOptions()
+	writeOptions = NewDefaultWriteOptions()
 	defer writeOptions.FreeWriteOptions()
-	readOptions = rocksdb.NewDefaultReadOptions()
+	readOptions = NewDefaultReadOptions()
 	defer readOptions.FreeReadOptions()
 
-	db, err = rocksdb.OpenDatabase(mainDBDir, false, false, options)
+	db, err = OpenDatabase(mainDBDir, false, false, options)
 	if err != nil {
 		options.FreeOptions()
 		log.Fatal("Cannot create database", err)
@@ -666,14 +664,14 @@ func TestSnapshots(t *testing.T) {
 	}
 
 	// make a snapshot
-	snapshot := rocksdb.NewSnapshot(db)
+	snapshot := NewSnapshot(db)
 	defer snapshot.FreeSnapshot()
-	snapshotReadOptions := rocksdb.NewReadOptions(true, true)
+	snapshotReadOptions := NewReadOptions(true, true)
 	defer snapshotReadOptions.FreeReadOptions()
 	snapshotReadOptions.SetSnapshot(snapshot)
 
 	// check if the snapshot matches the expectation
-	invariant := func(options *rocksdb.ReadOptions, expectedKeys [][]byte, expectedValues [][]byte, testDescription string) {
+	invariant := func(options *ReadOptions, expectedKeys [][]byte, expectedValues [][]byte, testDescription string) {
 		responses, errors := db.GetMulti(options, expectedKeys)
 		for i := range len(expectedKeys) {
 			if !bytes.Equal(responses[i], expectedValues[i]) {
@@ -756,12 +754,12 @@ func TestBackupRestore(t *testing.T) {
 	defer os.RemoveAll(dbDestDir)
 
 	// create and populate source
-	options := rocksdb.NewOptions()
+	options := NewOptions()
 	options.EnableCreateIfMissing()
-	writeOptions = rocksdb.NewDefaultWriteOptions()
+	writeOptions = NewDefaultWriteOptions()
 	defer writeOptions.FreeWriteOptions()
 
-	dbSrc, err := rocksdb.OpenDatabase(dbSourceDir, false, false, options)
+	dbSrc, err := OpenDatabase(dbSourceDir, false, false, options)
 	if err != nil {
 		options.FreeOptions()
 		log.Fatal("Cannot create database", err)
@@ -784,7 +782,7 @@ func TestBackupRestore(t *testing.T) {
 		t.Errorf("Error executing write batch: %s", err.Error())
 	}
 
-	backupEngine, err := rocksdb.NewBackupEngine(dbBackupDir)
+	backupEngine, err := NewBackupEngine(dbBackupDir)
 	if err != nil {
 		t.Errorf("Error creating backup engine: %s", err.Error())
 	}
@@ -813,10 +811,10 @@ func TestBackupRestore(t *testing.T) {
 	}
 
 	// open restored database
-	dstOptions := rocksdb.NewOptions()
+	dstOptions := NewOptions()
 	dstOptions.EnableCreateIfMissing()
 
-	dbDst, err := rocksdb.OpenDatabase(dbDestDir, false, false, dstOptions)
+	dbDst, err := OpenDatabase(dbDestDir, false, false, dstOptions)
 	if err != nil {
 		dstOptions.FreeOptions()
 		log.Fatal("Cannot create database", err)
