@@ -26,6 +26,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // primary database
@@ -208,8 +210,7 @@ func runPrimary(t *testing.T) {
 		}
 	}()
 
-	if mainDBDir == "" {
-		t.Error("Internal test error: mainDBDir is empty")
+	if !assert.NotEmpty(t, mainDBDir) {
 		return
 	}
 
@@ -220,15 +221,11 @@ func runPrimary(t *testing.T) {
 	)
 
 	childStdin, err := cmd.StdinPipe()
-	if err != nil {
-		t.Errorf("Error opening stdin: %s", err.Error())
-	}
+	assert.NoError(t, err)
 	defer childStdin.Close()
 
 	childStdout, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Errorf("Error opening stdout: %s", err.Error())
-	}
+	assert.NoError(t, err)
 	defer childStdout.Close()
 
 	var wg sync.WaitGroup
@@ -260,28 +257,26 @@ func runPrimary(t *testing.T) {
 		}
 	}()
 
-	if err := cmd.Start(); err != nil {
-		t.Errorf("Error spawning child process: %s", err.Error())
-	}
+	err = cmd.Start()
+	assert.NoError(t, err)
 
 ParentLoop:
 	for resp := range responses {
 		switch resp {
 		case cReady:
 			// secondary is ready, write a batch
-			if err := fillValues(catchupKeyFmt, catchupValFmt, catchupBatchSize); err != nil {
-				t.Error(err)
-			}
+			err := fillValues(catchupKeyFmt, catchupValFmt, catchupBatchSize)
+			assert.NoError(t, err)
 			// command child to catch up
 			commands <- cTryCatchup
 		case rFailNotVisible:
-			t.Error("Child was unable to see the changes")
+			assert.Fail(t, "Child was unable to see the changes")
 			break ParentLoop
 		case rFailMalformed:
-			t.Error("Child saw malformed changes")
+			assert.Fail(t, "Child saw malformed changes")
 			break ParentLoop
 		case rFailPartialVis:
-			t.Error("Child saw only part of the changes")
+			assert.Fail(t, "Child saw only part of the changes")
 			break ParentLoop
 		case rSuccess:
 			fmt.Println("Caught up successfully")
@@ -294,9 +289,8 @@ ParentLoop:
 	commands <- cFinish
 
 	fmt.Println("Waiting")
-	if err := cmd.Wait(); err != nil {
-		t.Error("Non-zero exit code from the child process")
-	}
+	err = cmd.Wait()
+	assert.NoError(t, err)
 	wg.Wait()
 
 	doneChannel <- true
@@ -356,29 +350,23 @@ func TestStrValue(t *testing.T) {
 	sKey, sValue := "test", "response"
 
 	// PutStr
-	if err := db.PutStr(writeOptions, sKey, sValue); err != nil {
-		t.Errorf("Error writing string: %s", err.Error())
-	}
+	err := db.PutStr(writeOptions, sKey, sValue)
+	assert.NoError(t, err)
 
 	// GetStr
-	if res, err := db.GetStr(readOptions, sKey); err != nil {
-		t.Errorf("Error reading string: %s", err.Error())
-	} else if res != sValue {
-		t.Errorf("String mismatch: %s / %s", res, sValue)
-	}
+	res, err := db.GetStr(readOptions, sKey)
+	assert.NoError(t, err)
+	assert.Equal(t, sValue, res)
 
 	// DeleteStr
-	if err := db.DeleteStr(writeOptions, sKey); err != nil {
-		t.Errorf("Error deleting string: %s", err.Error())
-	}
+	err = db.DeleteStr(writeOptions, sKey)
+	assert.NoError(t, err)
 
 	// GetStr to validate it is gone
-	if res, err := db.GetStr(readOptions, sKey); err != nil {
-		t.Errorf("Error reading deleted string: %s", err.Error())
-	} else if res != "" {
-		// nonexistent string value is ""
-		t.Errorf("String mismatch: %s / %s", res, sValue)
-	}
+	res, err = db.GetStr(readOptions, sKey)
+	assert.NoError(t, err)
+	// nonexistent string value is ""
+	assert.Empty(t, res)
 }
 
 // TestByteValue tests Put, Get, Delete for a single byte[] value
@@ -386,29 +374,23 @@ func TestByteValue(t *testing.T) {
 	bKey, bValue := []byte{0, 1, 2, 3, 4}, []byte{5, 6, 7, 8}
 
 	// Put
-	if err := db.Put(writeOptions, bKey, bValue); err != nil {
-		t.Errorf("Error writing bytes: %s", err.Error())
-	}
+	err := db.Put(writeOptions, bKey, bValue)
+	assert.NoError(t, err)
 
 	// Get
-	if res, err := db.Get(readOptions, bKey); err != nil {
-		t.Errorf("Error reading string: %s", err.Error())
-	} else if !bytes.Equal(res, bValue) {
-		t.Errorf("Byte mismatch: %v / %v", res, bValue)
-	}
+	res, err := db.Get(readOptions, bKey)
+	assert.NoError(t, err)
+	assert.Equal(t, bValue, res)
 
 	// Delete
-	if err := db.Delete(writeOptions, bKey); err != nil {
-		t.Errorf("Error deleting bytes: %s", err.Error())
-	}
+	err = db.Delete(writeOptions, bKey)
+	assert.NoError(t, err)
 
 	// Get to validate it is gone
-	if res, err := db.Get(readOptions, bKey); err != nil {
-		t.Errorf("Error reading deleted bytes: %s", err.Error())
-	} else if res != nil {
-		// nonexistent bytes value is nil
-		t.Errorf("Bytes mismatch: %v / %v", res, bValue)
-	}
+	res, err = db.Get(readOptions, bKey)
+	assert.NoError(t, err)
+	// nonexistent bytes value is nil
+	assert.Nil(t, res)
 }
 
 // TestBatch tests creating, writing and deleting a batch
@@ -423,58 +405,47 @@ func TestBatch(t *testing.T) {
 	}
 
 	// validate GetCount()
-	if itemCount := batch.GetCount(); itemCount != batchSize {
-		t.Errorf("Batch size mismatch: %d / %d", itemCount, batchSize)
-	}
+	itemCount := batch.GetCount()
+	assert.Equal(t, batchSize, itemCount)
 
-	if err := db.ExecuteBatch(batch, writeOptions); err != nil {
-		t.Errorf("Error executing write batch: %s", err.Error())
-	}
+	err := db.ExecuteBatch(batch, writeOptions)
+	assert.NoError(t, err)
 
 	// validate Clear(); GetCount() is already validated
 	batch.Clear()
-	if itemCount := batch.GetCount(); itemCount != 0 {
-		t.Errorf("The batch still has %d elements", itemCount)
-	}
+	itemCount = batch.GetCount()
+	assert.Zero(t, itemCount)
 
 	// validate writes by reading, and form a Delete batch
 	for i := range batchSize {
 		sKey, sValue := fmt.Sprintf(keyFmt, i), fmt.Sprintf(valFmt, i)
 		// read as strings
-		if resStr, err := db.GetStr(readOptions, sKey); err != nil {
-			t.Errorf("Error reading string: %s", err.Error())
-		} else if resStr != sValue {
-			t.Errorf("String mismatch: %s / %s", resStr, sValue)
-		}
+		resStr, err := db.GetStr(readOptions, sKey)
+		assert.NoError(t, err)
+		assert.Equal(t, sValue, resStr)
 
 		bKey, bValue := []byte(sKey), []byte(sValue)
 		// read as bytes
-		if resBytes, err := db.Get(readOptions, bKey); err != nil {
-			t.Errorf("Error reading bytes: %s", err.Error())
-		} else if !bytes.Equal(resBytes, bValue) {
-			t.Errorf("Byte mismatch: %v / %v", resBytes, bValue)
-		}
+		resBytes, err := db.Get(readOptions, bKey)
+		assert.NoError(t, err)
+		assert.Equal(t, bValue, resBytes)
 
 		// prepare cleanup
 		batch.Delete(bKey)
 	}
 
 	// validate that the batch contains the expected number of Delete()
-	if itemCount := batch.GetCount(); itemCount != batchSize {
-		t.Errorf("Batch size mismatch: %d / %d", itemCount, batchSize)
-	}
+	itemCount = batch.GetCount()
+	assert.Equal(t, batchSize, itemCount)
 
 	// execute cleanup
-	if err := db.ExecuteBatch(batch, writeOptions); err != nil {
-		t.Errorf("Error executing delete batch: %s", err.Error())
-	}
+	err = db.ExecuteBatch(batch, writeOptions)
+	assert.NoError(t, err)
 
 	// check that the key is gone
-	if res, err := db.GetStr(readOptions, fmt.Sprintf(keyFmt, 0)); err != nil {
-		t.Errorf("Error reading string: %s", err.Error())
-	} else if res != "" {
-		t.Error("The key was not deleted")
-	}
+	res, err := db.GetStr(readOptions, fmt.Sprintf(keyFmt, 0))
+	assert.NoError(t, err)
+	assert.Empty(t, res)
 }
 
 // fillValues adds count of kv pairs matching provided format
@@ -497,9 +468,8 @@ func TestMulti(t *testing.T) {
 	const batchSize = 10000
 	const keyFmt = "multi_key%06d"
 	const valFmt = "multi_val%06d"
-	if err := fillValues(keyFmt, valFmt, batchSize); err != nil {
-		t.Error(err)
-	}
+	err := fillValues(keyFmt, valFmt, batchSize)
+	assert.NoError(t, err)
 
 	requestKeys := make([][]byte, batchSize+1)
 	expectedResponses := make([][]byte, batchSize+1)
@@ -515,27 +485,18 @@ func TestMulti(t *testing.T) {
 	// compare response and form a cleanup batch
 	batch := db.NewBatch()
 	for i := range batchSize {
-		if !bytes.Equal(responses[i], expectedResponses[i]) {
-			t.Errorf(
-				"Byte mismatch for key %v: %v / %v",
-				requestKeys[i], responses[i], expectedResponses[i],
-			)
-		}
-		if errors[i] != nil {
-			t.Errorf("Error reading key %v: %s", requestKeys[i], errors[i].Error())
-		}
+		assert.Equal(t, expectedResponses[i], responses[i], "key %v", requestKeys[i])
+		assert.NoError(t, errors[i], "key %v", requestKeys[i])
 		batch.Delete(requestKeys[i])
 	}
 
 	// validate that the batch contains the expected number of Delete()
-	if itemCount := batch.GetCount(); itemCount != batchSize {
-		t.Errorf("Batch size mismatch: %d / %d", itemCount, batchSize)
-	}
+	itemCount := batch.GetCount()
+	assert.Equal(t, batchSize, itemCount)
 
 	// execute cleanup
-	if err := db.ExecuteBatch(batch, writeOptions); err != nil {
-		t.Errorf("Error executing delete batch: %s", err.Error())
-	}
+	err = db.ExecuteBatch(batch, writeOptions)
+	assert.NoError(t, err)
 }
 
 // TestIterator tests writing (with batches) and reading (with Iterator) multiple values.
@@ -543,9 +504,8 @@ func TestIterator(t *testing.T) {
 	const batchSize = 10000
 	const keyFmt = "iterator_key%06d"
 	const valFmt = "iterator_val%06d"
-	if err := fillValues(keyFmt, valFmt, batchSize); err != nil {
-		t.Error(err)
-	}
+	err := fillValues(keyFmt, valFmt, batchSize)
+	assert.NoError(t, err)
 
 	t.Run("TestIterator_Forward", func(t *testing.T) {
 		t.Parallel()
@@ -561,21 +521,14 @@ func TestIterator(t *testing.T) {
 			case 1:
 				iter.SeekForPrev(bKey)
 			}
-			if !iter.IsValid() {
-				t.Errorf("Invalid iterator on key %s, error %s", bKey, iter.GetError())
-			}
+			assert.True(t, iter.IsValid(), "key %s", bKey)
 			rKey, rVal := iter.Key(), iter.Value()
-			if !bytes.Equal(bKey, rKey) {
-				t.Errorf("Key mismatch: expected %s, got %s", bKey, rKey)
-			}
-			if !bytes.Equal(bVal, rVal) {
-				t.Errorf("Value mismatch: expected %s, got %s", bVal, rVal)
-			}
+			assert.Equal(t, bKey, rKey)
+			assert.Equal(t, bVal, rVal)
 			iter.Next()
 		}
-		if err := iter.GetError(); err != nil {
-			t.Error(err)
-		}
+		err := iter.GetError()
+		assert.NoError(t, err)
 	})
 
 	t.Run("TestIterator_Back", func(t *testing.T) {
@@ -589,21 +542,14 @@ func TestIterator(t *testing.T) {
 			if i == batchSize-1 {
 				iter.Seek(bKey)
 			}
-			if !iter.IsValid() {
-				t.Errorf("Invalid iterator on key %s, error %s", bKey, iter.GetError())
-			}
+			assert.True(t, iter.IsValid(), "key %s", bKey)
 			rKey, rVal := iter.Key(), iter.Value()
-			if !bytes.Equal(bKey, rKey) {
-				t.Errorf("Key mismatch: expected %s, got %s", bKey, rKey)
-			}
-			if !bytes.Equal(bVal, rVal) {
-				t.Errorf("Value mismatch: expected %s, got %s", bVal, rVal)
-			}
+			assert.Equal(t, bKey, rKey)
+			assert.Equal(t, bVal, rVal)
 			iter.Prev()
 		}
-		if err := iter.GetError(); err != nil {
-			t.Error(err)
-		}
+		err := iter.GetError()
+		assert.NoError(t, err)
 	})
 
 	t.Run("TestIterator_ImpreciseSeek", func(t *testing.T) {
@@ -614,16 +560,10 @@ func TestIterator(t *testing.T) {
 
 		checkPair := func(val int) {
 			bKey, bVal := []byte(fmt.Sprintf(keyFmt, val)), []byte(fmt.Sprintf(valFmt, val))
-			if !iter.IsValid() {
-				t.Errorf("Invalid iterator on key %s, error %s", bKey, iter.GetError())
-			}
+			assert.True(t, iter.IsValid(), "key %s", bKey)
 			rKey, rVal := iter.Key(), iter.Value()
-			if !bytes.Equal(bKey, rKey) {
-				t.Errorf("Key mismatch: expected %s, got %s", bKey, rKey)
-			}
-			if !bytes.Equal(bVal, rVal) {
-				t.Errorf("Value mismatch: expected %s, got %s", bVal, rVal)
-			}
+			assert.Equal(t, bKey, rKey)
+			assert.Equal(t, bVal, rVal)
 		}
 
 		// NOTE: seeking to nonexistent key "iterator_key0012340"; expected to position on the previous existing key "iterator_key001235"
@@ -659,9 +599,8 @@ func TestSnapshots(t *testing.T) {
 	requestKeys[len(requestKeys)-1] = rogueKey
 	expectedSnapshotResponses[len(expectedSnapshotResponses)-1] = nil // rogue key does not exist in snapshot
 
-	if err := db.ExecuteBatch(batch, writeOptions); err != nil {
-		t.Errorf("Error executing write batch in TestSnapshots: %s", err.Error())
-	}
+	err := db.ExecuteBatch(batch, writeOptions)
+	assert.NoError(t, err)
 
 	// make a snapshot
 	snapshot := NewSnapshot(db)
@@ -674,15 +613,9 @@ func TestSnapshots(t *testing.T) {
 	invariant := func(options *ReadOptions, expectedKeys [][]byte, expectedValues [][]byte, testDescription string) {
 		responses, errors := db.GetMulti(options, expectedKeys)
 		for i := range len(expectedKeys) {
-			if !bytes.Equal(responses[i], expectedValues[i]) {
-				t.Errorf(
-					"Byte mismatch during %s test for key '%s': '%s' received, whereas '%s' expected",
-					testDescription, string(expectedKeys[i]), string(responses[i]), string(expectedValues[i]),
-				)
-			}
-			if errors[i] != nil {
-				t.Errorf("Error reading key %s: %s during %s", string(expectedKeys[i]), errors[i].Error(), testDescription)
-			}
+			// Use bytes.Equal to match original behavior (nil and []byte{} are considered equal)
+			assert.True(t, bytes.Equal(expectedValues[i], responses[i]), "%s: key '%s'", testDescription, string(expectedKeys[i]))
+			assert.NoError(t, errors[i], "%s: key '%s'", testDescription, string(expectedKeys[i]))
 		}
 	}
 
@@ -700,9 +633,8 @@ func TestSnapshots(t *testing.T) {
 	// add rogue key
 	batch.Put(rogueKey, rogueValue)
 	expectedLatestResponses[len(expectedLatestResponses)-1] = rogueValue
-	if err := db.ExecuteBatch(batch, writeOptions); err != nil {
-		t.Errorf("Error executing update batch in TestSnapshots: %s", err.Error())
-	}
+	err = db.ExecuteBatch(batch, writeOptions)
+	assert.NoError(t, err)
 
 	// run the check after data is updated, the snapshot should keep old values
 	invariant(snapshotReadOptions, requestKeys, expectedSnapshotResponses, "snapshot updated")
@@ -716,9 +648,8 @@ func TestSnapshots(t *testing.T) {
 	}
 	batch.Delete(rogueKey)
 	expectedLatestResponses[len(expectedLatestResponses)-1] = nil
-	if err := db.ExecuteBatch(batch, writeOptions); err != nil {
-		t.Errorf("Error executing delete batch in TestSnapshots: %s", err.Error())
-	}
+	err = db.ExecuteBatch(batch, writeOptions)
+	assert.NoError(t, err)
 
 	// run the check after data is deleted, the snapshot should keep old values
 	invariant(snapshotReadOptions, requestKeys, expectedSnapshotResponses, "snapshot final")
@@ -736,21 +667,15 @@ func TestBackupRestore(t *testing.T) {
 	const numBackup = 3
 
 	dbSourceDir, err := os.MkdirTemp("", "rocksdb-test-src")
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 	defer os.RemoveAll(dbSourceDir)
 
 	dbBackupDir, err := os.MkdirTemp("", "rocksdb-test-backup")
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 	defer os.RemoveAll(dbBackupDir)
 
 	dbDestDir, err := os.MkdirTemp("", "rocksdb-test-dst")
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 	defer os.RemoveAll(dbDestDir)
 
 	// create and populate source
@@ -774,41 +699,30 @@ func TestBackupRestore(t *testing.T) {
 	}
 
 	// validate GetCount()
-	if itemCount := batch.GetCount(); itemCount != batchSize {
-		t.Errorf("Batch size mismatch: %d / %d", itemCount, batchSize)
-	}
+	itemCount := batch.GetCount()
+	assert.Equal(t, batchSize, itemCount)
 
-	if err := dbSrc.ExecuteBatch(batch, writeOptions); err != nil {
-		t.Errorf("Error executing write batch: %s", err.Error())
-	}
+	err = dbSrc.ExecuteBatch(batch, writeOptions)
+	assert.NoError(t, err)
 
 	backupEngine, err := NewBackupEngine(dbBackupDir)
-	if err != nil {
-		t.Errorf("Error creating backup engine: %s", err.Error())
-	}
+	assert.NoError(t, err)
 
 	// backup several times
 	for i := range numBackup {
 		bKey, bValue := []byte(fmt.Sprintf(keyFmt, batchSize+i)), []byte(fmt.Sprintf(valFmt, batchSize+i))
-		if err := dbSrc.Put(writeOptions, bKey, bValue); err != nil {
-			t.Errorf("Error writing bytes: %s", err.Error())
-		}
+		err = dbSrc.Put(writeOptions, bKey, bValue)
+		assert.NoError(t, err)
 		err = backupEngine.BackupDatabase(dbSrc, true)
-		if err != nil {
-			t.Errorf("Error backing up database %s: %s", dbSourceDir, err.Error())
-		}
+		assert.NoError(t, err)
 	}
 
 	// purge all backups but the last one
 	err = backupEngine.PurgeOldBackups(1)
-	if err != nil {
-		t.Errorf("Error purging old backups: %v", err)
-	}
+	assert.NoError(t, err)
 
 	err = backupEngine.RestoreFromLastBackup(dbDestDir, false)
-	if err != nil {
-		t.Errorf("Error restoring database: %s", err.Error())
-	}
+	assert.NoError(t, err)
 
 	// open restored database
 	dstOptions := NewOptions()
@@ -822,11 +736,9 @@ func TestBackupRestore(t *testing.T) {
 
 	// the last written key should be visible - unless a wrong database was purged
 	bKey, bValue := []byte(fmt.Sprintf(keyFmt, batchSize+numBackup-1)), []byte(fmt.Sprintf(valFmt, batchSize+numBackup-1))
-	if res, err := dbDst.Get(readOptions, bKey); err != nil {
-		t.Errorf("Error reading string: %s", err.Error())
-	} else if !bytes.Equal(res, bValue) {
-		t.Errorf("Byte mismatch: %v / %v", res, bValue)
-	}
+	res, err := dbDst.Get(readOptions, bKey)
+	assert.NoError(t, err)
+	assert.Equal(t, bValue, res)
 
 	// dir cleanup
 	for _, dir := range []string{dbSourceDir, dbBackupDir, dbDestDir} {
