@@ -26,6 +26,9 @@ package blazesym
 struct blaze_sym* get_result(blaze_syms* res, size_t pos) {
 	return &res->syms[pos];
 }
+const struct blaze_symbolize_inlined_fn* get_inlined(blaze_sym* sym, size_t pos) {
+	return &sym->inlined[pos];
+}
 */
 import "C"
 import (
@@ -143,6 +146,17 @@ func (s *Symbolizer) Symbolize(pid uint32, stack []uint64) ([]Symbol, error) {
 		column := int64(sym.code_info.column)
 		symbol := Symbol{name, file, dir, line, column, offset}
 		results = append(results, symbol)
+
+		for j := 0; j < int(sym.inlined_cnt); j++ {
+			inline := C.get_inlined(sym, C.size_t(j))
+			name = C.GoString(inline.name)
+			dir = C.GoString(inline.code_info.dir)
+			file = C.GoString(inline.code_info.file)
+			line = int64(inline.code_info.line)
+			column = int64(inline.code_info.column)
+			symbol = Symbol{name, file, dir, line, column, 0}
+			results = append(results, symbol)
+		}
 	}
 	return results, nil
 }
