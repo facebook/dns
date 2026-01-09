@@ -34,13 +34,13 @@ const (
 )
 
 func RRSliceMatchSubsetf(t *testing.T, list, subset []dns.RR, msg string, args ...interface{}) {
-	a := make([]string, 8)
-	b := make([]string, 8)
-	for _, x := range list {
-		a = append(a, x.String())
+	a := make([]string, len(list))
+	b := make([]string, len(subset))
+	for idx, x := range list {
+		a[idx] = x.String()
 	}
-	for _, x := range subset {
-		b = append(b, x.String())
+	for idx, x := range subset {
+		b[idx] = x.String()
 	}
 	require.Subsetf(t, a, b, msg, args...)
 }

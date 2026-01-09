@@ -57,26 +57,26 @@ func OpenDbForTesting(t *testing.T, db *testaid.TestDB) (th *FBDNSDB) {
 
 // RRSliceMatch matches the RR in a slice with specific order.
 func RRSliceMatch(t *testing.T, expected, actual []dns.RR) {
-	a := make([]string, 8)
-	b := make([]string, 8)
-	for _, x := range expected {
-		a = append(a, x.String())
+	a := make([]string, len(expected))
+	b := make([]string, len(actual))
+	for idx, x := range expected {
+		a[idx] = x.String()
 	}
-	for _, x := range actual {
-		b = append(b, x.String())
+	for idx, x := range actual {
+		b[idx] = x.String()
 	}
 	require.Equal(t, a, b)
 }
 
 // RRSliceMatchNoOrder matches the RR in a slice without specific order.
 func RRSliceMatchNoOrder(t *testing.T, expected, actual []dns.RR) {
-	a := make([]string, 8)
-	b := make([]string, 8)
-	for _, x := range expected {
-		a = append(a, x.String())
+	a := make([]string, len(expected))
+	b := make([]string, len(actual))
+	for idx, x := range expected {
+		a[idx] = x.String()
 	}
-	for _, x := range actual {
-		b = append(b, x.String())
+	for idx, x := range actual {
+		b[idx] = x.String()
 	}
 	require.ElementsMatch(t, a, b)
 }
