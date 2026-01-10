@@ -40,13 +40,13 @@ func genRecords(i int) [][]byte {
 // genData generates test data along with verification data, using error-safe linear fashion.
 // Used to double-check our parser for races and data corruption.
 func genData(size int) ([]byte, []MapRecord) {
-	records := [][]byte{}
-	mapRecords := []MapRecord{}
+	records := make([][]byte, size)
+	mapRecords := make([]MapRecord, 0)
 	c := new(Codec)
 	c.Serial = testSerial
 	for i := range size {
 		for _, r := range genRecords(i) {
-			records = append(records, r)
+			records[i] = r
 			mr, err := c.ConvertLn(r)
 			if err != nil {
 				panic(err)
@@ -73,7 +73,7 @@ func genData(size int) ([]byte, []MapRecord) {
 }
 
 func getDataSet() []byte {
-	dataset := []byte{}
+	dataset := make([]byte, 0)
 	// we use test data from codectests defined in data_test.go
 	for _, test := range codectests {
 		dataset = append(dataset, test.in...)
@@ -221,7 +221,7 @@ func TestParseParallelGen(t *testing.T) {
 }
 
 func TestParseRecordsLinear(t *testing.T) {
-	dataset := []byte{}
+	dataset := make([]byte, 63)
 	dataset = append(dataset, []byte("8fb.com,c\001\n")...)
 	dataset = append(dataset, []byte("%\\141b,192.168.1.0/24,c\001\n")...)
 	dataset = append(dataset, []byte("+fb.com,1.2.3.4,3600,\\141bn")...)

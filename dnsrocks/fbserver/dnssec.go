@@ -59,7 +59,7 @@ func initializeZonesKeys(zones []string, keyfiles []string) ([]string, []*dnssec
 }
 
 func dnssecParse(keyfiles []string) ([]*dnssec.DNSKEY, int, bool, error) {
-	keys := []*dnssec.DNSKEY{}
+	keys := make([]*dnssec.DNSKEY, len(keyfiles))
 
 	capacity := defaultCap
 
@@ -67,7 +67,7 @@ func dnssecParse(keyfiles []string) ([]*dnssec.DNSKEY, int, bool, error) {
 	if e != nil {
 		return nil, 0, false, e
 	}
-	keys = append(keys, k...)
+	copy(keys, k)
 
 	// Check if we have both KSKs and ZSKs.
 	zsk, ksk := 0, 0

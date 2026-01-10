@@ -122,11 +122,10 @@ func processRecs(recs []dns.RR) map[string][]string {
 }
 
 func getSOAns(origin string) []string {
-	result := []string{
-		fmt.Sprintf("Z%s,a.ns.facebook.com,dns.facebook.com,,14400,1800,604800,3600,3600", origin),
-	}
-	for _, ns := range []string{"a", "b", "c", "d"} {
-		result = append(result, fmt.Sprintf("&%s,,%s.ns.facebook.com,172800", origin, ns))
+	result := make([]string, 5)
+	result[0] = fmt.Sprintf("Z%s,a.ns.facebook.com,dns.facebook.com,,14400,1800,604800,3600,3600", origin)
+	for idx, ns := range []string{"a", "b", "c", "d"} {
+		result[idx+1] = fmt.Sprintf("&%s,,%s.ns.facebook.com,172800", origin, ns)
 	}
 	return result
 }
