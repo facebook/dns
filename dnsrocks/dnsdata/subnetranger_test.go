@@ -79,7 +79,7 @@ func TestSubnetRanger(t *testing.T) {
 		codec.Acc.Ranger.Enable()
 		codec.Acc.NoPrefixSets = true
 		codec.NoRnetOutput = true
-		out := []MapRecord{}
+		out := make([]MapRecord, 0) //nolint:prealloc
 		for _, in := range tc {
 			v, err := codec.ConvertLn([]byte(in))
 			if err != nil {
