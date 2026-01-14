@@ -1765,7 +1765,7 @@ func TestEncodeMultSubnets(t *testing.T) {
 	}
 
 	codec := new(Codec)
-	out := []MapRecord{}
+	out := make([]MapRecord, 0) //nolint:prealloc
 	for _, in := range tc {
 		v, err := codec.ConvertLn(in)
 		if err != nil {
@@ -1789,13 +1789,13 @@ func TestNoEncodeSubnets(t *testing.T) {
 		[]byte(`%\000\022,2a03:6640::/32,c\000`),
 		[]byte(`%\000\002,::/0,c\000`),
 	}
-	targ := []MapRecord{}
+	targ := make([]MapRecord, 0) //nolint:prealloc
 
 	codec := new(Codec)
 	codec.NoRnetOutput = true
 	codec.Acc.NoPrefixSets = true
 
-	out := []MapRecord{}
+	out := []MapRecord{} //nolint:prealloc
 	for _, in := range tc {
 		v, err := codec.ConvertLn(in)
 		if err != nil {
