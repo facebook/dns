@@ -50,7 +50,7 @@ var SeparateBitMap bool
 func init() {
 	SeparateBitMap = os.Getenv("FBDNS_SEPARATE_MASKLENS") != ""
 
-	for i := 0; i < len(cachedCIDRMask); i++ {
+	for i := range len(cachedCIDRMask) {
 		cachedCIDRMask[i] = net.CIDRMask(i, 128)
 	}
 }
