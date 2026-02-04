@@ -30,7 +30,7 @@ func TestWatch(t *testing.T) {
 		},
 	}
 	c.Setup()
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		c.filterQueue <- &FilterDTO{
 			Timestamp: int64(i),
 			DstPort:   10,
@@ -41,7 +41,7 @@ func TestWatch(t *testing.T) {
 			},
 		}
 	}
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		c.probeQueue <- &ProbeDTO{
 			ProbeData: EnhancedProbeData{
 				Tgid:       uint32(3 * i),
@@ -73,7 +73,7 @@ func TestDisplayMapToToplike(t *testing.T) {
 		},
 	}
 	c.Setup()
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		c.filterQueue <- &FilterDTO{
 			Timestamp: int64(i),
 			DstPort:   10,
@@ -84,7 +84,7 @@ func TestDisplayMapToToplike(t *testing.T) {
 			},
 		}
 	}
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		c.probeQueue <- &ProbeDTO{
 			ProbeData: EnhancedProbeData{
 				Pid:        0,
