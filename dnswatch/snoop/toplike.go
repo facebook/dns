@@ -14,9 +14,10 @@ limitations under the License.
 package snoop
 
 import (
+	"cmp"
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 	"strconv"
 	"time"
 
@@ -177,30 +178,30 @@ func (t *ToplikeState) printData(maxRows int) {
 		for _, v := range topMap.Rows {
 			vals = append(vals, v)
 		}
-		sort.Slice(vals, func(i, j int) bool {
+		slices.SortFunc(vals, func(a, b *ToplikeRow) int {
 			switch t.sortBy {
 			case tPID:
-				return vals[i].PID > vals[j].PID
+				return cmp.Compare(b.PID, a.PID)
 			case tCOMM:
-				return vals[i].Comm > vals[j].Comm
+				return cmp.Compare(b.Comm, a.Comm)
 			case tDNSnr:
-				return vals[i].DNS.val > vals[j].DNS.val
+				return cmp.Compare(b.DNS.val, a.DNS.val)
 			case tDNS:
-				return vals[i].DNS.per > vals[j].DNS.per
+				return cmp.Compare(b.DNS.per, a.DNS.per)
 			case tNXDOM:
-				return vals[i].NXDOM.per > vals[j].NXDOM.per
+				return cmp.Compare(b.NXDOM.per, a.NXDOM.per)
 			case tNOERR:
-				return vals[i].NOERR.per > vals[j].NOERR.per
+				return cmp.Compare(b.NOERR.per, a.NOERR.per)
 			case tSERVF:
-				return vals[i].SERVF.per > vals[j].SERVF.per
+				return cmp.Compare(b.SERVF.per, a.SERVF.per)
 			case tA:
-				return vals[i].A.per > vals[j].A.per
+				return cmp.Compare(b.A.per, a.A.per)
 			case tAAAA:
-				return vals[i].AAAA.per > vals[j].AAAA.per
+				return cmp.Compare(b.AAAA.per, a.AAAA.per)
 			case tPTR:
-				return vals[i].PTR.per > vals[j].PTR.per
+				return cmp.Compare(b.PTR.per, a.PTR.per)
 			default:
-				return vals[i].Comm > vals[j].Comm
+				return cmp.Compare(b.Comm, a.Comm)
 			}
 		})
 		last := int(math.Min(float64(len(vals)-1), float64(maxRows)))

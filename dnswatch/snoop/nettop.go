@@ -14,9 +14,10 @@ limitations under the License.
 package snoop
 
 import (
+	"cmp"
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/google/gopacket/layers"
@@ -198,31 +199,31 @@ func (t *NetTopState) printData(maxRows int) {
 		for _, v := range topMap.Rows {
 			vals = append(vals, v)
 		}
-		sort.Slice(vals, func(i, j int) bool {
+		slices.SortFunc(vals, func(a, b *NetTopRow) int {
 			switch t.sortBy {
 			case ntADDR:
 				if t.byQueryAddr {
-					return vals[i].QueryAddr > vals[j].QueryAddr
+					return cmp.Compare(b.QueryAddr, a.QueryAddr)
 				}
-				return vals[i].ResponseAddr > vals[j].ResponseAddr
+				return cmp.Compare(b.ResponseAddr, a.ResponseAddr)
 			case ntDNSnr:
-				return vals[i].DNS.val > vals[j].DNS.val
+				return cmp.Compare(b.DNS.val, a.DNS.val)
 			case ntDNS:
-				return vals[i].DNS.per > vals[j].DNS.per
+				return cmp.Compare(b.DNS.per, a.DNS.per)
 			case ntNXDOM:
-				return vals[i].NXDOM.per > vals[j].NXDOM.per
+				return cmp.Compare(b.NXDOM.per, a.NXDOM.per)
 			case ntNOERR:
-				return vals[i].NOERR.per > vals[j].NOERR.per
+				return cmp.Compare(b.NOERR.per, a.NOERR.per)
 			case ntSERVF:
-				return vals[i].SERVF.per > vals[j].SERVF.per
+				return cmp.Compare(b.SERVF.per, a.SERVF.per)
 			case ntA:
-				return vals[i].A.per > vals[j].A.per
+				return cmp.Compare(b.A.per, a.A.per)
 			case ntAAAA:
-				return vals[i].AAAA.per > vals[j].AAAA.per
+				return cmp.Compare(b.AAAA.per, a.AAAA.per)
 			case ntPTR:
-				return vals[i].PTR.per > vals[j].PTR.per
+				return cmp.Compare(b.PTR.per, a.PTR.per)
 			default:
-				return vals[i].DNS.val > vals[j].DNS.val
+				return cmp.Compare(b.DNS.val, a.DNS.val)
 			}
 		})
 		last := int(math.Min(float64(len(vals)-1), float64(maxRows)))
