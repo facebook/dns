@@ -547,6 +547,11 @@ func (options *WaitForCompactOptions) GetCloseDB() bool {
 	return CharToBool(C.rocksdb_wait_for_compact_options_get_close_db(options.cOptions))
 }
 
+// Destroy frees the WaitForCompactOptions
+func (options *WaitForCompactOptions) Destroy() {
+	C.rocksdb_wait_for_compact_options_destroy(options.cOptions)
+}
+
 // SetTimeout sets timeout for waiting for compaction to complete.
 // When timeout == 0, WaitForCompact() will wait as long as there's background work to finish.
 // See https://github.com/facebook/rocksdb/blob/2648e0a747303e63796315049b9005c7320356c0/include/rocksdb/options.h#L2165

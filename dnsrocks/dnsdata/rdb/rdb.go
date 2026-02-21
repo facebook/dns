@@ -425,6 +425,7 @@ func (rdb *RDB) Close() error {
 	// flush is not implemented when open as secondary
 	if !rdb.secondary {
 		waitOpts := rocksdb.NewWaitForCompactOptions()
+		defer waitOpts.Destroy()
 		waitOpts.SetFlush(true)
 		log.Printf("waiting for potential compactions to finish")
 		err = rdb.db.WaitForCompact(waitOpts)
