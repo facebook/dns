@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/facebook/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/dnsmetrics"
 )
 
 // MonitorType is a transport protocol string (e.g., "tcp").
@@ -37,11 +37,11 @@ const (
 type Monitor struct {
 	listener      net.Listener
 	transportName MonitorType
-	stats         *metrics.Stats
+	stats         *dnsmetrics.Stats
 }
 
 // NewMonitor creates a Monitor from a net.Listener.
-func NewMonitor(l net.Listener, t MonitorType, s *metrics.Stats) *Monitor {
+func NewMonitor(l net.Listener, t MonitorType, s *dnsmetrics.Stats) *Monitor {
 	m := &Monitor{
 		listener:      l,
 		transportName: t,
@@ -49,7 +49,7 @@ func NewMonitor(l net.Listener, t MonitorType, s *metrics.Stats) *Monitor {
 	}
 
 	if m.stats == nil {
-		m.stats = metrics.NewStats()
+		m.stats = dnsmetrics.NewStats()
 	}
 	m.initListenerStats("Accept", "Close", "Addr", "Read")
 	m.initConnectionStats("Accept", "Close")

@@ -36,9 +36,9 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/facebook/dns/dnsrocks/db"
+	"github.com/facebook/dns/dnsrocks/dnsmetrics"
 	"github.com/facebook/dns/dnsrocks/dnsserver"
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
-	"github.com/facebook/dns/dnsrocks/metrics"
 	"github.com/facebook/dns/dnsrocks/nsid"
 	"github.com/facebook/dns/dnsrocks/throttle"
 	"github.com/facebook/dns/dnsrocks/tlsconfig"
@@ -92,7 +92,7 @@ const connectionKey = "dns.connection"
 var dbTimestampName = []byte{2, 'i', 'd', 4, 'd', 'a', 't', 'a', 4, 't', 'e', 's', 't', 0}
 
 type anyMetricsExporter interface {
-	ConsumeStats(category string, stats *metrics.Stats) error
+	ConsumeStats(category string, stats *dnsmetrics.Stats) error
 }
 
 // NewServer start the server given a server config, a logger and a stat collector
@@ -157,7 +157,7 @@ func (srv *Server) initUDPServer(addr string, h dns.Handler) (*dns.Server, error
 
 // initTCPServer opens a monitored TCP socket and returns a DNS server ready
 // for ActivateAndServe.
-func (srv *Server) initTCPServer(addr string, h dns.Handler, s *metrics.Stats) (*dns.Server, error) {
+func (srv *Server) initTCPServer(addr string, h dns.Handler, s *dnsmetrics.Stats) (*dns.Server, error) {
 	l, err := listenTCP(addr, srv.listenConf(), s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init TCP server: %w", err)
@@ -174,7 +174,7 @@ func (srv *Server) initTCPServer(addr string, h dns.Handler, s *metrics.Stats) (
 // initTLSServer loads TLS certificates and session keys, before opening a
 // monitored TCP/TLS socket and returns a DNS server ready for ActivateAndServe.
 // The context is used to teminate the session ticket refresh goroutine.
-func (srv *Server) initTLSServer(ctx context.Context, addr string, h dns.Handler, conf *tlsconfig.TLSConfig, s *metrics.Stats) (*dns.Server, error) {
+func (srv *Server) initTLSServer(ctx context.Context, addr string, h dns.Handler, conf *tlsconfig.TLSConfig, s *dnsmetrics.Stats) (*dns.Server, error) {
 	tlsConf, err := tlsconfig.InitTLSConfig(ctx, conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init TLS config: %w", err)
@@ -227,7 +227,7 @@ func (srv *Server) Start() (err error) {
 	}
 
 	// DNS connection stats
-	stats := metrics.NewStats()
+	stats := dnsmetrics.NewStats()
 	err = srv.metricsExporter.ConsumeStats(connectionKey, stats)
 	if err != nil {
 		glog.Errorf("Failed to register metrics for consumption. %v, err: %v", stats, err)

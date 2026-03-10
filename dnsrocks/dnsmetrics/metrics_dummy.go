@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package metrics
+package dnsmetrics
 
 // DummyServer is a dummy metrics server
 type DummyServer struct {
