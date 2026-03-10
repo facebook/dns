@@ -31,9 +31,9 @@ import (
 	"time"
 
 	"github.com/facebook/dns/dnsrocks/dnsdata/quote"
+	"github.com/facebook/dns/dnsrocks/dnsmetrics"
 	"github.com/facebook/dns/dnsrocks/fbserver"
 	"github.com/facebook/dns/dnsrocks/logger"
-	"github.com/facebook/dns/dnsrocks/metrics"
 
 	"github.com/golang/glog"
 
@@ -216,7 +216,7 @@ Currently two types of trigger files are supported:
 	}
 
 	// Metrics server
-	metricsServer, err := metrics.NewMetricsServer(metricsAddr)
+	metricsServer, err := dnsmetrics.NewMetricsServer(metricsAddr)
 	if err != nil {
 		glog.Fatalf("cannot initialize metrics server: %s\n", err)
 	}
@@ -235,7 +235,7 @@ Currently two types of trigger files are supported:
 	l.StartLoggerOutput()
 
 	// stat collector
-	stats := metrics.NewStats()
+	stats := dnsmetrics.NewStats()
 
 	srv := fbserver.NewServer(serverConfig, l, stats, metricsServer)
 

@@ -23,10 +23,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/facebook/dns/dnsrocks/dnsmetrics"
 	"github.com/facebook/dns/dnsrocks/dnsserver"
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 	"github.com/facebook/dns/dnsrocks/fbserver"
-	"github.com/facebook/dns/dnsrocks/metrics"
 	"github.com/facebook/dns/dnsrocks/testaid"
 
 	"github.com/stretchr/testify/require"
@@ -73,7 +73,7 @@ func getFBServer(t *testing.T) (*fbserver.Server, func()) {
 	serverConfig.DBConfig.Path = path.Clean(serverConfig.DBConfig.Path)
 
 	// Thrift server
-	dummyServer, err := metrics.NewMetricsServer(thriftAddr)
+	dummyServer, err := dnsmetrics.NewMetricsServer(thriftAddr)
 	require.Nilf(t, err, "Error initializing thrift server: %s", err)
 
 	// Logger

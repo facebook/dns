@@ -22,19 +22,19 @@ import (
 	"net"
 	"time"
 
-	"github.com/facebook/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/dnsmetrics"
 )
 
 // ConnectionMonitor is a wrapper around `net.Conn` which serves to log per connection metrics.
 type ConnectionMonitor struct {
 	connection    net.Conn
 	transportName MonitorType
-	stats         *metrics.Stats
+	stats         *dnsmetrics.Stats
 }
 
 // NewConnectionMonitor makes a new ConnectionMonitor from `net.Conn`.
 // It also initializes and increments the appropriate counters for the connection.
-func NewConnectionMonitor(c net.Conn, transportName MonitorType, s *metrics.Stats) *ConnectionMonitor {
+func NewConnectionMonitor(c net.Conn, transportName MonitorType, s *dnsmetrics.Stats) *ConnectionMonitor {
 	cm := &ConnectionMonitor{
 		connection:    c,
 		transportName: transportName,
@@ -42,7 +42,7 @@ func NewConnectionMonitor(c net.Conn, transportName MonitorType, s *metrics.Stat
 	}
 
 	if cm.stats == nil {
-		cm.stats = metrics.NewStats()
+		cm.stats = dnsmetrics.NewStats()
 	}
 
 	cm.stats.IncrementCounter(formatConnectionMonitorStatName(cm.transportName, "Accept", true))
@@ -103,12 +103,12 @@ func (cm *ConnectionMonitor) SetWriteDeadline(t time.Time) error {
 type TLSConnectionMonitor struct {
 	connection    *tls.Conn
 	transportName MonitorType
-	stats         *metrics.Stats
+	stats         *dnsmetrics.Stats
 }
 
 // NewTLSConnectionMonitor makes a new ConnectionMonitor from `net.Conn`.
 // It also initializes and increments the appropriate counters for the connection.
-func NewTLSConnectionMonitor(c net.Conn, transportName MonitorType, s *metrics.Stats) *TLSConnectionMonitor {
+func NewTLSConnectionMonitor(c net.Conn, transportName MonitorType, s *dnsmetrics.Stats) *TLSConnectionMonitor {
 	cm := &TLSConnectionMonitor{
 		connection:    c.(*tls.Conn),
 		transportName: transportName,
@@ -116,7 +116,7 @@ func NewTLSConnectionMonitor(c net.Conn, transportName MonitorType, s *metrics.S
 	}
 
 	if cm.stats == nil {
-		cm.stats = metrics.NewStats()
+		cm.stats = dnsmetrics.NewStats()
 	}
 
 	cm.stats.IncrementCounter(formatConnectionMonitorStatName(cm.transportName, "Accept", true))
@@ -183,12 +183,12 @@ func (cm *TLSConnectionMonitor) ConnectionState() tls.ConnectionState {
 type PacketConnectionMonitor struct {
 	connection    net.PacketConn
 	transportName MonitorType
-	stats         *metrics.Stats
+	stats         *dnsmetrics.Stats
 }
 
 // NewPacketConnectionMonitor makes a new PacketConnectionMonitor from `net.PacketConn`.
 // It also initializes and increments the appropriate counters for the connection.
-func NewPacketConnectionMonitor(c net.PacketConn, transportName MonitorType, s *metrics.Stats) *PacketConnectionMonitor {
+func NewPacketConnectionMonitor(c net.PacketConn, transportName MonitorType, s *dnsmetrics.Stats) *PacketConnectionMonitor {
 	pcm := &PacketConnectionMonitor{
 		connection:    c,
 		transportName: transportName,
@@ -196,7 +196,7 @@ func NewPacketConnectionMonitor(c net.PacketConn, transportName MonitorType, s *
 	}
 
 	if pcm.stats == nil {
-		pcm.stats = metrics.NewStats()
+		pcm.stats = dnsmetrics.NewStats()
 	}
 
 	pcm.stats.ResetCounter(formatConnectionMonitorStatName(pcm.transportName, "ReadFrom", true))

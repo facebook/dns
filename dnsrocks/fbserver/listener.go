@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/facebook/dns/dnsrocks/metrics"
+	"github.com/facebook/dns/dnsrocks/dnsmetrics"
 )
 
 // listenUDP configures a socket with SO_REUSEPORT and returns a UDP
@@ -34,7 +34,7 @@ func listenUDP(addr string, conf net.ListenConfig) (net.PacketConn, error) {
 // listenTCP configures a socket with SO_REUSEPORT. It then uses the socket to
 // create an unencrypted, monitored TLS net.Listener. The monitor sends
 // connection metrics to fb303.
-func listenTCP(addr string, conf net.ListenConfig, stats *metrics.Stats) (*Monitor, error) {
+func listenTCP(addr string, conf net.ListenConfig, stats *dnsmetrics.Stats) (*Monitor, error) {
 	list, err := conf.Listen(context.Background(), "tcp", addr)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func listenTCP(addr string, conf net.ListenConfig, stats *metrics.Stats) (*Monit
 // listenTLS configures a socket with SO_REUSEPORT. It then uses the socket to
 // create an encrypted, monitored TLS net.Listener. The monitor sends connection
 // metrics to fb303.
-func listenTLS(addr string, conf net.ListenConfig, tlsConf *tls.Config, stats *metrics.Stats) (*Monitor, error) {
+func listenTLS(addr string, conf net.ListenConfig, tlsConf *tls.Config, stats *dnsmetrics.Stats) (*Monitor, error) {
 	tcpList, err := conf.Listen(context.Background(), "tcp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("could not open tcp listener for tls conn: %w", err)

@@ -31,9 +31,9 @@ import (
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/require"
 
+	"github.com/facebook/dns/dnsrocks/dnsmetrics"
 	"github.com/facebook/dns/dnsrocks/dnsserver"
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
-	"github.com/facebook/dns/dnsrocks/metrics"
 	"github.com/facebook/dns/dnsrocks/testaid"
 )
 
@@ -66,7 +66,7 @@ func makeTestServer(t testing.TB, config ServerConfig) (map[string]string, *Serv
 	var m = make(map[string]string)
 	logger := dnsserver.DummyLogger{}
 	stats := stats.DummyStats{}
-	metricsExporter, _ := metrics.NewMetricsServer(":0")
+	metricsExporter, _ := dnsmetrics.NewMetricsServer(":0")
 	srv := NewServer(config, &logger, &stats, metricsExporter)
 	numServers := int64(1) // UDP is always enabled
 	if config.TCP {
