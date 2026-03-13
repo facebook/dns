@@ -1,1 +1,3 @@
 blazesym_c.syso
+bpf/vmlinux.h
+snoop/out/dnswatch_bpf_probe_core.o

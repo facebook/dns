@@ -42,13 +42,13 @@ func normalizeZone(zone string) string {
 }
 
 // initializeZonesKeys initialize the keys for a given set of zones.
-func initializeZonesKeys(zones []string, keyfiles []string) ([]string, []*dnssec.DNSKEY, bool, *cache.Cache, error) {
+func initializeZonesKeys(zones []string, keyfiles []string) ([]string, []*dnssec.DNSKEY, bool, *cache.Cache[[]dns.RR], error) {
 	nZones := []string{}
 	keys, capacity, splitkeys, err := dnssecParse(keyfiles)
 	if err != nil {
 		return nZones, nil, false, nil, err
 	}
-	ca := cache.New(capacity)
+	ca := cache.New[[]dns.RR](capacity)
 
 	nZones = make([]string, len(zones))
 	for i, z := range zones {

@@ -1,6 +1,6 @@
 module github.com/facebook/dns/dnsrocks
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/coredns/coredns v1.14.2
