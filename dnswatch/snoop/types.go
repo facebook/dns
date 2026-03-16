@@ -164,17 +164,12 @@ func (d *DNSDecoder) SrcAddr() (net.IP, error) {
 
 // Header returns DNS specific data headers
 func (d *DNSDecoder) Header() []string {
-	var ret []string
-	// First question name
-	ret = append(ret, "DNS Qry Name")
-	// First answer IP
-	ret = append(ret, "DNS Resp IP")
+	var ret = []string{"DNS Qry Name", "DNS Resp IP"}
 	return ret
 }
 
 // Row returns values ordered by fields in Header
 func (d *DNSDecoder) Row() ([]string, error) {
-	var ret []string
 	qryName := ""
 	rspIP := ""
 	if d.dns == nil {
@@ -186,8 +181,7 @@ func (d *DNSDecoder) Row() ([]string, error) {
 	if len(d.dns.Answers) > 0 {
 		rspIP = d.dns.Answers[0].IP.String()
 	}
-	ret = append(ret, qryName)
-	ret = append(ret, rspIP)
+	var ret = []string{qryName, rspIP}
 	return ret, nil
 }
 

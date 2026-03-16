@@ -25,14 +25,14 @@ func TestSqllike(t *testing.T) {
 		Orderby: "-COL2,TEST",
 		Groupby: "COL2",
 	}
-	loadMaps := make([]map[string]interface{}, 0)
+	loadMaps := make([]map[string]interface{}, 40)
 	for i := range 40 {
 		lMap := map[string]interface{}{
 			"LATENCY": i * 3,
 			"TEST":    i,
 			"COL2":    i % 5,
 		}
-		loadMaps = append(loadMaps, lMap)
+		loadMaps[i] = lMap
 	}
 	s.Setup(loadMaps)
 	s.SolveWhere()
