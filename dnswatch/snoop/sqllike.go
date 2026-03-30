@@ -98,23 +98,23 @@ func (s *SqllikeData) SolveGroupby() {
 	}
 	groups := s.Df.GroupBy(groupCols...)
 
-	var aggArray []df.AggregationType
-	var colArray []string
+	var aggArray = make([]df.AggregationType, 5)
+	var colArray = make([]string, 5)
 
-	aggArray = append(aggArray, df.Aggregation_COUNT)
-	colArray = append(colArray, "LATENCY")
+	aggArray[0] = df.Aggregation_COUNT
+	colArray[0] = "LATENCY"
 
-	aggArray = append(aggArray, df.Aggregation_MAX)
-	colArray = append(colArray, "LATENCY")
+	aggArray[1] = df.Aggregation_MAX
+	colArray[1] = "LATENCY"
 
-	aggArray = append(aggArray, df.Aggregation_MIN)
-	colArray = append(colArray, "LATENCY")
+	aggArray[2] = df.Aggregation_MIN
+	colArray[2] = "LATENCY"
 
-	aggArray = append(aggArray, df.Aggregation_MEAN)
-	colArray = append(colArray, "LATENCY")
+	aggArray[3] = df.Aggregation_MEAN
+	colArray[3] = "LATENCY"
 
-	aggArray = append(aggArray, df.Aggregation_MEDIAN)
-	colArray = append(colArray, "LATENCY")
+	aggArray[4] = df.Aggregation_MEDIAN
+	colArray[4] = "LATENCY"
 
 	s.Df = groups.Aggregation(aggArray, colArray)
 

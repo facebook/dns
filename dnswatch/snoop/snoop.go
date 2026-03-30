@@ -441,7 +441,8 @@ func (c *Consumer) computeDataframe() {
 		Groupby: c.Config.Groupby,
 	}
 
-	loadMaps := make([]map[string]interface{}, 0)
+	loadMaps := make([]map[string]interface{}, len(c.displayMap))
+	var idx = 0
 	for _, d := range c.displayMap {
 		pid, pName, lat, qType, qName, rIP, rCode := 0, UNK, 0, UNK, UNK, UNK, UNK
 		if d.pid != 0 {
@@ -477,7 +478,8 @@ func (c *Consumer) computeDataframe() {
 			"QADDR":   d.queryAddr.String(),
 			"RADDR":   d.responseAddr.String(),
 		}
-		loadMaps = append(loadMaps, lMap)
+		loadMaps[idx] = lMap
+		idx++
 	}
 	df.Setup(loadMaps)
 	df.SolveWhere()

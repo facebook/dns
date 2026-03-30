@@ -1085,7 +1085,7 @@ func TestBatchDel(t *testing.T) {
 func TestExecuteBatch(t *testing.T) {
 	// same logic as in rdb_util
 	makeFullVal := func(val []byte) []byte {
-		b := make([]byte, 4)
+		b := make([]byte, 4) //nolint:prealloc
 		binary.LittleEndian.PutUint32(b[:], uint32(len(val)))
 		return append(b, val...)
 	}
