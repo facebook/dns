@@ -205,13 +205,6 @@ type MockClosestKeyFinderMockRecorder struct {
 	mock *MockClosestKeyFinder
 }
 
-// NewMockClosestKeyFinder creates a new mock instance
-func NewMockClosestKeyFinder(ctrl *gomock.Controller) *MockClosestKeyFinder {
-	mock := &MockClosestKeyFinder{ctrl: ctrl}
-	mock.recorder = &MockClosestKeyFinderMockRecorder{mock}
-	return mock
-}
-
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockClosestKeyFinder) EXPECT() *MockClosestKeyFinderMockRecorder {
 	return m.recorder
@@ -243,13 +236,6 @@ type MockContextMockRecorder struct {
 	mock *MockContext
 }
 
-// NewMockContext creates a new mock instance
-func NewMockContext(ctrl *gomock.Controller) *MockContext {
-	mock := &MockContext{ctrl: ctrl}
-	mock.recorder = &MockContextMockRecorder{mock}
-	return mock
-}
-
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockContext) EXPECT() *MockContextMockRecorder {
 	return m.recorder
@@ -276,13 +262,6 @@ type MockReader struct {
 // MockReaderMockRecorder is the mock recorder for MockReader
 type MockReaderMockRecorder struct {
 	mock *MockReader
-}
-
-// NewMockReader creates a new mock instance
-func NewMockReader(ctrl *gomock.Controller) *MockReader {
-	mock := &MockReader{ctrl: ctrl}
-	mock.recorder = &MockReaderMockRecorder{mock}
-	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use

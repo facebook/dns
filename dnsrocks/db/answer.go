@@ -36,8 +36,7 @@ type ResourceRecord struct {
 }
 
 var (
-	// ErrLocationMismatch is returned if the record is not matching the location
-	ErrLocationMismatch = errors.New("location mismatch")
+
 	// ErrWildcardMismatch is returned if the record is a wildcard but we are not
 	// looking for wildcard
 	ErrWildcardMismatch = errors.New("wildcard mismatch")
