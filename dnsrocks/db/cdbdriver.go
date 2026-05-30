@@ -34,7 +34,7 @@ type cdbdriver struct {
 	contextPool sync.Pool
 }
 
-var newCdbContextFunc = func() interface{} {
+var newCdbContextFunc = func() any {
 	return cdb.NewContext()
 }
 

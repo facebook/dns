@@ -35,7 +35,7 @@ import (
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 )
 
-func progressLine(format string, args ...interface{}) {
+func progressLine(format string, args ...any) {
 	if !term.IsTerminal(int(os.Stdout.Fd())) {
 		return
 	}
