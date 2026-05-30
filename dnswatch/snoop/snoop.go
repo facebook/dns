@@ -441,7 +441,7 @@ func (c *Consumer) computeDataframe() {
 		Groupby: c.Config.Groupby,
 	}
 
-	loadMaps := make([]map[string]interface{}, len(c.displayMap))
+	loadMaps := make([]map[string]any, len(c.displayMap))
 	var idx = 0
 	for _, d := range c.displayMap {
 		pid, pName, lat, qType, qName, rIP, rCode := 0, UNK, 0, UNK, UNK, UNK, UNK
@@ -467,7 +467,7 @@ func (c *Consumer) computeDataframe() {
 			}
 			rCode = mkdns.RcodeToString[int(d.response.ResponseCode)]
 		}
-		lMap := map[string]interface{}{
+		lMap := map[string]any{
 			"PID":     pid,
 			"PNAME":   pName,
 			"LATENCY": lat,

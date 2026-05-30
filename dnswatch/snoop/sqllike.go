@@ -32,7 +32,7 @@ type SqllikeData struct {
 }
 
 // Setup used to create dataframe from list of maps
-func (s *SqllikeData) Setup(m []map[string]interface{}) {
+func (s *SqllikeData) Setup(m []map[string]any) {
 	s.Df = df.LoadMaps(m)
 }
 
