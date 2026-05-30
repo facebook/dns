@@ -49,7 +49,7 @@ func TestConcurrencyReader(t *testing.T) {
 
 	innerReader.EXPECT().ReadPacketConn(conn, time.Duration(0)).Times(10).Return(buf[:], addr, nil)
 	next.EXPECT().Name().AnyTimes().Return("mock")
-	next.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Times(10).Do(func(_, _, _ interface{}) {
+	next.EXPECT().ServeDNS(gomock.Any(), gomock.Any(), gomock.Any()).Times(10).Do(func(_, _, _ any) {
 		require.True(t, sem.TryAcquire(1), "Too many concurrent requests")
 		<-doWrite
 		sem.Release(1)

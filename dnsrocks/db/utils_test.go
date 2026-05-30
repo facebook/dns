@@ -33,7 +33,7 @@ const (
 	AdditionalSection = iota
 )
 
-func RRSliceMatchSubsetf(t *testing.T, list, subset []dns.RR, msg string, args ...interface{}) {
+func RRSliceMatchSubsetf(t *testing.T, list, subset []dns.RR, msg string, args ...any) {
 	a := make([]string, len(list))
 	b := make([]string, len(subset))
 	for idx, x := range list {
