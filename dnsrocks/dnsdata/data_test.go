@@ -1511,7 +1511,7 @@ func BenchmarkConvertLn(b *testing.B) {
 		b.Run(string(tc.in), func(b *testing.B) {
 			codec := new(Codec)
 			in := codectests[0].in
-			for n := 0; n < b.N; n++ {
+			for b.Loop() {
 				_, err := codec.ConvertLn(in)
 				if err != nil {
 					b.Fatalf("%v", err)
@@ -1706,7 +1706,7 @@ func BenchmarkMarshalText(b *testing.B) {
 			if err != nil {
 				b.Fatalf("%v", err)
 			}
-			for n := 0; n < b.N; n++ {
+			for b.Loop() {
 				_, err := r.MarshalText()
 				if err != nil {
 					b.Fatalf("%v", err)
@@ -1877,7 +1877,7 @@ func TestParseIPNet(t *testing.T) {
 func BenchmarkAtoiFscan(b *testing.B) {
 	var out uint32
 	in := []byte("12345")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = fmt.Fscan(bytes.NewBuffer(in), &out)
 	}
 }
@@ -1885,7 +1885,7 @@ func BenchmarkAtoiFscan(b *testing.B) {
 func BenchmarkAtoiSscan(b *testing.B) {
 	var out uint32
 	in := []byte("12345")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = fmt.Sscan(string(in), &out)
 	}
 }
@@ -1893,7 +1893,7 @@ func BenchmarkAtoiSscan(b *testing.B) {
 func BenchmarkAtoiStrconv(b *testing.B) {
 	var out uint32
 	in := []byte("12345")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if x, err := strconv.Atoi(string(in)); err == nil {
 			out = uint32(x)
 		}
@@ -1904,7 +1904,7 @@ func BenchmarkAtoiStrconv(b *testing.B) {
 func BenchmarkAtoiStrconvUint(b *testing.B) {
 	var out uint32
 	in := []byte("12345")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if x, err := strconv.ParseUint(string(in), 10, 32); err == nil {
 			out = uint32(x)
 		}
@@ -1915,7 +1915,7 @@ func BenchmarkAtoiStrconvUint(b *testing.B) {
 func BenchmarkAtoiOur(b *testing.B) {
 	var out uint32
 	in := []byte("12345")
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		getuint32(in, &out)
 	}
 	_ = out

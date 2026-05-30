@@ -205,7 +205,7 @@ func BenchmarkIsAuthoritative(b *testing.B) {
 			benchname := fmt.Sprintf("%s(%s)/%s-%v", config.Driver, config.Flavour, bm.qname, bm.locID)
 			b.Run(benchname, func(b *testing.B) {
 				offset, _ := dns.PackDomainName(bm.qname, packedQName, 0, nil, false)
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					_, _, _, err = r.IsAuthoritative(packedQName[:offset], bm.locID)
 					if err != nil {
 						b.Fatalf("%v", err)
@@ -346,7 +346,7 @@ func BenchmarkFindAnswer(b *testing.B) {
 				a := new(dns.Msg)
 				a.Compress = true
 				a.Authoritative = true
-				for i := 0; i < b.N; i++ {
+				for b.Loop() {
 					_, rcode := r.FindAnswer(packedQName[:offset], controlName[:controlOffset], bm.qname, bm.qtype, bm.locID, a, 10)
 					if bm.expectedRcode == dns.RcodeNameError && rcode != dns.RcodeNameError {
 						b.Fatal("unexpectedly found missing record")
