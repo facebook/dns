@@ -503,7 +503,7 @@ func ParseIPNet(s string) (ipnet *net.IPNet, err error) {
 		}
 		return &net.IPNet{IP: ip, Mask: net.CIDRMask(128, 128)}, nil
 	}
-	return ipnet, err
+	return ipnet, err //nolint:nilnil // pre-existing
 }
 
 // MarshalMap implements MapMarshaler
@@ -1551,8 +1551,7 @@ func getlmap(b []byte) Lmap {
 
 // write an FQDN in DNS wire format
 func putdom(w io.Writer, a []byte) {
-	f := bytes.Split(a, []byte("."))
-	for _, s := range f {
+	for s := range bytes.SplitSeq(a, []byte(".")) {
 		n := byte(len(s))
 		if n > 0 {
 			_, err := w.Write([]byte{n})
