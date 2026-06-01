@@ -18,12 +18,13 @@ package svcb
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/base64"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"net"
-	"sort"
+	"slices"
 	"strconv"
 )
 
@@ -57,10 +58,8 @@ type valueMarshaller = func([]byte) ([]byte, error)
 
 func mandatoryMarshaller(input []byte) ([]byte, error) {
 	values := bytes.Split(input, valueDelimInternal)
-	sort.SliceStable(values, func(i, j int) bool {
-		inum := strToParamNum[string(values[i])]
-		jnum := strToParamNum[string(values[j])]
-		return uint16(inum) < uint16(jnum)
+	slices.SortStableFunc(values, func(a, b []byte) int {
+		return cmp.Compare(uint16(strToParamNum[string(a)]), uint16(strToParamNum[string(b)]))
 	})
 
 	var buf bytes.Buffer

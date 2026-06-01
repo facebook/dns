@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -46,12 +46,9 @@ type kvList []keyValues
 
 // Sort sorts by key
 func (kv *kvList) Sort() {
-	sort.Slice(
-		*kv,
-		func(i, j int) bool {
-			return bytes.Compare((*kv)[i].key, (*kv)[j].key) < 0
-		},
-	)
+	slices.SortFunc(*kv, func(a, b keyValues) int {
+		return bytes.Compare(a.key, b.key)
+	})
 }
 
 // appendValues will append 'newVals' values to a multi-value 'data', and return the result;

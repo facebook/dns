@@ -18,9 +18,10 @@ package svcb
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/binary"
 	"fmt"
-	"sort"
+	"slices"
 )
 
 type paramNum uint16
@@ -218,8 +219,8 @@ func (l *ParamList) FromText(rawparams []byte) error {
 
 	// note that the svcparams have to be sorted
 	// otherwise the RR will be considered as malformed
-	sort.SliceStable(*l, func(i, j int) bool {
-		return (*l)[i].keynum < (*l)[j].keynum
+	slices.SortStableFunc(*l, func(a, b param) int {
+		return cmp.Compare(a.keynum, b.keynum)
 	})
 	return nil
 }

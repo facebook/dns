@@ -18,10 +18,11 @@ package dnsdata
 
 import (
 	"bytes"
+	"cmp"
 	"errors"
 	"fmt"
 	"net"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -357,22 +358,23 @@ func (r *Rearranger) Rearrange() RangePoints {
 	}
 
 	// sort by nest
-	sort.Slice(result, func(i, j int) bool {
-		cmp := bytes.Compare(result[i].rangeStart[:], result[j].rangeStart[:])
-		if cmp != 0 {
-			return cmp == -1
+	slices.SortFunc(result, func(a, b *RangePoint) int {
+		if c := bytes.Compare(a.rangeStart[:], b.rangeStart[:]); c != 0 {
+			return c
 		}
-		k1, k2 := result[i].pointKind, result[j].pointKind
-		if k1 != k2 {
+		if a.pointKind != b.pointKind {
 			// between pointKindStart and pointKindEnd: pointKindEnd goes first (it is less)
-			return k1 == pointKindEnd
+			if a.pointKind == pointKindEnd {
+				return -1
+			}
+			return 1
 		}
-		if k1 == pointKindStart {
+		if a.pointKind == pointKindStart {
 			// for pointKindStart between pointKindStart and pointKindStart: shortest prefix first
-			return result[i].location.maskLen < result[j].location.maskLen
+			return cmp.Compare(a.location.maskLen, b.location.maskLen)
 		}
 		// for pointKindEnd between pointKindEnd and pointKindEnd: longest prefix first
-		return result[i].location.maskLen > result[j].location.maskLen
+		return cmp.Compare(b.location.maskLen, a.location.maskLen)
 	})
 
 	locationStack := make([]rangeLocation, 0, 129) // normally 129 values from /0 to /128, but can be more if the same IP range was declared more than once
