@@ -90,8 +90,7 @@ func (s *PrometheusMetricsServer) UpdateExporter() {
 					Help:      mkey,
 				})
 				if err := s.registry.Register(promCollector); err != nil {
-					are := &prometheus.AlreadyRegisteredError{}
-					if errors.As(err, are) {
+					if are, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 						promCollector = are.ExistingCollector.(prometheus.Gauge)
 					} else {
 						glog.Errorf("failed to register metric %s %v", mkey, err)
