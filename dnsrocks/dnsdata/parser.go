@@ -119,9 +119,7 @@ func parse(r io.Reader, process func([]byte) error, workers int) error {
 
 	var wg sync.WaitGroup
 	// Scan
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		defer close(c)
 		for scanner.Scan() {
 			line := bytes.TrimLeft(scanner.Bytes(), " ")
@@ -132,7 +130,7 @@ func parse(r io.Reader, process func([]byte) error, workers int) error {
 			copy(newLine, line)
 			c <- newLine
 		}
-	}()
+	})
 
 	if err := g.Wait(); err != nil {
 		return err
