@@ -29,7 +29,7 @@ import (
 	"github.com/coredns/coredns/plugin"
 	"github.com/fsnotify/fsnotify"
 	"github.com/golang/glog"
-	lru "github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru/v2"
 
 	"github.com/facebook/dns/dnsrocks/db"
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
@@ -110,7 +110,7 @@ type FBDNSDB struct {
 	cacheConfig   CacheConfig
 	reloadMu      sync.RWMutex
 	done          chan struct{}
-	lru           *lru.Cache
+	lru           *lru.Cache[string, any]
 	logger        Logger
 	stats         stats.Stats
 	Next          plugin.Handler
@@ -118,9 +118,9 @@ type FBDNSDB struct {
 
 // NewFBDNSDBBasic initialize a new FBDNSDB. Reloading strategy is left to be set.
 func NewFBDNSDBBasic(handlerConfig HandlerConfig, dbConfig DBConfig, cacheConfig CacheConfig, l Logger, s stats.Stats) (t *FBDNSDB, err error) {
-	var lrucache *lru.Cache
+	var lrucache *lru.Cache[string, any]
 	if cacheConfig.Enabled {
-		if lrucache, err = lru.New(cacheConfig.LRUSize); err != nil {
+		if lrucache, err = lru.New[string, any](cacheConfig.LRUSize); err != nil {
 			return
 		}
 	}
