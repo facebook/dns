@@ -18,6 +18,7 @@ package whoami
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -51,22 +52,29 @@ func (wh *Handler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 	}
 	state := request.Request{W: w, Req: r}
 
+	// The whoami handler only overrides TXT data. For any other qtype, pass the
+	// query down the chain to obtain the response.  If the response is NXDOMAIN,
+	// rewrite the RCODE to NOERROR.  (This preserves the SOA record for negative
+	// caching.)
+	if state.QType() != dns.TypeTXT && state.QType() != dns.TypeANY {
+		nw := &nodataWriter{ResponseWriter: w}
+		return plugin.NextOrFailure(wh.Name(), wh.Next, ctx, nw, r)
+	}
+
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Compress = true
 	m.Authoritative = true
-	if state.QType() == dns.TypeTXT {
-		mkTxt := func(key, value string) dns.RR {
-			var rr dns.RR = new(dns.TXT)
-			rr.(*dns.TXT).Hdr = dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeTXT, Class: state.QClass()}
-			rr.(*dns.TXT).Txt = []string{fmt.Sprintf("%s %s", key, value)}
-			return rr
-		}
-		info := wh.infoGen().GetInfo(state)
-		for _, pair := range *info {
-			if len(pair.Val) > 0 {
-				m.Answer = append(m.Answer, mkTxt(pair.Key, pair.Val))
-			}
+	mkTxt := func(key, value string) dns.RR {
+		var rr dns.RR = new(dns.TXT)
+		rr.(*dns.TXT).Hdr = dns.RR_Header{Name: r.Question[0].Name, Rrtype: dns.TypeTXT, Class: state.QClass()}
+		rr.(*dns.TXT).Txt = []string{fmt.Sprintf("%s %s", key, value)}
+		return rr
+	}
+	info := wh.infoGen().GetInfo(state)
+	for _, pair := range *info {
+		if len(pair.Val) > 0 {
+			m.Answer = append(m.Answer, mkTxt(pair.Key, pair.Val))
 		}
 	}
 
@@ -81,3 +89,19 @@ func (wh *Handler) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Ms
 
 // Name returns the handlers name
 func (wh *Handler) Name() string { return "whoami" }
+
+// nodataWriter wraps a dns.ResponseWriter and rewrites an NXDOMAIN response
+// into NOERROR while leaving the authority section (SOA) intact, turning a
+// downstream "no such name" answer into a NODATA answer.
+type nodataWriter struct {
+	dns.ResponseWriter
+}
+
+// WriteMsg rewrites the RCODE from NXDOMAIN to NOERROR before writing.
+func (nw *nodataWriter) WriteMsg(m *dns.Msg) error {
+	if m.Rcode != dns.RcodeNameError {
+		return errors.New("whoami: name must be NXDOMAIN")
+	}
+	m.Rcode = dns.RcodeSuccess
+	return nw.ResponseWriter.WriteMsg(m)
+}
