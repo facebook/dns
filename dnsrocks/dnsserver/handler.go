@@ -34,9 +34,7 @@ import (
 )
 
 const (
-	// TypeToStatsPrefix is the prefix used for creating stats keys
-	TypeToStatsPrefix              = "DNS_query"
-	maxAnswer         maxAnswerKey = "maxans"
+	maxAnswer maxAnswerKey = "maxans"
 	// DefaultMaxAnswer is the default number of answer returned for A\AAAA query
 	DefaultMaxAnswer = 1
 
@@ -45,8 +43,6 @@ const (
 	defaultFallbackLoc = "\x00\x02"
 	defaultLocN        = "@default"
 )
-
-var typeToStats = make(map[uint16]string)
 
 type cacheEntry struct {
 	expiration int64
@@ -64,20 +60,6 @@ func WithMaxAnswer(ctx context.Context, masAns int) context.Context {
 func GetMaxAnswer(ctx context.Context) (int, bool) {
 	maxAns, ok := ctx.Value(maxAnswer).(int)
 	return maxAns, ok
-}
-
-func init() {
-	// initialize typeToStats map.
-	for k, v := range dns.TypeToString {
-		typeToStats[k] = fmt.Sprintf("%s.%s", TypeToStatsPrefix, v)
-	}
-}
-
-func typeToStatsKey(qtype uint16) string {
-	if t, ok := typeToStats[qtype]; ok {
-		return t
-	}
-	return fmt.Sprintf("%s.TYPE%d", TypeToStatsPrefix, qtype)
 }
 
 // MakeOPTWithECS returns dns.OPT with a specified subnet EDNS0 option
@@ -247,7 +229,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	if state.Do() {
 		h.stats.IncrementCounter("DNS_queries.edns0.do_bit")
 	}
-	h.stats.IncrementCounter(typeToStatsKey(state.QType()))
+	h.stats.IncrementCounter(TypeToStatsKey(state.QType()))
 
 	// Check if this is a supported edns version
 	if a, err := edns.Version(state.Req); err != nil { // Wrong EDNS version, return at once.

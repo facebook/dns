@@ -26,13 +26,17 @@ import (
 	"github.com/coredns/coredns/plugin"
 
 	"github.com/facebook/dns/dnsrocks/dnsserver"
+	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 	"github.com/facebook/dns/dnsrocks/tlsconfig"
 
 	"github.com/golang/glog"
 )
 
-// HandlerFactory adds a configured handler in front of an existing chain.
-type HandlerFactory func(plugin.Handler) (plugin.Handler, error)
+// HandlerFactory adds a configured handler in front of an existing chain. It
+// receives the server's stats so that a handler which answers a query itself,
+// rather than passing it to the database handler at the end of the chain, can
+// still record it in the counters that handler would have bumped.
+type HandlerFactory func(plugin.Handler, stats.Stats) (plugin.Handler, error)
 
 // ServerConfig represent the configuration for a given DNS server
 type ServerConfig struct {

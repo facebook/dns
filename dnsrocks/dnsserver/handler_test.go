@@ -1872,7 +1872,7 @@ func TestTypeToStatsKey(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
-			require.Equal(t, tc.keyName, typeToStatsKey(tc.qType))
+			require.Equal(t, tc.keyName, TypeToStatsKey(tc.qType))
 		})
 	}
 }

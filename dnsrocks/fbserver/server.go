@@ -250,7 +250,7 @@ func (srv *Server) Start() (err error) {
 		defaultHandler = dotTLSAHandler
 	}
 	for _, factory := range srv.conf.HandlerFactories {
-		defaultHandler, err = factory(defaultHandler)
+		defaultHandler, err = factory(defaultHandler, srv.stats)
 		if err != nil {
 			return fmt.Errorf("failed to initialize configured handler: %w", err)
 		}
