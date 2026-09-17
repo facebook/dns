@@ -23,6 +23,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"slices"
 	"strconv"
@@ -87,7 +88,6 @@ func mandatoryMarshaller(input []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// nolint:unparam
 func alpnMarshaller(input []byte) ([]byte, error) {
 	alpns := bytes.Split(input, valueDelimInternal)
 
@@ -95,6 +95,14 @@ func alpnMarshaller(input []byte) ([]byte, error) {
 	buf.Grow(len(input) + len(alpns))
 
 	for _, alpn := range alpns {
+		// each alpn-id is a length-prefixed wire vector with a single
+		// length octet, so it must satisfy 1 <= len <= 255 (RFC 7301)
+		if len(alpn) == 0 {
+			return nil, errors.New("alpn value contains an empty alpn-id")
+		}
+		if len(alpn) > math.MaxUint8 {
+			return nil, fmt.Errorf("alpn value too long: %d>%d", len(alpn), math.MaxUint8)
+		}
 		buf.WriteByte(byte(len(alpn)))
 		buf.Write(alpn)
 	}

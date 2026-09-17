@@ -18,6 +18,7 @@ package svcb
 
 import (
 	"bytes"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -230,4 +231,66 @@ func TestBadParamList(t *testing.T) {
 
 		require.Error(t, err, "%s should be an invalid SVCB/HTTPS TinyDNS record", bad)
 	}
+}
+
+// The single length octet that frames each alpn-id can only describe a
+// 1..255-byte value (RFC 7301). alpnMarshaller previously wrote
+// byte(len(alpn)) with no bound, so a 256-byte id truncated its prefix to 0
+// and desynced the alpn list. The tests below pin the encode-time bound and
+// its 255-byte boundary. alpnMarshaller is the changed function, so they call
+// it directly rather than through fromText.
+
+// Positive control: on the vulnerable marshaller a 256-byte alpn-id was
+// accepted and its length octet wrapped to 0; the fix rejects it.
+// @remedimate-generated T288746215
+func TestAlpnMarshallerRejectsOversizedID(t *testing.T) {
+	_, err := alpnMarshaller(bytes.Repeat([]byte("a"), math.MaxUint8+1)) // 256 bytes
+	require.Error(t, err, "a 256-byte alpn-id must be rejected at encode time")
+}
+
+// Positive control: bytes.Split yields an empty token for "h2|", "|h2" and
+// "h2||h3"; the vulnerable marshaller emitted a 0-length alpn-id, which is
+// invalid wire data (RFC 7301 alpn-id length is 1..255). The fix rejects it.
+// @remedimate-generated T288746215
+func TestAlpnMarshallerRejectsEmptyID(t *testing.T) {
+	for _, in := range [][]byte{[]byte("h2|"), []byte("|h2"), []byte("h2||h3")} {
+		_, err := alpnMarshaller(in)
+		require.Error(t, err, "an empty alpn-id in %q must be rejected", in)
+	}
+}
+
+// Negative control: a 255-byte alpn-id is the largest the single length octet
+// can frame. It was accepted before the fix and still is (the bound is a
+// strict >), producing [255, id...]. This exercises the guarded code path with
+// legitimate input and must pass on both the vulnerable and fixed code.
+// @remedimate-generated T288746215
+func TestAlpnMarshallerAcceptsMaxLengthID(t *testing.T) {
+	id := bytes.Repeat([]byte("a"), math.MaxUint8) // 255 bytes
+	wire, err := alpnMarshaller(id)
+	require.NoError(t, err, "a 255-byte alpn-id must be accepted")
+	require.Equal(t, append([]byte{byte(len(id))}, id...), wire,
+		"a 255-byte alpn-id must be framed as [255, id...]")
+}
+
+// Positive control: a SvcParamValue is framed by a 2-octet length prefix, so
+// on the vulnerable toWire a 65536-byte value wrapped uint16(len) to 0 and
+// desynced the stored rdata. The fix rejects it.
+// @remedimate-generated T288746215
+func TestParamToWireRejectsOversizedValue(t *testing.T) {
+	p := param{keynum: ech, value: bytes.Repeat([]byte{0}, math.MaxUint16+1)} // 65536 bytes
+	var buf bytes.Buffer
+	require.Error(t, p.toWire(&buf), "a 65536-byte SvcParamValue must be rejected at encode time")
+}
+
+// Negative control: a 65535-byte value is the largest a 2-octet prefix can
+// frame. It was accepted before the fix and still is (strict >), serializing
+// to key(2)+prefix(2)+value bytes. Must pass on both the vulnerable and fixed
+// code.
+// @remedimate-generated T288746215
+func TestParamToWireAcceptsMaxLengthValue(t *testing.T) {
+	p := param{keynum: ech, value: bytes.Repeat([]byte{0}, math.MaxUint16)} // 65535 bytes
+	var buf bytes.Buffer
+	require.NoError(t, p.toWire(&buf), "a 65535-byte SvcParamValue must be accepted")
+	require.Equal(t, 2+2+math.MaxUint16, buf.Len(),
+		"a 65535-byte value must serialize to key+prefix+value bytes")
 }

@@ -21,6 +21,7 @@ import (
 	"cmp"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"slices"
 )
 
@@ -151,6 +152,11 @@ func (p *param) toText(buf *bytes.Buffer) {
 }
 
 func (p *param) toWire(buf *bytes.Buffer) error {
+	// the value is written behind a 2-octet length prefix, so it must
+	// fit that prefix (RFC 9460 SvcParamValue length is a uint16)
+	if len(p.value) > math.MaxUint16 {
+		return fmt.Errorf("svcparam %s value too long: %d>%d", paramNumToStr[p.keynum], len(p.value), math.MaxUint16)
+	}
 	// 2 bytes for the key (uint16)
 	// 2 bytes for the length-prefix of the value
 	// value bytes
