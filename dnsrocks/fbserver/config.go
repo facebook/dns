@@ -23,34 +23,40 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coredns/coredns/plugin"
+
 	"github.com/facebook/dns/dnsrocks/dnsserver"
 	"github.com/facebook/dns/dnsrocks/tlsconfig"
 
 	"github.com/golang/glog"
 )
 
+// HandlerFactory adds a configured handler in front of an existing chain.
+type HandlerFactory func(plugin.Handler) (plugin.Handler, error)
+
 // ServerConfig represent the configuration for a given DNS server
 type ServerConfig struct {
-	IPAns          ipAns
-	Port           int
-	MaxUDPSize     int
-	TCP            bool
-	TLS            bool
-	ReusePort      int
-	MaxTCPQueries  int
-	TCPIdleTimeout time.Duration
-	NumCPU         int
-	MaxConcurrency int
-	ReadTimeout    time.Duration
-	TLSConfig      tlsconfig.TLSConfig
-	HandlerConfig  dnsserver.HandlerConfig
-	CacheConfig    dnsserver.CacheConfig
-	DBConfig       dnsserver.DBConfig
-	WhoamiDomain   string
-	RefuseANY      bool
-	DNSSECConfig   DNSSECConfig
-	NSID           bool
-	PrivateInfo    bool
+	IPAns            ipAns
+	Port             int
+	MaxUDPSize       int
+	TCP              bool
+	TLS              bool
+	ReusePort        int
+	MaxTCPQueries    int
+	TCPIdleTimeout   time.Duration
+	NumCPU           int
+	MaxConcurrency   int
+	ReadTimeout      time.Duration
+	TLSConfig        tlsconfig.TLSConfig
+	HandlerConfig    dnsserver.HandlerConfig
+	CacheConfig      dnsserver.CacheConfig
+	DBConfig         dnsserver.DBConfig
+	WhoamiDomain     string
+	HandlerFactories []HandlerFactory
+	RefuseANY        bool
+	DNSSECConfig     DNSSECConfig
+	NSID             bool
+	PrivateInfo      bool
 }
 
 type ipAns map[string]int

@@ -249,6 +249,12 @@ func (srv *Server) Start() (err error) {
 		dotTLSAHandler.Next = defaultHandler
 		defaultHandler = dotTLSAHandler
 	}
+	for _, factory := range srv.conf.HandlerFactories {
+		defaultHandler, err = factory(defaultHandler)
+		if err != nil {
+			return fmt.Errorf("failed to initialize configured handler: %w", err)
+		}
+	}
 	// Only add whoamiHandler to the plugin chain if it is enabled.
 	if srv.conf.WhoamiDomain != "" {
 		domain := strings.ToLower(dns.Fqdn(srv.conf.WhoamiDomain))

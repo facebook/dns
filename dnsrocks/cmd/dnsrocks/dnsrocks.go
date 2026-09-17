@@ -40,6 +40,19 @@ import (
 	_ "net/http/pprof"
 )
 
+// flagValidator represents a validation step that must be run after the flags are parsed.
+type flagValidator func() error
+
+// flagRegistrar represents a registration step that must occur before the flags can be parsed.
+// Its result is an unnamed func() error rather than flagValidator: registrars are defined in
+// other packages, which cannot name a type declared here, and Go requires function types to be
+// identical to be assignable.
+type flagRegistrar func(*flag.FlagSet, *fbserver.ServerConfig) func() error
+
+// platformFlagRegistrars is appended to by platform-specific files from their
+// init().
+var platformFlagRegistrars []flagRegistrar
+
 func setCPU(cpu string) (int, error) {
 	var numCPU int
 
@@ -81,6 +94,10 @@ func main() {
 	var verbosity int
 	const DefaultMetricsAddr string = ":18888"
 	cliflags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	platformFlagValidators := make([]flagValidator, 0, len(platformFlagRegistrars))
+	for _, register := range platformFlagRegistrars {
+		platformFlagValidators = append(platformFlagValidators, register(cliflags, &serverConfig))
+	}
 
 	// DNS Server config
 	cliflags.IntVar(&serverConfig.Port, "port", 8053, "port to run on")
@@ -184,6 +201,11 @@ Currently two types of trigger files are supported:
 	}
 	if doTTLSATtl > math.MaxUint32 {
 		glog.Fatalf("tls-tlsa-record-ttl %d is greater than max uint32: %d", doTTLSATtl, math.MaxUint32)
+	}
+	for _, validate := range platformFlagValidators {
+		if err := validate(); err != nil {
+			glog.Fatalf("invalid platform-specific flags: %v", err)
+		}
 	}
 	serverConfig.TLSConfig.DoTTLSATtl = uint32(doTTLSATtl)
 	serverConfig.DBConfig.Path = path.Clean(serverConfig.DBConfig.Path)
