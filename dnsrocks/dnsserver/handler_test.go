@@ -2104,6 +2104,81 @@ func TestHandlerNoCache(t *testing.T) {
 	}
 }
 
+// TestHandlerCacheKeyQTypeQClassCollision is a regression test for a cache
+// key collision. The key was
+//
+//	fmt.Sprintf("%.3d%.3d%.3d%s", loc, qtype, qclass, name)
+//
+// so distinct queries for the same name could collapse onto one key.
+// qtype 65535 / qclass 1 renders "65535"+"001" = "65535001" and qtype 655
+// / qclass 35001 renders "655"+"35001" = "65535001".
+func TestHandlerCacheKeyQTypeQClassCollision(t *testing.T) {
+	ctr := stats.NewCounters()
+	th := createFBDNSDBWithCache(t, ctr)
+
+	rec := dnstest.NewRecorder(&test.ResponseWriter{})
+	ctx := CreateTestContext(1)
+
+	// First query: name X, qtype 65535 (TYPE65535), qclass IN (1).
+	reqA := new(dns.Msg)
+	reqA.SetQuestion(dns.Fqdn("bar.example.com."), 65535)
+	reqA.Question[0].Qclass = 1
+	_, err := th.ServeDNSWithRCODE(ctx, rec, reqA)
+	require.NoError(t, err)
+	// The collision can only manifest if the first answer is cached; confirm
+	// the precondition holds so a later cache miss is meaningful.
+	require.Equal(t, 1, th.lru.Len(), "first query should populate exactly one cache entry")
+
+	ctr.ResetCounter("DNS_cache.hit")
+	ctr.ResetCounter("DNS_cache.missed")
+
+	// Second query: same name, qtype 655, qclass 35001.
+	reqB := new(dns.Msg)
+	reqB.SetQuestion(dns.Fqdn("bar.example.com."), 655)
+	reqB.Question[0].Qclass = 35001
+	_, err = th.ServeDNSWithRCODE(ctx, rec, reqB)
+	require.NoError(t, err)
+
+	// With the delimited key the two queries occupy distinct slots: the second
+	// query is a cache miss and adds its own entry.
+	require.Zero(t, ctr["DNS_cache.hit"], "distinct qtype/qclass queries must not share a cache entry")
+	require.NotZero(t, ctr["DNS_cache.missed"], "second distinct query should miss the cache")
+	require.Equal(t, 2, th.lru.Len(), "two distinct queries must occupy two cache slots")
+}
+
+func TestHandlerCacheHit(t *testing.T) {
+	ctr := stats.NewCounters()
+	th := createFBDNSDBWithCache(t, ctr)
+
+	ctx := CreateTestContext(1)
+	req := new(dns.Msg)
+	req.SetQuestion(dns.Fqdn("bar.example.com."), dns.TypeA)
+
+	// First lookup: resolved from the DB (cache miss) and cached.
+	rec := dnstest.NewRecorder(&test.ResponseWriter{})
+	rcode, err := th.ServeDNSWithRCODE(ctx, rec, req)
+	require.NoError(t, err)
+	require.Equal(t, dns.RcodeSuccess, rcode)
+	require.NotZero(t, ctr["DNS_cache.missed"])
+	require.Len(t, rec.Msg.Answer, 1)
+	a, ok := rec.Msg.Answer[0].(*dns.A)
+	require.True(t, ok, "expected an A record for bar.example.com")
+	require.Equal(t, "1.1.1.1", a.A.String())
+	firstAnswer := rec.Msg.Answer
+
+	ctr.ResetCounter("DNS_cache.hit")
+	ctr.ResetCounter("DNS_cache.missed")
+
+	// Repeat of the exact same query: served from cache with the same answer.
+	rec = dnstest.NewRecorder(&test.ResponseWriter{})
+	rcode, err = th.ServeDNSWithRCODE(ctx, rec, req)
+	require.NoError(t, err)
+	require.Equal(t, dns.RcodeSuccess, rcode)
+	require.NotZero(t, ctr["DNS_cache.hit"], "repeat of the same query should be a cache hit")
+	require.Zero(t, ctr["DNS_cache.missed"])
+	RRSliceMatch(t, firstAnswer, rec.Msg.Answer)
+}
+
 func TestReloadPartial(t *testing.T) {
 	th := OpenDbForTesting(t, &testaid.TestRDB)
 	ctr := stats.NewCounters()

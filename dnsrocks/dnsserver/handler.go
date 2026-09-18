@@ -284,7 +284,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	}
 
 	if h.cacheConfig.Enabled {
-		cacheKey = fmt.Sprintf("%.3d%.3d%.3d%s", loc.LocID, state.QType(), state.QClass(), state.Name())
+		cacheKey = fmt.Sprintf("%d:%d:%d:%s", loc.LocID, state.QType(), state.QClass(), state.Name())
 		if v, ok := h.lru.Get(cacheKey); ok {
 			t := v.(cacheEntry).expiration
 			if t < time.Now().Unix() {
