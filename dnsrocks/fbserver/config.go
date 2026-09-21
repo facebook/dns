@@ -33,10 +33,10 @@ import (
 )
 
 // HandlerFactory adds a configured handler in front of an existing chain. It
-// receives the server's stats so that a handler which answers a query itself,
-// rather than passing it to the database handler at the end of the chain, can
-// still record it in the counters that handler would have bumped.
-type HandlerFactory func(plugin.Handler, stats.Stats) (plugin.Handler, error)
+// receives the server's stats and logger so that a handler which answers a
+// query itself, rather than passing it to the database handler at the end of
+// the chain, can still record it where that handler would have.
+type HandlerFactory func(plugin.Handler, stats.Stats, dnsserver.Logger) (plugin.Handler, error)
 
 // ServerConfig represent the configuration for a given DNS server
 type ServerConfig struct {

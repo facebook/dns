@@ -51,6 +51,7 @@ type Server struct {
 	db              *dnsserver.FBDNSDB
 	servers         []*dns.Server
 	stats           stats.Stats
+	logger          dnsserver.Logger
 	metricsExporter anyMetricsExporter
 	// If NotifyStartedFunc is set it is called once the server has started listening.
 	NotifyStartedFunc func()
@@ -105,7 +106,7 @@ func NewServer(conf ServerConfig, logger dnsserver.Logger, stats stats.Stats, me
 	tdb, err := dnsserver.NewFBDNSDB(conf.HandlerConfig, conf.DBConfig, conf.CacheConfig, logger, stats)
 	failOnErr(err, "Error creating TinyDB handle")
 	failOnErr(tdb.Load(), "Error loading TinyDB")
-	return &Server{conf: conf, db: tdb, stats: stats, metricsExporter: metricsExporter}
+	return &Server{conf: conf, db: tdb, stats: stats, logger: logger, metricsExporter: metricsExporter}
 }
 
 // monitoredReader is a wrapper around dns default reader which serves to log the number of "read"
@@ -250,7 +251,7 @@ func (srv *Server) Start() (err error) {
 		defaultHandler = dotTLSAHandler
 	}
 	for _, factory := range srv.conf.HandlerFactories {
-		defaultHandler, err = factory(defaultHandler, srv.stats)
+		defaultHandler, err = factory(defaultHandler, srv.stats, srv.logger)
 		if err != nil {
 			return fmt.Errorf("failed to initialize configured handler: %w", err)
 		}
