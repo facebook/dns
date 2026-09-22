@@ -296,7 +296,12 @@ func (h *FBDNSDB) watchControlDirAndReload(watcher *fsnotify.Watcher) (err error
 				glog.Infof("Found full reload trigger file")
 				newPath, err := getNewDBPath(cp)
 				if err != nil {
-					return fmt.Errorf("getting new DB path: %w", err)
+					// A malformed switchdb trigger file (empty or naming a
+					// missing path) is a bad single input, not a watcher
+					// failure. Skip this event and keep watching so one bad
+					// file can't take down DNS serving.
+					glog.Errorf("Ignoring invalid full reload trigger: %v", err)
+					continue
 				}
 				h.ReloadChan <- *NewFullReloadSignal(newPath)
 			default:

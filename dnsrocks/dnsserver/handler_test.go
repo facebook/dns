@@ -2360,6 +2360,92 @@ func TestWatchControlDirAndReloadFull(t *testing.T) {
 	}
 }
 
+// TestWatchControlDirMalformedSwitchdbKeepsServing is the positive control for
+// the malformed-switchdb availability bug: an empty (or dangling) full-reload
+// trigger must not kill the control-dir watcher. On the vulnerable code
+// getNewDBPath's error propagates out of watchControlDirAndReload, the
+// goroutine returns, the fbserver wrapper reacts by calling srv.Shutdown, and
+// no further reload signal is ever delivered. With the fix the bad trigger is
+// skipped and the watcher keeps processing later triggers, so serving survives.
+// @remedimate-generated T288749397
+func TestWatchControlDirMalformedSwitchdbKeepsServing(t *testing.T) {
+	th := OpenDbForTesting(t, &testaid.TestCDB)
+	ctlDir, err := os.MkdirTemp("", "ctl-test")
+	require.NoError(t, err)
+	defer os.RemoveAll(ctlDir)
+	th.dbConfig.ControlPath = ctlDir
+	watcher, err := prepareDBWatcher(th.dbConfig.ControlPath)
+	if watcher != nil {
+		defer watcher.Close()
+	}
+	require.NoError(t, err)
+	go func() {
+		// Discard the return value on purpose: with the fix this call blocks
+		// forever (the watcher keeps running), while on the vulnerable code it
+		// returns a non-nil error as soon as the malformed switchdb below is
+		// processed. The liveness assertion further down is what tells the two
+		// apart, not this return.
+		_ = th.watchControlDirAndReload(watcher)
+	}()
+
+	// Drop a malformed full-reload trigger: empty content makes getNewDBPath
+	// fail because os.Stat of the resulting empty path reports ErrNotExist.
+	time.Sleep(1 * time.Millisecond)
+	require.NoError(t, os.WriteFile(path.Join(ctlDir, ControlFileFullReload), []byte(""), 0644))
+
+	// Let the watcher (mis)handle the bad trigger, then send a valid partial
+	// reload trigger. A watcher that is still alive must deliver its signal; a
+	// watcher that returned on the bad file never gets here.
+	time.Sleep(50 * time.Millisecond)
+	reloadFile, err := os.Create(path.Join(ctlDir, ControlFilePartialReload))
+	require.NoError(t, err)
+	reloadFile.Close()
+
+	select {
+	case reload := <-th.ReloadChan:
+		require.Equal(t, *NewPartialReloadSignal(), reload)
+	case <-time.After(2 * time.Second):
+		t.Errorf("watcher stopped serving reload triggers after a malformed switchdb file")
+	}
+}
+
+// TestWatchControlDirValidSwitchdbReloads is the negative control: a valid
+// full-reload trigger whose content names an existing path still produces a
+// FullReloadSignal. This is the untouched err==nil branch of the switchdb
+// handling, so it behaves identically before and after the fix.
+// @remedimate-generated T288749397
+func TestWatchControlDirValidSwitchdbReloads(t *testing.T) {
+	th := OpenDbForTesting(t, &testaid.TestCDB)
+	ctlDir, err := os.MkdirTemp("", "ctl-test")
+	require.NoError(t, err)
+	defer os.RemoveAll(ctlDir)
+	th.dbConfig.ControlPath = ctlDir
+	watcher, err := prepareDBWatcher(th.dbConfig.ControlPath)
+	if watcher != nil {
+		defer watcher.Close()
+	}
+	require.NoError(t, err)
+	go func() {
+		_ = th.watchControlDirAndReload(watcher)
+	}()
+
+	// The currently loaded DB file is always an existing path, so it is a valid
+	// switchdb payload. Write to a temp name and rename into place so the Create
+	// event observes the complete content, matching an atomic publisher write.
+	time.Sleep(1 * time.Millisecond)
+	validPath := testaid.TestCDB.Path
+	tmpFile := path.Join(ctlDir, "."+ControlFileFullReload)
+	require.NoError(t, os.WriteFile(tmpFile, []byte(validPath), 0644))
+	require.NoError(t, os.Rename(tmpFile, path.Join(ctlDir, ControlFileFullReload)))
+
+	select {
+	case reload := <-th.ReloadChan:
+		require.Equal(t, *NewFullReloadSignal(validPath), reload)
+	case <-time.After(2 * time.Second):
+		t.Errorf("Expected to receive FullReloadSignal for a valid switchdb trigger, but did not")
+	}
+}
+
 func TestDNSDBMinimalNSInAuth(t *testing.T) {
 	testCases := []struct {
 		qname          string
