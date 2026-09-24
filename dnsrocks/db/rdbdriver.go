@@ -41,7 +41,11 @@ func openRDB(path string) (DBI, error) {
 		return nil, err
 	}
 
-	isDataSorted := db.IsV2KeySyntaxUsed()
+	isDataSorted, err := db.IsV2KeySyntaxUsed()
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
 
 	driver := &rdbdriver{db: db, path: path, isDataSorted: isDataSorted}
 	return driver, nil

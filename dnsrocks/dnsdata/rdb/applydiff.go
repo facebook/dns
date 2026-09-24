@@ -40,7 +40,11 @@ func (batch *Batch) ApplyDiff(d *dbdiff.Entry) {
 
 func (rdb *RDB) ApplyDiff(r io.Reader, serial uint32) error {
 	codec := initCodec(serial)
-	codec.Features.UseV2Keys = rdb.IsV2KeySyntaxUsed()
+	useV2, err := rdb.IsV2KeySyntaxUsed()
+	if err != nil {
+		return err
+	}
+	codec.Features.UseV2Keys = useV2
 	batch := rdb.CreateBatch()
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {

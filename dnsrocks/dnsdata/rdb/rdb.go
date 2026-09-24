@@ -714,15 +714,22 @@ func (rdb *RDB) ForEach(key []byte, f func(value []byte) error, ctx *Context) (e
 }
 
 // IsV2KeySyntaxUsed returns value indicating whether v2 syntax is used for DB keys
-func (rdb *RDB) IsV2KeySyntaxUsed() bool {
+func (rdb *RDB) IsV2KeySyntaxUsed() (bool, error) {
 	value, err := rdb.Find([]byte(dnsdata.FeaturesKey), NewContext())
+	if errors.Is(err, io.EOF) {
+		// a DB without the features record predates v2 and uses v1 keys
+		return false, nil
+	}
 	if err != nil {
-		return false
+		return false, fmt.Errorf("reading %q: %w", dnsdata.FeaturesKey, err)
 	}
 
-	feature := dnsdata.DecodeFeatures(value)
+	feature, err := dnsdata.DecodeFeatures(value)
+	if err != nil {
+		return false, err
+	}
 
-	return feature&dnsdata.V2KeysFeature > 0
+	return feature&dnsdata.V2KeysFeature > 0, nil
 }
 
 func (rdb *RDB) get(key []byte, ctx *Context) (data []byte, err error) {

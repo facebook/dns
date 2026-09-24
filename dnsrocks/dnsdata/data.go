@@ -1518,8 +1518,11 @@ func encodeFeatures(f Feature) []byte {
 }
 
 // DecodeFeatures byte array stored in DB to a Feature
-func DecodeFeatures(data []byte) Feature {
-	return Feature(binary.LittleEndian.Uint32(data))
+func DecodeFeatures(data []byte) (Feature, error) {
+	if len(data) < 4 {
+		return 0, fmt.Errorf("features record too short: got %d bytes, want at least 4", len(data))
+	}
+	return Feature(binary.LittleEndian.Uint32(data)), nil
 }
 
 func getdom(text []byte) (dom []byte, iswildcard bool) {

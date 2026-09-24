@@ -27,6 +27,7 @@ import (
 	"testing"
 
 	rocksdb "github.com/facebook/dns/dnsrocks/cgo-rocksdb"
+	"github.com/facebook/dns/dnsrocks/dnsdata"
 
 	"github.com/stretchr/testify/require"
 )
@@ -1139,4 +1140,61 @@ func TestExecuteBatch(t *testing.T) {
 	value2, err := testdb.db.Get(testdb.readOptions, toDel.key)
 	require.Nil(t, err)
 	require.Nilf(t, value2, "key should be removed from DB, not just value set to []byte{}")
+}
+
+// @remedimate-generated T288746996
+func TestApplyDiffRejectsShortFeaturesRecord(t *testing.T) {
+	// The \x00o_features record stores a value whose 4-byte length header frames
+	// a 2-byte body: ReadNextChunk happily returns that 2-byte chunk with a nil
+	// error, so the features decoder receives fewer than the 4 bytes it needs.
+	// This is the exact malformed record an attacker plants in a DB the server
+	// reloads. The features decode must reject it with an error; the vulnerable
+	// code indexes past the slice and panics, which (unrecovered in the reload
+	// goroutine) kills the DNS process. ApplyDiff is a stable entry point that
+	// funnels through the same decode, so this exercises the crash path.
+	poisonedFeatures := []byte{2, 0, 0, 0, 0xAB, 0xCD} // header 2 -> 2-byte body
+	rdb := &RDB{
+		db: &mockedDB{
+			get: func(key []byte) ([]byte, error) {
+				require.Equal(t, []byte(dnsdata.FeaturesKey), key)
+				return poisonedFeatures, nil
+			},
+			put: func(_, _ []byte) error {
+				t.Error("Should not be called")
+				return nil
+			},
+		},
+		writeMutex: &sync.Mutex{},
+	}
+
+	var err error
+	require.NotPanics(t, func() {
+		err = rdb.ApplyDiff(bytes.NewReader(nil), 1)
+	})
+	require.Error(t, err)
+}
+
+// @remedimate-generated T288746996
+func TestApplyDiffAcceptsValidFeaturesRecord(t *testing.T) {
+	// A well-formed features record: a 4-byte length header framing the 4-byte
+	// V2KeysFeature bitmap, exactly what encodeFeatures/appendValues write. This
+	// decodes cleanly before and after the fix, so ApplyDiff over an empty diff
+	// must succeed. Establishes that legitimate DBs still load and the decode
+	// path still builds and runs.
+	validFeatures := []byte{4, 0, 0, 0, 2, 0, 0, 0} // header 4 -> V2KeysFeature (2)
+	rdb := &RDB{
+		db: &mockedDB{
+			get: func(key []byte) ([]byte, error) {
+				require.Equal(t, []byte(dnsdata.FeaturesKey), key)
+				return validFeatures, nil
+			},
+			put: func(_, _ []byte) error {
+				t.Error("Should not be called")
+				return nil
+			},
+		},
+		writeMutex: &sync.Mutex{},
+	}
+
+	require.NoError(t, rdb.ApplyDiff(bytes.NewReader(nil), 1))
 }
