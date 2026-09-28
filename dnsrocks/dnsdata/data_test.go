@@ -19,9 +19,11 @@ package dnsdata
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"net"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -1194,6 +1196,70 @@ var codectests = []codecTest{
 		},
 	},
 	{
+		in:      []byte("Pab.net,plugin,arg=x"),
+		outText: []byte("Pab.net,plugin,arg=x"),
+		out: []MapRecord{
+			{
+				Key:   []byte{0, 'P', 2, 'a', 'b', 3, 'n', 'e', 't', 0, '='},
+				Value: []byte{'p', 'l', 'u', 'g', 'i', 'n', 0, 'a', 'r', 'g', '=', 'x'},
+			},
+		},
+		outV2: []MapRecord{
+			{
+				Key:   []byte{0, 'P', 3, 'n', 'e', 't', 2, 'a', 'b', 0, '='},
+				Value: []byte{'p', 'l', 'u', 'g', 'i', 'n', 0, 'a', 'r', 'g', '=', 'x'},
+			},
+		},
+	},
+	{
+		in:      []byte("P*.example.com,plugin,arg1=x;arg2=y"),
+		outText: []byte("P*.example.com,plugin,arg1=x;arg2=y"),
+		out: []MapRecord{
+			{
+				Key:   []byte{0, 'P', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 3, 'c', 'o', 'm', 0, '*'},
+				Value: []byte{'p', 'l', 'u', 'g', 'i', 'n', 0, 'a', 'r', 'g', '1', '=', 'x', ';', 'a', 'r', 'g', '2', '=', 'y'},
+			},
+		},
+		outV2: []MapRecord{
+			{
+				Key:   []byte{0, 'P', 3, 'c', 'o', 'm', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 0, '*'},
+				Value: []byte{'p', 'l', 'u', 'g', 'i', 'n', 0, 'a', 'r', 'g', '1', '=', 'x', ';', 'a', 'r', 'g', '2', '=', 'y'},
+			},
+		},
+	},
+	{
+		in:      []byte("Pab.net,noargs,"),
+		outText: []byte("Pab.net,noargs,"),
+		out: []MapRecord{
+			{
+				Key:   []byte{0, 'P', 2, 'a', 'b', 3, 'n', 'e', 't', 0, '='},
+				Value: []byte{'n', 'o', 'a', 'r', 'g', 's', 0},
+			},
+		},
+		outV2: []MapRecord{
+			{
+				Key:   []byte{0, 'P', 3, 'n', 'e', 't', 2, 'a', 'b', 0, '='},
+				Value: []byte{'n', 'o', 'a', 'r', 'g', 's', 0},
+			},
+		},
+	},
+	{
+		in:      []byte("Pab.net,plugin,debug=true;tier=foo"),
+		outText: []byte("Pab.net,plugin,debug=true;tier=foo"),
+		out: []MapRecord{
+			{
+				Key:   []byte{0, 'P', 2, 'a', 'b', 3, 'n', 'e', 't', 0, '='},
+				Value: []byte("plugin\000debug=true;tier=foo"),
+			},
+		},
+		outV2: []MapRecord{
+			{
+				Key:   []byte{0, 'P', 3, 'n', 'e', 't', 2, 'a', 'b', 0, '='},
+				Value: []byte("plugin\000debug=true;tier=foo"),
+			},
+		},
+	},
+	{
 		in:      []byte("!m1,0.0.0.0"),
 		outText: []byte("!\\155\\061,0.0.0.0"),
 		out: []MapRecord{
@@ -1919,4 +1985,52 @@ func BenchmarkAtoiOur(b *testing.B) {
 		getuint32(in, &out)
 	}
 	_ = out
+}
+
+// TestDecodePluginMapRejectsMalformedArgs checks that an argument list the
+// pluginargs grammar rejects fails the whole record. The alternative, dropping
+// the offending argument and serving the rest, is invisible to an operator.
+func TestDecodePluginMapRejectsMalformedArgs(t *testing.T) {
+	testCases := []string{
+		"Pab.net,plugin,k=v;",
+		"Pab.net,plugin,;k=v",
+		"Pab.net,plugin,k1=v1;;k2=v2",
+		"Pab.net,plugin,k=",
+		"Pab.net,plugin,=v",
+		"Pab.net,plugin,bare",
+		"Pab.net,plugin,k=1;k=2",
+	}
+
+	for _, in := range testCases {
+		t.Run(in, func(t *testing.T) {
+			codec := new(Codec)
+			_, err := codec.DecodeLn([]byte(in))
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestDecodePluginMapValidatesPluginNameLength(t *testing.T) {
+	testCases := []struct {
+		name       string
+		pluginName string
+		wantErr    bool
+	}{
+		{name: "minimum length", pluginName: "ab"},
+		{name: "maximum length", pluginName: strings.Repeat("x", math.MaxUint8)},
+		{name: "too short", pluginName: "x", wantErr: true},
+		{name: "too long", pluginName: strings.Repeat("x", math.MaxUint8+1), wantErr: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			codec := new(Codec)
+			_, err := codec.DecodeLn([]byte(fmt.Sprintf("Pab.net,%s,k=v", tc.pluginName)))
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }

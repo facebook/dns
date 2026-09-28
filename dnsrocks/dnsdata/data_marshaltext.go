@@ -363,6 +363,18 @@ func (r *Rcsmap) MarshalText() (text []byte, err error) {
 }
 
 // MarshalText implements encoding.TextMarshaler
+func (r *Rpluginmap) MarshalText() (text []byte, err error) {
+	w := new(bytes.Buffer)
+	w.WriteString(string(prefixPluginMap))
+	putdomtext(w, r.dom)
+	w.Write(NSEP)
+	w.Write(r.pluginName)
+	w.Write(NSEP)
+	w.WriteString(r.args)
+	return w.Bytes(), nil
+}
+
+// MarshalText implements encoding.TextMarshaler
 func (r *Rrangepoint) MarshalText() (text []byte, err error) {
 	return r.pt.MarshalTextForLmap(r.lmap)
 }

@@ -30,6 +30,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/facebook/dns/dnsrocks/dnsdata/pluginargs"
 	"github.com/facebook/dns/dnsrocks/dnsdata/quote"
 	"github.com/facebook/dns/dnsrocks/dnsdata/svcb"
 
@@ -219,6 +220,16 @@ type Ripmap struct {
 // Rcsmap is [FB-only] 8 - define an EDNS client subnet-based map
 type Rcsmap Ripmap
 
+// Rpluginmap is [FB-only] P - defines a plugin-based lookup for a domain.
+// It is not a DNS wire record served to clients; it tells DNSRocks to defer
+// location resolution for the domain to an external plugin.
+type Rpluginmap struct {
+	dom        []byte // the host (may retain a "*." wildcard prefix)
+	pluginName []byte
+	args       string // in the pluginargs grammar, passed through verbatim
+	c          *Codec
+}
+
 // Rrangepoint [FB-only] - an internal record type generated from "%" records using the "rearrangement" process
 type Rrangepoint struct {
 	lmap Lmap
@@ -343,6 +354,7 @@ const (
 	prefixRangePoint Rtype = "!"
 	prefixSVCB       Rtype = "B"
 	prefixHTTPS      Rtype = "H"
+	prefixPluginMap  Rtype = "P"
 )
 
 func decodeRtype(text []byte) Rtype {
@@ -388,6 +400,8 @@ func (c *Codec) newRecord(t Rtype) (Record, error) {
 		return &Rsvcb{c: c, wtype: TypeSVCB}, nil
 	case prefixHTTPS:
 		return &Rhttps{c: c, wtype: TypeHTTPS}, nil
+	case prefixPluginMap:
+		return &Rpluginmap{c: c}, nil
 	}
 	return nil, ErrBadRType
 }
@@ -1437,6 +1451,35 @@ func (r *Rcsmap) MarshalMap() ([]MapRecord, error) {
 	k := makemapkey([]byte("\0008"), r.dom, r.c)
 	v := new(bytes.Buffer) // BUG scale
 	putlmap(v, r.lmap)
+
+	return []MapRecord{{Key: k, Value: v.Bytes()}}, nil
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler
+func (r *Rpluginmap) UnmarshalText(text []byte) error {
+	f := fields(text)
+	r.dom, _ = quote.Bunquote(f[0]) // BUG: handle error
+	r.pluginName = bytes.Clone(f[1])
+	if len(r.pluginName) < 2 || len(r.pluginName) > math.MaxUint8 {
+		return fmt.Errorf("plugin name %q is %d bytes, outside the 2 to %d byte range",
+			r.pluginName, len(r.pluginName), math.MaxUint8)
+	}
+	// Validated and stored verbatim: a malformed record is rejected rather
+	// than served with its arguments quietly mangled.
+	r.args = string(f[2])
+	if err := pluginargs.Validate(r.args); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalMap implements MapMarshaler
+func (r *Rpluginmap) MarshalMap() ([]MapRecord, error) {
+	k := makemapkey([]byte("\000P"), r.dom, r.c)
+	v := new(bytes.Buffer) // BUG scale
+	v.Write(r.pluginName)
+	v.WriteByte(0)
+	v.WriteString(r.args)
 
 	return []MapRecord{{Key: k, Value: v.Bytes()}}, nil
 }
