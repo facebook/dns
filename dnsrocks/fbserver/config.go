@@ -19,6 +19,7 @@ package fbserver
 import (
 	"fmt"
 	"net"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -28,8 +29,6 @@ import (
 	"github.com/facebook/dns/dnsrocks/dnsserver"
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
 	"github.com/facebook/dns/dnsrocks/tlsconfig"
-
-	"github.com/golang/glog"
 )
 
 // HandlerFactory adds a configured handler in front of an existing chain. It
@@ -69,24 +68,34 @@ func (ipans ipAns) String() string {
 	if ipans == nil {
 		return ""
 	}
-	vals := make([]string, len(ipans))
+	vals := make([]string, 0, len(ipans))
 	for k, v := range ipans {
-		vals = append(vals, fmt.Sprintf("%s : %v, ", k, v))
+		vals = append(vals, fmt.Sprintf("%s,%d", k, v))
 	}
-	return strings.Join(vals, ",")
+	slices.Sort(vals)
+	return strings.Join(vals, " ")
 }
 
 // Support setting ipAns with only "IP" or "IP,maxAns"
 func (ipans ipAns) Set(v string) error {
 	ipAnsSpt := strings.Split(v, ",")
+	if len(ipAnsSpt) > 2 {
+		return fmt.Errorf("invalid argument value %q: expected IP or IP,maxAns", v)
+	}
 
 	ip := net.ParseIP(ipAnsSpt[0])
+	if ip == nil {
+		return fmt.Errorf("invalid IP address %q", ipAnsSpt[0])
+	}
 	ans := dnsserver.DefaultMaxAnswer
 	ipStr := ip.String()
-	if len(ipAnsSpt) >= 2 {
+	if len(ipAnsSpt) == 2 {
 		num, err := strconv.Atoi(ipAnsSpt[1])
 		if err != nil {
-			glog.Fatalf("Failed to convert '%s' to int, error: %v", ipAnsSpt[1], err)
+			return fmt.Errorf("invalid max answer %q: %w", ipAnsSpt[1], err)
+		}
+		if num <= 0 {
+			return fmt.Errorf("max answer must be greater than zero, got %d", num)
 		}
 		ans = num
 	}
