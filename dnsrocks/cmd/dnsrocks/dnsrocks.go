@@ -34,6 +34,7 @@ import (
 	"github.com/facebook/dns/dnsrocks/dnsmetrics"
 	"github.com/facebook/dns/dnsrocks/fbserver"
 	"github.com/facebook/dns/dnsrocks/logger"
+	"github.com/facebook/dns/dnsrocks/pluginmap"
 
 	"github.com/golang/glog"
 
@@ -52,6 +53,18 @@ type flagRegistrar func(*flag.FlagSet, *fbserver.ServerConfig) func() error
 // platformFlagRegistrars is appended to by platform-specific files from their
 // init().
 var platformFlagRegistrars []flagRegistrar
+
+// splitPluginNames parses the comma separated -enabled-plugins value, ignoring
+// surrounding whitespace and empty entries.
+func splitPluginNames(flagValue string) []string {
+	var names []string
+	for name := range strings.SplitSeq(flagValue, ",") {
+		if name = strings.TrimSpace(name); name != "" {
+			names = append(names, name)
+		}
+	}
+	return names
+}
 
 func setCPU(cpu string) (int, error) {
 	var numCPU int
@@ -174,6 +187,11 @@ Currently two types of trigger files are supported:
 	logPrefix := cliflags.String("log-prefix", "", "Prefix to use in logger")
 	dnsRecordKeyToValidate := cliflags.String("record-key-to-validate", "", "DNS record key expected to present in DB file.")
 
+	// Plugins register from init() - this must be called from main() to be complete.
+	enabledPlugins := cliflags.String("enabled-plugins", "",
+		"Comma separated list of location plugins to enable (default disabled). Options: "+
+			strings.Join(pluginmap.Registered(), ","))
+
 	version := cliflags.Bool("version", false, "Print versioning information.")
 
 	// Enable glog format (already defined by glog lib)
@@ -214,6 +232,10 @@ Currently two types of trigger files are supported:
 		glog.Fatalf("Failed to unquote validation dns record: '%s', %v\n", *dnsRecordKeyToValidate, err)
 	}
 	serverConfig.DBConfig.ValidationKey = unquotedKey
+
+	registry, err := pluginmap.NewRegistry(splitPluginNames(*enabledPlugins))
+	failOnErr(err, "Error building the plugin registry")
+	serverConfig.PluginRegistry = registry
 
 	if *version {
 		glog.Infof("go version: %s go arch: %s go OS: %s", runtime.Version(), runtime.GOARCH, runtime.GOOS)

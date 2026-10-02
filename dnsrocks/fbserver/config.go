@@ -28,6 +28,7 @@ import (
 
 	"github.com/facebook/dns/dnsrocks/dnsserver"
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
+	"github.com/facebook/dns/dnsrocks/pluginmap"
 	"github.com/facebook/dns/dnsrocks/tlsconfig"
 )
 
@@ -54,6 +55,7 @@ type ServerConfig struct {
 	HandlerConfig    dnsserver.HandlerConfig
 	CacheConfig      dnsserver.CacheConfig
 	DBConfig         dnsserver.DBConfig
+	PluginRegistry   *pluginmap.Registry
 	WhoamiDomain     string
 	HandlerFactories []HandlerFactory
 	RefuseANY        bool

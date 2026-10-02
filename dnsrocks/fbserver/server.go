@@ -103,7 +103,8 @@ func NewServer(conf ServerConfig, logger dnsserver.Logger, stats stats.Stats, me
 		conf.IPAns[""] = 1
 	}
 
-	tdb, err := dnsserver.NewFBDNSDB(conf.HandlerConfig, conf.DBConfig, conf.CacheConfig, logger, stats)
+	tdb, err := dnsserver.NewFBDNSDBWithPluginRegistry(
+		conf.HandlerConfig, conf.DBConfig, conf.CacheConfig, conf.PluginRegistry, logger, stats)
 	failOnErr(err, "Error creating TinyDB handle")
 	failOnErr(tdb.Load(), "Error loading TinyDB")
 	return &Server{conf: conf, db: tdb, stats: stats, logger: logger, metricsExporter: metricsExporter}

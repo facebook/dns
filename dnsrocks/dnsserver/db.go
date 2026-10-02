@@ -33,6 +33,7 @@ import (
 
 	"github.com/facebook/dns/dnsrocks/db"
 	"github.com/facebook/dns/dnsrocks/dnsserver/stats"
+	"github.com/facebook/dns/dnsrocks/pluginmap"
 )
 
 // CacheConfig has knobs to modify caching behaviour.
@@ -101,6 +102,11 @@ type HandlerConfig struct {
 	MaxCNAMEHops int
 }
 
+type pluginProvider interface {
+	Get(name string) pluginmap.Plugin
+	Empty() bool
+}
+
 // FBDNSDB is the DNS DB handler.
 type FBDNSDB struct {
 	ReloadChan    chan ReloadSignal
@@ -113,11 +119,29 @@ type FBDNSDB struct {
 	lru           *lru.Cache[string, any]
 	logger        Logger
 	stats         stats.Stats
+	plugins       pluginProvider
 	Next          plugin.Handler
 }
 
 // NewFBDNSDBBasic initialize a new FBDNSDB. Reloading strategy is left to be set.
-func NewFBDNSDBBasic(handlerConfig HandlerConfig, dbConfig DBConfig, cacheConfig CacheConfig, l Logger, s stats.Stats) (t *FBDNSDB, err error) {
+func NewFBDNSDBBasic(
+	handlerConfig HandlerConfig,
+	dbConfig DBConfig,
+	cacheConfig CacheConfig,
+	l Logger,
+	s stats.Stats,
+) (t *FBDNSDB, err error) {
+	return newFBDNSDBBasic(handlerConfig, dbConfig, cacheConfig, nil, l, s)
+}
+
+func newFBDNSDBBasic(
+	handlerConfig HandlerConfig,
+	dbConfig DBConfig,
+	cacheConfig CacheConfig,
+	plugins pluginProvider,
+	l Logger,
+	s stats.Stats,
+) (t *FBDNSDB, err error) {
 	var lrucache *lru.Cache[string, any]
 	if cacheConfig.Enabled {
 		if lrucache, err = lru.New[string, any](cacheConfig.LRUSize); err != nil {
@@ -132,6 +156,7 @@ func NewFBDNSDBBasic(handlerConfig HandlerConfig, dbConfig DBConfig, cacheConfig
 		lru:           lrucache,
 		logger:        l,
 		stats:         s,
+		plugins:       plugins,
 		done:          make(chan struct{}),
 		ReloadChan:    make(chan ReloadSignal),
 	}
@@ -139,9 +164,38 @@ func NewFBDNSDBBasic(handlerConfig HandlerConfig, dbConfig DBConfig, cacheConfig
 	return tdb, nil
 }
 
-// NewFBDNSDB initialize a new FBDNSDB and set up DB reloading
-func NewFBDNSDB(handlerConfig HandlerConfig, dbConfig DBConfig, cacheConfig CacheConfig, l Logger, s stats.Stats) (t *FBDNSDB, err error) {
-	tdb, err := NewFBDNSDBBasic(handlerConfig, dbConfig, cacheConfig, l, s)
+// NewFBDNSDB initialize a new FBDNSDB and set up DB reloading.
+func NewFBDNSDB(
+	handlerConfig HandlerConfig,
+	dbConfig DBConfig,
+	cacheConfig CacheConfig,
+	l Logger,
+	s stats.Stats,
+) (*FBDNSDB, error) {
+	return newFBDNSDB(handlerConfig, dbConfig, cacheConfig, nil, l, s)
+}
+
+// NewFBDNSDBWithPluginRegistry initializes an FBDNSDB with Plugin Map support.
+func NewFBDNSDBWithPluginRegistry(
+	handlerConfig HandlerConfig,
+	dbConfig DBConfig,
+	cacheConfig CacheConfig,
+	plugins *pluginmap.Registry,
+	l Logger,
+	s stats.Stats,
+) (*FBDNSDB, error) {
+	return newFBDNSDB(handlerConfig, dbConfig, cacheConfig, plugins, l, s)
+}
+
+func newFBDNSDB(
+	handlerConfig HandlerConfig,
+	dbConfig DBConfig,
+	cacheConfig CacheConfig,
+	plugins pluginProvider,
+	l Logger,
+	s stats.Stats,
+) (t *FBDNSDB, err error) {
+	tdb, err := newFBDNSDBBasic(handlerConfig, dbConfig, cacheConfig, plugins, l, s)
 	if err != nil {
 		return nil, err
 	}

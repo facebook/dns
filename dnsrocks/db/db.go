@@ -72,6 +72,7 @@ type DB struct {
 // Reader will be able to perform DNS queries.
 // It wraps DB to carry query context and properly count reference count to DB
 type Reader interface {
+	FindPluginMap(qname []byte) (PluginMap, bool, error)
 	FindLocation(qname []byte, ecs *dns.EDNS0_SUBNET, ip string) (loc *Location, err error)
 	IsAuthoritative(q []byte, locID ID) (ns bool, auth bool, zoneCut []byte, err error)
 	FindAnswer(q []byte, packedControlName []byte, qname string, qtype uint16, locID ID, a *dns.Msg, maxAnswer int) (bool, int)

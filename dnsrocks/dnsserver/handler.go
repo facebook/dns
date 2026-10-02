@@ -17,6 +17,7 @@
 package dnsserver
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/facebook/dns/dnsrocks/db"
 	"github.com/facebook/dns/dnsrocks/dnsserver/test"
+	"github.com/facebook/dns/dnsrocks/pluginmap"
 
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/plugin/pkg/edns"
@@ -125,7 +127,7 @@ func (h *FBDNSDB) writeAndLog(state request.Request, resp *dns.Msg, ecs *dns.EDN
 	return rcode, nil
 }
 
-func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAns int, a *dns.Msg, ecs *dns.EDNS0_SUBNET) ([]dns.RR, bool, error) {
+func (h *FBDNSDB) chaseCNAME(ctx context.Context, reader db.Reader, localState request.Request, maxAns int, a *dns.Msg, ecs *dns.EDNS0_SUBNET) ([]dns.RR, bool, error) {
 	var (
 		packedQName = make([]byte, 255)
 		// the location matching this requestor and target
@@ -147,7 +149,8 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 		prevScopePrefixLen = ecs.SourceScope
 	}
 
-	if loc, err = reader.FindLocation(packedQName, ecs, localState.IP()); err != nil {
+	if loc, err = h.selectLocation(ctx, reader, packedQName, localState.Name(),
+		localState.QType(), ecs, localState.IP()); err != nil {
 		glog.Errorf("%s: failed to find location: %v", localState.Name(), err)
 		return nil, false, err
 	}
@@ -189,6 +192,130 @@ func (h *FBDNSDB) chaseCNAME(reader db.Reader, localState request.Request, maxAn
 		h.stats.IncrementCounter("DNS_cname_chasing.qtype.not_found")
 	}
 	return newRecords, weighted, nil
+}
+
+// resolvePluginLocations attempts to call the provided plugin. Upon success, it
+// converts the array of pluginmap.Location it receives to db.Location versions.
+// It will return an error upon receiving an error from the plugin, or if any of
+// the received locations cannot be converted.
+func (h *FBDNSDB) resolvePluginLocations(
+	ctx context.Context,
+	record db.PluginMap,
+	ecs *dns.EDNS0_SUBNET,
+	ip string,
+) ([]db.Location, error) {
+	if h.plugins == nil || h.plugins.Empty() {
+		return []db.Location{}, nil
+	}
+
+	plugin := h.plugins.Get(record.Plugin)
+	if plugin == nil {
+		return []db.Location{}, nil
+	}
+
+	req := &pluginmap.Request{
+		Args:       record.Args,
+		ResolverIP: ip,
+	}
+	if ecs != nil {
+		ecsCopy := *ecs
+		ecsCopy.Address = bytes.Clone(ecs.Address)
+		req.ECS = &ecsCopy
+	}
+
+	candidates, err := plugin.Lookup(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("plugin %q failed to resolve a location: %w", record.Plugin, err)
+	}
+
+	locations := make([]db.Location, 0, len(candidates))
+	for _, candidate := range candidates {
+		location, err := db.NewLocation(record.Plugin, candidate.Name, candidate.Scope)
+		if err != nil {
+			return nil, fmt.Errorf("plugin %q returned invalid location %q: %w",
+				record.Plugin, candidate.Name, err)
+		}
+		locations = append(locations, location)
+	}
+	return locations, nil
+}
+
+func (h *FBDNSDB) selectMapLocation(
+	reader db.Reader,
+	packedQName []byte,
+	ecs *dns.EDNS0_SUBNET,
+	ip string,
+) (*db.Location, error) {
+	location, err := reader.FindLocation(packedQName, ecs, ip)
+	if err != nil {
+		return nil, err
+	}
+	if location != nil {
+		h.stats.IncrementCounter("DNS_location.map.selected")
+	}
+	return location, nil
+}
+
+// selectLocation chooses the first plugin candidate for which the queried name
+// exists. NODATA is a valid selection; only NXDOMAIN advances to the next
+// candidate. If none match, the existing map-based lookup remains the fallback.
+func (h *FBDNSDB) selectLocation(
+	ctx context.Context,
+	reader db.Reader,
+	packedQName []byte,
+	qname string,
+	qtype uint16,
+	ecs *dns.EDNS0_SUBNET,
+	ip string,
+) (*db.Location, error) {
+	var locations []db.Location
+	if h.plugins != nil && !h.plugins.Empty() {
+		record, found, err := reader.FindPluginMap(packedQName)
+		if err != nil {
+			return nil, err
+		}
+		if found {
+			pluginLocations, err := h.resolvePluginLocations(ctx, record, ecs, ip)
+			if err != nil {
+				h.stats.IncrementCounter("DNS_location.plugin.error")
+			} else {
+				locations = pluginLocations
+			}
+		}
+	}
+	for i := range locations {
+		location := &locations[i]
+		ns, auth, zoneCut, err := reader.IsAuthoritative(packedQName, location.LocID)
+		if err != nil {
+			return nil, err
+		}
+		if !ns && !auth {
+			h.stats.IncrementCounter("DNS_location.plugin.unrecognized")
+			continue
+		}
+		if auth {
+			probe := new(dns.Msg)
+			_, rcode := reader.FindAnswer(
+				packedQName, zoneCut, qname, qtype, location.LocID, probe, DefaultMaxAnswer)
+			if rcode == dns.RcodeServerFailure {
+				return nil, fmt.Errorf("checking plugin location %q failed", location.LocID.Contents())
+			}
+			if rcode == dns.RcodeNameError {
+				h.stats.IncrementCounter("DNS_location.plugin.unrecognized")
+				continue
+			}
+		}
+
+		if ecs != nil {
+			ecs.SourceScope = location.Mask
+		}
+		if i > 0 {
+			h.stats.IncrementCounter("DNS_location.plugin.less_preferred")
+		}
+		h.stats.IncrementCounter("DNS_location.plugin.selected")
+		return location, nil
+	}
+	return h.selectMapLocation(reader, packedQName, ecs, ip)
 }
 
 // ServeDNSWithRCODE handles a dns query and with return the RCODE and eventual
@@ -249,7 +376,8 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 	packedQName = packedQName[:offset]
 
 	ecs = db.FindECS(state.Req)
-	if loc, err = reader.FindLocation(packedQName, ecs, state.IP()); err != nil {
+	if loc, err = h.selectLocation(
+		ctx, reader, packedQName, state.Name(), state.QType(), ecs, state.IP()); err != nil {
 		glog.Errorf("%s: failed to find location: %v", state.Name(), err)
 		h.logger.LogFailed(state, ecs, loc, time.Since(startTime).Microseconds())
 		return dns.RcodeServerFailure, nil
@@ -411,7 +539,7 @@ func (h *FBDNSDB) ServeDNSWithRCODE(ctx context.Context, w dns.ResponseWriter, r
 				}
 
 				updatedState := state.NewWithQuestion(target, state.QType())
-				newRecords, weighted, err = h.chaseCNAME(reader, updatedState, maxAns, a, ecs)
+				newRecords, weighted, err = h.chaseCNAME(ctx, reader, updatedState, maxAns, a, ecs)
 				if err != nil {
 					glog.Errorf("Failed to chase CNAME for domain: %s, target: %s, error: %v", state.Name(), target, err)
 					break
