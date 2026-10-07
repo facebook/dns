@@ -24,18 +24,19 @@ import (
 // HasRecord goes over existing records in all sections and checks wether or not
 // it exists in the message payload.
 func HasRecord(msg *dns.Msg, record string, qtype uint16) bool {
+	canonical := dns.CanonicalName(record)
 	for _, a := range msg.Answer {
-		if a.Header().Rrtype == qtype && a.Header().Name == record {
+		if a.Header().Rrtype == qtype && dns.CanonicalName(a.Header().Name) == canonical {
 			return true
 		}
 	}
 	for _, a := range msg.Ns {
-		if a.Header().Rrtype == qtype && a.Header().Name == record {
+		if a.Header().Rrtype == qtype && dns.CanonicalName(a.Header().Name) == canonical {
 			return true
 		}
 	}
 	for _, a := range msg.Extra {
-		if a.Header().Rrtype == qtype && a.Header().Name == record {
+		if a.Header().Rrtype == qtype && dns.CanonicalName(a.Header().Name) == canonical {
 			return true
 		}
 	}

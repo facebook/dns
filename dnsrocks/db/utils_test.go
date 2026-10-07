@@ -138,6 +138,12 @@ func TestHasRecord(t *testing.T) {
 			expected: true,
 		},
 		{
+			// message has a case-insensitive foo.example.org/CNAME record in Answer section
+			qname:    "FOO.example.org.",
+			qtype:    dns.TypeCNAME,
+			expected: true,
+		},
+		{
 			// message has a bar.example.org/A record in Answer section
 			qname:    "bar.example.org.",
 			qtype:    dns.TypeA,
@@ -156,17 +162,22 @@ func TestHasRecord(t *testing.T) {
 			expected: true,
 		},
 		{
+			// message has a case-insensitive example.org/NS record in Ns section
+			qname:    "EXAMPLE.org.",
+			qtype:    dns.TypeNS,
+			expected: true,
+		},
+		{
 			// message has a a.ns.example.org/NA record in Extra section
 			qname:    "a.ns.example.org.",
 			qtype:    dns.TypeA,
 			expected: true,
 		},
 		{
-			// FIXME: we may want to detect this use case.
-			// message has a A.ns.example.org/NA record in Extra section
+			// message has a case-insensitive a.ns.example.org/A record in Extra section
 			qname:    "A.ns.example.org.",
 			qtype:    dns.TypeA,
-			expected: false,
+			expected: true,
 		},
 	}
 	for _, tc := range testCases {
