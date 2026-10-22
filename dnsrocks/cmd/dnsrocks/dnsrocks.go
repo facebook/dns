@@ -54,6 +54,10 @@ type flagRegistrar func(*flag.FlagSet, *fbserver.ServerConfig) func() error
 // init().
 var platformFlagRegistrars []flagRegistrar
 
+type platformInitializer func() func()
+
+var platformInitializers []platformInitializer
+
 // splitPluginNames parses the comma separated -enabled-plugins value, ignoring
 // surrounding whitespace and empty entries.
 func splitPluginNames(flagValue string) []string {
@@ -99,6 +103,12 @@ func setCPU(cpu string) (int, error) {
 }
 
 func main() {
+	for _, initialize := range platformInitializers {
+		if cleanup := initialize(); cleanup != nil {
+			defer cleanup()
+		}
+	}
+
 	var serverConfig = fbserver.NewServerConfig()
 	var loggerConfig logger.Config
 	var doTTLSATtl uint64
