@@ -27,6 +27,7 @@ import (
 	"io"
 	"log"
 	"math/big"
+	"net"
 	"os"
 	"path"
 	"testing"
@@ -150,7 +151,7 @@ func pemBlockForKey(priv any) *pem.Block {
 // contains both a private key and a cert.
 // returns the file name where the cert/key were saved. The caller must delete
 // the file.
-func MkTestCert(t *testing.T) string {
+func MkTestCert(t testing.TB) string {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.Nil(t, err)
 
@@ -160,8 +161,10 @@ func MkTestCert(t *testing.T) string {
 		Subject: pkix.Name{
 			CommonName: "fbserver test certificate",
 		},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now().Add(time.Hour),
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().Add(time.Hour),
+		DNSNames:    []string{"localhost"},
+		IPAddresses: []net.IP{net.IPv6loopback, net.IPv4(127, 0, 0, 1)},
 	}
 	pemBytes, err := x509.CreateCertificate(rand.Reader, template, template, &privateKey.PublicKey, privateKey)
 	require.Nil(t, err)
