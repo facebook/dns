@@ -35,6 +35,11 @@ type Plugin interface {
 	Lookup(ctx context.Context, req *Request) ([]Location, error)
 }
 
+// Counter records named counters. Implementations must be safe for concurrent use.
+type Counter interface {
+	IncrementCounter(key string)
+}
+
 // Location is a logical location returned by a Plugin. DNSRocks owns the
 // conversion from Name to its database key encoding.
 type Location struct {
@@ -54,6 +59,16 @@ type Request struct {
 	// ECS is the EDNS Client Subnet option, or nil if not present. It is a copy;
 	// plugins report response scope through Location instead of mutating it.
 	ECS *dns.EDNS0_SUBNET
+	// Stats exports plugin counters through the server's metrics collector.
+	// A nil collector disables counters.
+	Stats Counter
+}
+
+// IncrementCounter records a plugin counter if a collector was supplied.
+func (r *Request) IncrementCounter(key string) {
+	if r.Stats != nil {
+		r.Stats.IncrementCounter(key)
+	}
 }
 
 // Factory constructs a plugin. A factory runs only for a plugin this server

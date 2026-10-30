@@ -216,6 +216,7 @@ func (h *FBDNSDB) resolvePluginLocations(
 	req := &pluginmap.Request{
 		Args:       record.Args,
 		ResolverIP: ip,
+		Stats:      h.stats,
 	}
 	if ecs != nil {
 		ecsCopy := *ecs

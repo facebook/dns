@@ -86,6 +86,7 @@ type selectionPlugin struct {
 
 func (p *selectionPlugin) Lookup(_ context.Context, request *pluginmap.Request) ([]pluginmap.Location, error) {
 	p.request = request
+	request.IncrementCounter("test.lookup")
 	return p.locations, p.err
 }
 
@@ -122,7 +123,8 @@ func TestResolvePluginLocationsPassesRequestAndPreservesOrder(t *testing.T) {
 		{Name: "primary", Scope: 24},
 		{Name: "@default", Scope: 16},
 	}}
-	handler := &FBDNSDB{plugins: testPluginRegistry{"test": plugin}}
+	counters := &countingStats{counters: map[string]int{}}
+	handler := &FBDNSDB{plugins: testPluginRegistry{"test": plugin}, stats: counters}
 	ecs := &dns.EDNS0_SUBNET{
 		Code:          dns.EDNS0SUBNET,
 		Family:        1,
@@ -139,6 +141,7 @@ func TestResolvePluginLocationsPassesRequestAndPreservesOrder(t *testing.T) {
 	}, locations)
 	require.Equal(t, "k1=v1;k2=v2", plugin.request.Args)
 	require.Equal(t, "192.0.2.1", plugin.request.ResolverIP)
+	require.Equal(t, 1, counters.counters["test.lookup"])
 
 	plugin.request.ECS.SourceScope = 12
 	require.Zero(t, ecs.SourceScope)
